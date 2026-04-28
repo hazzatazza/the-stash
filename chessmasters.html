@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Chess Masters: Pro Edition</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;700&family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+    <style>
+        :root {
+            --bg: #121212; --panel: #1e1e1e; --accent: #779556; --text: #ffffff;
+            --sq-light: #eeeed2; --sq-dark: #769656;
+            --font-ui: 'Outfit', sans-serif; --font-body: 'Inter', sans-serif;
+        }
+
+        body { margin: 0; font-family: var(--font-body); background: var(--bg); color: var(--text); height: 100vh; display: flex; align-items: center; justify-content: center; }
+
+        .app-hub { width: 1000px; height: 700px; background: var(--panel); border-radius: 20px; overflow: hidden; display: flex; flex-direction: column; box-shadow: 0 20px 60px rgba(0,0,0,0.9); border: 1px solid #333; }
+        
+        .screen { display: none; padding: 40px; height: 100%; box-sizing: border-box; flex-direction: column; align-items: center; justify-content: center; animation: fadeIn 0.3s ease; }
+        .active { display: flex; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+        h1 { font-family: var(--font-ui); color: var(--accent); font-size: 3rem; margin: 0 0 20px 0; }
+        
+        .btn { padding: 12px 25px; border-radius: 8px; border: none; background: #333; color: white; font-weight: 600; cursor: pointer; transition: 0.3s; margin: 5px; font-family: var(--font-ui); width: 220px; }
+        .btn:hover { background: var(--accent); }
+        .btn-primary { background: var(--accent); }
+
+        .avatar-upload { width: 100px; height: 100px; border-radius: 50%; background: #333; display: flex; align-items: center; justify-content: center; margin-bottom: 15px; border: 2px dashed #555; cursor: pointer; overflow: hidden; }
+        .avatar-upload img { width: 100%; height: 100%; object-fit: cover; }
+
+        .bot-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; overflow-y: auto; padding: 10px; width: 100%; }
+        .bot-card { background: #2a2a2a; padding: 15px; border-radius: 12px; text-align: center; cursor: pointer; transition: 0.2s; border: 1px solid #444; }
+        .bot-card:hover { border-color: var(--accent); transform: translateY(-5px); }
+
+        #board { display: grid; grid-template-columns: repeat(8, 60px); grid-template-rows: repeat(8, 60px); border: 6px solid #333; }
+        .square { width: 60px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; position: relative; }
+        .light { background-color: var(--sq-light); }
+        .dark { background-color: var(--sq-dark); }
+        .selected { background-color: #bbc775 !important; }
+        .piece { width: 55px; height: 55px; z-index: 2; pointer-events: none; }
+        .indicator { width: 15px; height: 15px; background: rgba(0,0,0,0.3); border-radius: 50%; position: absolute; pointer-events: none; }
+
+        .sidebar { flex-grow: 1; margin-left: 20px; display: flex; flex-direction: column; gap: 10px; width: 250px; }
+        .profile-row { display: flex; align-items: center; gap: 15px; background: #222; padding: 15px; border-radius: 8px; }
+        .avatar { width: 50px; height: 50px; border-radius: 50%; background: #444; overflow: hidden; display: flex; align-items: center; justify-content: center; }
+        #log { flex-grow: 1; background: #000; padding: 10px; border-radius: 8px; overflow-y: auto; font-family: monospace; font-size: 13px; height: 200px; }
+    </style>
+</head>
+<body>
+
+<div class="app-hub">
+    <div id="screen-setup" class="screen active">
+        <h1>CHESS MASTERS</h1>
+        <label class="avatar-upload" for="avatar-input">
+            <span id="avatar-placeholder">Upload</span>
+            <img id="avatar-preview" style="display:none;">
+        </label>
+        <input type="file" id="avatar-input" accept="image/*" style="display:none;" onchange="previewAvatar(this)">
+        <input type="text" id="username-input" placeholder="Enter your name" style="padding:12px; border-radius:8px; border:none; margin-bottom:15px; width:200px; text-align:center; background:#333; color:white;">
+        <button class="btn btn-primary" onclick="enterArena()">Enter Arena</button>
+    </div>
+
+    <div id="screen-home" class="screen">
+        <h1>CHESS MASTERS</h1>
+        <button class="btn btn-primary" onclick="showScreen('screen-bots')">Play Game</button>
+        <button class="btn" onclick="showScreen('screen-settings')">Settings</button>
+        <button class="btn" onclick="showScreen('screen-credits')">Credits</button>
+        <button class="btn" onclick="location.reload()" style="background:#882222;">Reset Profile</button>
+    </div>
+
+    <div id="screen-bots" class="screen">
+        <h1>Select Challenger</h1>
+        <div id="bot-grid" class="bot-grid"></div>
+        <button class="btn" onclick="showScreen('screen-home')" style="margin-top:20px;">Back</button>
+    </div>
+
+    <div id="screen-game" class="screen" style="flex-direction:row; align-items:center;">
+        <div id="board"></div>
+        <div class="sidebar">
+            <div id="opp-profile" class="profile-row"></div>
+            <div id="user-profile" class="profile-row"></div>
+            <div id="log"></div>
+            <button class="btn" onclick="copyPGN()">Copy PGN</button>
+            <button class="btn" onclick="showScreen('screen-home')" style="background:#555;">Back to Menu</button>
+        </div>
+    </div>
+
+    <div id="screen-settings" class="screen">
+        <h1>Settings</h1>
+        <label>Light Squares: <input type="color" id="c1" value="#eeeed2" onchange="updateColors()"></label>
+        <label>Dark Squares: <input type="color" id="c2" value="#769656" onchange="updateColors()"></label>
+        <button class="btn" onclick="showScreen('screen-home')">Done</button>
+    </div>
+
+    <div id="screen-credits" class="screen">
+        <h1>Credits</h1>
+        <p>Engine: Native JS AI</p>
+        <p>An Algebra Practise Original. Built for Chess Fans.</p>
+        <button class="btn" onclick="showScreen('screen-home')">Back</button>
+    </div>
+</div>
+
+<script>
+    const pSvg = { w: { p: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', r: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg', n: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', b: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg', q: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', k: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg' }, b: { p: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg', r: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg', n: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', b: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg', q: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg', k: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg' } };
+    // Adjusted Elo range to 400-1350 to better reflect true bot strength
+    const bots = Array.from({length:20}, (_, i) => ({name: `Bot ${i+1}`, elo: 400 + (i*50), icon: ["🤖","🤠","👶","🧠","👔","🌙","⚡","🎓","🕶️","🎭","👑","🏆","🎖️","🔥","🧊","☠️","👽","🐲","🧙","🧛"][i]}));
+    let state = { game: new Chess(), user: {name: 'Player', img: null}, bot: null, selected: null, valid: [] };
+
+    window.onload = () => initBots();
+
+    function previewAvatar(input) {
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                state.user.img = e.target.result;
+                document.getElementById('avatar-preview').src = e.target.result;
+                document.getElementById('avatar-preview').style.display = 'block';
+                document.getElementById('avatar-placeholder').style.display = 'none';
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function enterArena() {
+        state.user.name = document.getElementById('username-input').value || "Player";
+        showScreen('screen-home');
+    }
+
+    function initBots() {
+        const grid = document.getElementById('bot-grid');
+        bots.forEach(bot => {
+            const div = document.createElement('div');
+            div.className = 'bot-card';
+            div.innerHTML = `<div style="font-size:24px;">${bot.icon}</div><strong>${bot.name}</strong><br>Elo: ${bot.elo}`;
+            div.onclick = () => startMatch(bot);
+            grid.appendChild(div);
+        });
+    }
+
+    function showScreen(id) {
+        document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+    }
+
+    function startMatch(bot) {
+        state.bot = bot;
+        state.game.reset();
+        showScreen('screen-game');
+        const userImg = state.user.img ? `<img src="${state.user.img}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">` : '<div class="avatar">👤</div>';
+        document.getElementById('user-profile').innerHTML = `${userImg}<div>${state.user.name}<br>Rating: 1500</div>`;
+        document.getElementById('opp-profile').innerHTML = `<div class="avatar">${bot.icon}</div><div>${bot.name}<br>Elo: ${bot.elo}</div>`;
+        renderBoard();
+    }
+
+    function renderBoard() {
+        const board = document.getElementById('board'); board.innerHTML = '';
+        const b = state.game.board();
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                const sqName = ['a','b','c','d','e','f','g','h'][c] + (8-r);
+                const sq = document.createElement('div');
+                sq.className = `square ${(r+c)%2===0 ? 'light' : 'dark'}`;
+                if (state.selected === sqName) sq.classList.add('selected');
+                if (state.valid.includes(sqName)) sq.innerHTML = '<div class="indicator"></div>';
+                const p = b[r][c];
+                if(p) sq.innerHTML += `<img src="${pSvg[p.color][p.type]}" class="piece">`;
+                sq.onclick = () => handleSquare(sqName);
+                board.appendChild(sq);
+            }
+        }
+    }
+
+    function handleSquare(sq) {
+        if (state.selected) {
+            const move = state.game.move({ from: state.selected, to: sq, promotion: 'q' });
+            if (move) {
+                renderBoard();
+                logMove(move);
+                state.selected = null;
+                state.valid = [];
+                setTimeout(botMove, 250);
+            } else {
+                state.selected = null;
+                state.valid = [];
+                renderBoard();
+            }
+        } else {
+            const piece = state.game.get(sq);
+            if (piece && piece.color === state.game.turn()) {
+                state.selected = sq;
+                state.valid = state.game.moves({ square: sq, verbose: true }).map(m => m.to);
+                renderBoard();
+            }
+        }
+    }
+
+    function evaluateBoard(game) {
+        let total = 0;
+        const pieces = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
+        game.board().forEach(row => row.forEach(p => {
+            if (p) total += (p.color === 'w' ? 1 : -1) * pieces[p.type];
+        }));
+        return total;
+    }
+
+    function minimax(game, depth, alpha, beta, isMaximizing) {
+        if (depth === 0 || game.game_over()) return evaluateBoard(game);
+        let moves = game.moves();
+        if (isMaximizing) {
+            let maxEval = -Infinity;
+            for (let move of moves) {
+                game.move(move);
+                let ev = minimax(game, depth - 1, alpha, beta, false);
+                game.undo();
+                maxEval = Math.max(maxEval, ev);
+                alpha = Math.max(alpha, ev);
+                if (beta <= alpha) break;
+            }
+            return maxEval;
+        } else {
+            let minEval = Infinity;
+            for (let move of moves) {
+                game.move(move);
+                let ev = minimax(game, depth - 1, alpha, beta, true);
+                game.undo();
+                minEval = Math.min(minEval, ev);
+                beta = Math.min(beta, ev);
+                if (beta <= alpha) break;
+            }
+            return minEval;
+        }
+    }
+
+    function botMove() {
+        const moves = state.game.moves();
+        if (moves.length === 0) return;
+        // Adjusted scaling: (ELO-400)/300 ensures max depth at ~1300 ELO
+        const depth = Math.min(4, Math.floor((state.bot.elo - 400) / 300) + 1);
+        let bestMove = null;
+        let bestVal = Infinity;
+        for (let move of moves) {
+            state.game.move(move);
+            let val = minimax(state.game, depth - 1, -Infinity, Infinity, true);
+            state.game.undo();
+            if (val < bestVal) { bestVal = val; bestMove = move; }
+        }
+        state.game.move(bestMove);
+        renderBoard();
+        logMove({color: 'b', piece: state.game.get(bestMove.substring(2,4)).type, to: bestMove.substring(2,4)});
+    }
+
+    function logMove(move) {
+        const pNames = {p: 'Pawn', n: 'Knight', b: 'Bishop', r: 'Rook', q: 'Queen', k: 'King'};
+        const entry = document.createElement('div');
+        entry.innerText = `${move.color === 'w' ? 'White' : 'Black'} played ${pNames[move.piece]} to ${move.to}`;
+        const log = document.getElementById('log');
+        log.appendChild(entry);
+        log.scrollTop = log.scrollHeight;
+    }
+
+    function updateColors() {
+        document.documentElement.style.setProperty('--sq-light', document.getElementById('c1').value);
+        document.documentElement.style.setProperty('--sq-dark', document.getElementById('c2').value);
+    }
+
+    function copyPGN() { navigator.clipboard.writeText(state.game.pgn()); alert("PGN Copied!"); }
+</script>
+</body>
+</html>
