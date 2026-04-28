@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Music Maker Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+    <style>
+        :root {
+            --bg: #0f172a; --panel: rgba(30, 41, 59, 0.7); --text: #f8fafc; --accent: #38bdf8;
+            --input-bg: rgba(0,0,0,0.3);
+        }
+        .light-theme {
+            --bg: #e2e8f0; --panel: rgba(255, 255, 255, 0.7); --text: #1e293b; --accent: #0ea5e9;
+            --input-bg: rgba(255,255,255,0.5);
+        }
+
+        body { 
+            background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; 
+            margin: 0; padding: 10px; height: 100vh; box-sizing: border-box;
+            display: flex; flex-direction: column; transition: background 0.3s;
+        }
+
+        .glass {
+            background: var(--panel);
+            backdrop-filter: blur(15px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+        }
+
+        header { display: flex; justify-content: space-between; align-items: center; padding: 10px 20px; margin-bottom: 10px; }
+        
+        #viewport { flex-grow: 1; overflow: auto; border-radius: 12px; margin-bottom: 10px; }
+        #grid { display: grid; gap: 2px; padding: 10px; width: max-content; }
+        
+        .cell { 
+            width: 25px; height: 25px; background: rgba(0,0,0,0.2); 
+            cursor: pointer; border-radius: 3px; transition: filter 0.1s; 
+            touch-action: none; 
+        }
+        .cell:hover { filter: brightness(1.5); }
+        .cell.playing { outline: 2px solid white; box-shadow: 0 0 10px white; }
+        
+        .dashboard { padding: 15px; display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; align-items: center; }
+        
+        button, select, input { 
+            background: var(--input-bg); color: var(--text); border: 1px solid rgba(255,255,255,0.1); 
+            padding: 8px 12px; border-radius: 8px; cursor: pointer; font-family: inherit; font-size: 13px;
+        }
+        
+        select, option { background: #1e293b !important; color: #fff !important; }
+        
+        #recBtn { background: #e11d48; }
+        #recBtn.recording { animation: pulse 1.5s infinite; }
+        @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+        
+        .modal { display: none; position: fixed; inset: 0; z-index: 100; justify-content: center; align-items: center; background: rgba(0,0,0,0.8); }
+        .modal-content { padding: 30px; text-align: center; max-width: 400px; }
+    </style>
+</head>
+<body>
+
+    <header class="glass">
+        <h2 style="margin:0; font-size: 18px;">Music Maker Pro</h2>
+        <input type="text" id="songName" placeholder="Untitled Song" style="background:none; border:none; border-bottom:1px solid #aaa; color:inherit; text-align:center;">
+        <div style="display:flex; gap:10px;">
+            <button onclick="document.getElementById('modal').style.display='flex'">ⓘ</button>
+            <button id="themeToggle">☀️</button>
+        </div>
+    </header>
+
+    <div id="viewport" class="glass">
+        <div id="grid"></div>
+    </div>
+
+    <div class="dashboard glass">
+        <button id="playBtn">▶ Play</button>
+        <button id="recBtn">● Record</button>
+        <button id="clearBtn">Clear</button>
+        <button id="addCol">+ Column</button>
+        <button id="delCol">- Column</button>
+        <select id="synthType">
+            <option value="piano">Piano</option>
+            <option value="guitar">Guitar</option>
+            <option value="woodwind">Woodwind</option>
+            <option value="drums">Drums</option>
+        </select>
+        <input type="range" id="tempo" min="60" max="240" value="120">
+        <span id="bpmText" style="font-size:12px;">120 BPM</span>
+    </div>
+
+    <div id="modal" class="modal" onclick="this.style.display='none'">
+        <div class="glass modal-content">
+            <h3>Credits</h3>
+            <p>Made by Hazza 2026 for:</p>
+            <img src="https://iili.io/q4IJf9a.png" alt="Algebra Practice" style="max-width:80%; border-radius:10px;">
+        </div>
+    </div>
+
+<script>
+    const gridEl = document.getElementById('grid');
+    const recorder = new Tone.Recorder();
+    let isMouseDown = false, isPlaying = false, beats = 32;
+    const notes = ["C8", "B7", "A#7", "A7", "G#7", "G7", "F#7", "F7", "E7", "D#7", "D7", "C#7", "C7", "B6", "A#6", "A6", "G#6", "G6", "F#6", "F6", "E6", "D#6", "D6", "C#6", "C6", "B5", "A#5", "A5", "G#5", "G5", "F#5", "F5", "E5", "D#5", "D5", "C#5", "C5", "B4", "A#4", "A4", "G#4", "G4", "F#4", "F4", "E4", "D#4", "D4", "C#4", "C4", "B3", "A#3", "A3", "G#3", "G3", "F#3", "F3", "E3", "D#3", "D3", "C#3", "C3", "B2", "A#2", "A2", "G#2", "G2", "F#2", "F2", "E2", "D#2", "D2", "C#2", "C2", "B1", "A#1", "A1", "G#1", "G1", "F#1", "F1", "E1", "D#1", "D1", "C#1", "C1", "B0", "A0"];
+    const rowColors = ["#f87171", "#fb923c", "#facc15", "#4ade80", "#22d3ee", "#818cf8", "#c084fc", "#f472b6"];
+    
+    let grid = Array.from({ length: notes.length }, () => new Array(beats).fill(false));
+    let activeSynth = new Tone.PolySynth(Tone.Synth).toDestination().connect(recorder);
+
+    document.getElementById('themeToggle').onclick = () => {
+        document.body.classList.toggle('light-theme');
+        document.getElementById('themeToggle').innerText = document.body.classList.contains('light-theme') ? '🌙' : '☀️';
+    };
+
+    function renderGrid() {
+        gridEl.innerHTML = '';
+        gridEl.style.gridTemplateColumns = `repeat(${beats}, 25px)`;
+        for (let r = 0; r < notes.length; r++) {
+            for (let c = 0; c < beats; c++) {
+                const cell = document.createElement('div');
+                cell.className = 'cell';
+                if (grid[r][c]) cell.style.backgroundColor = rowColors[r % rowColors.length];
+                
+                // Smoother pointer events
+                cell.onpointerdown = (e) => { e.preventDefault(); isMouseDown = true; toggle(r, c, cell); };
+                cell.onpointerover = (e) => { if(isMouseDown) toggle(r, c, cell); };
+                gridEl.appendChild(cell);
+            }
+        }
+    }
+
+    window.onpointerup = () => isMouseDown = false;
+
+    function toggle(r, c, el) {
+        grid[r][c] = !grid[r][c];
+        el.style.backgroundColor = grid[r][c] ? rowColors[r % rowColors.length] : 'rgba(0,0,0,0.2)';
+        if(grid[r][c]) activeSynth.triggerAttackRelease(notes[r], "8n");
+    }
+
+    document.getElementById('playBtn').onclick = async () => {
+        await Tone.start();
+        isPlaying = !isPlaying;
+        isPlaying ? Tone.Transport.start() : Tone.Transport.stop();
+        document.getElementById('playBtn').innerText = isPlaying ? "■ Stop" : "▶ Play";
+    };
+
+    document.getElementById('addCol').onclick = () => { beats += 1; grid.forEach(row => row.push(false)); renderGrid(); };
+    document.getElementById('delCol').onclick = () => { if(beats > 1) { beats -= 1; grid.forEach(row => row.pop()); renderGrid(); } };
+    document.getElementById('clearBtn').onclick = () => { grid = grid.map(r => r.fill(false)); renderGrid(); };
+    
+    document.getElementById('tempo').oninput = (e) => {
+        Tone.Transport.bpm.value = e.target.value;
+        document.getElementById('bpmText').innerText = e.target.value + " BPM";
+    };
+
+    document.getElementById('recBtn').onclick = async () => {
+        const btn = document.getElementById('recBtn');
+        if (btn.classList.contains('recording')) {
+            const recording = await recorder.stop();
+            const url = URL.createObjectURL(recording);
+            const a = document.createElement('a');
+            a.href = url; a.download = (document.getElementById('songName').value || 'my-track') + '.webm'; a.click();
+            btn.classList.remove('recording'); btn.innerText = "● Record";
+        } else {
+            recorder.start();
+            btn.classList.add('recording'); btn.innerText = "■ Finish";
+            if(!isPlaying) document.getElementById('playBtn').click();
+        }
+    };
+
+    document.getElementById('synthType').onchange = (e) => {
+        activeSynth.dispose();
+        const confs = { piano: Tone.Synth, guitar: Tone.AMSynth, woodwind: Tone.MonoSynth, drums: Tone.MembraneSynth };
+        activeSynth = new Tone.PolySynth(confs[e.target.value]).toDestination().connect(recorder);
+    };
+
+    let col = 0;
+    Tone.Transport.scheduleRepeat((time) => {
+        document.querySelectorAll('.cell').forEach(c => c.classList.remove('playing'));
+        for (let r = 0; r < notes.length; r++) {
+            const index = r * beats + col;
+            const cell = gridEl.children[index];
+            if(cell) {
+                cell.classList.add('playing');
+                if (grid[r][col]) activeSynth.triggerAttackRelease(notes[r], "8n", time);
+            }
+        }
+        col = (col + 1) % beats;
+        if(col % 8 === 0) gridEl.children[col].scrollIntoView({behavior:'smooth', block:'nearest'});
+    }, "8n");
+
+    renderGrid();
+</script>
+</body>
+</html>
