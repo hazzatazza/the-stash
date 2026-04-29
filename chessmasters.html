@@ -45,6 +45,7 @@
         .profile-row { display: flex; align-items: center; gap: 15px; background: #222; padding: 15px; border-radius: 8px; }
         .avatar { width: 50px; height: 50px; border-radius: 50%; background: #444; overflow: hidden; display: flex; align-items: center; justify-content: center; }
         #log { flex-grow: 1; background: #000; padding: 10px; border-radius: 8px; overflow-y: auto; font-family: monospace; font-size: 13px; height: 200px; }
+        #status-msg { color: #888; font-size: 14px; font-style: italic; height: 20px; text-align: center; }
     </style>
 </head>
 <body>
@@ -80,7 +81,9 @@
         <div class="sidebar">
             <div id="opp-profile" class="profile-row"></div>
             <div id="user-profile" class="profile-row"></div>
+            <div id="status-msg"></div>
             <div id="log"></div>
+            <button class="btn" onclick="resetMatch()" style="background:#444;">Reset Match</button>
             <button class="btn" onclick="copyPGN()">Copy PGN</button>
             <button class="btn" onclick="showScreen('screen-home')" style="background:#555;">Back to Menu</button>
         </div>
@@ -96,16 +99,21 @@
     <div id="screen-credits" class="screen">
         <h1>Credits</h1>
         <p>Engine: Native JS AI</p>
-        <p>An Algebra Practise Original. Built for Chess Fans.</p>
+        <p>Built for the Ultimate Experience.</p>
         <button class="btn" onclick="showScreen('screen-home')">Back</button>
     </div>
 </div>
 
 <script>
     const pSvg = { w: { p: 'https://upload.wikimedia.org/wikipedia/commons/4/45/Chess_plt45.svg', r: 'https://upload.wikimedia.org/wikipedia/commons/7/72/Chess_rlt45.svg', n: 'https://upload.wikimedia.org/wikipedia/commons/7/70/Chess_nlt45.svg', b: 'https://upload.wikimedia.org/wikipedia/commons/b/b1/Chess_blt45.svg', q: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Chess_qlt45.svg', k: 'https://upload.wikimedia.org/wikipedia/commons/4/42/Chess_klt45.svg' }, b: { p: 'https://upload.wikimedia.org/wikipedia/commons/c/c7/Chess_pdt45.svg', r: 'https://upload.wikimedia.org/wikipedia/commons/f/ff/Chess_rdt45.svg', n: 'https://upload.wikimedia.org/wikipedia/commons/e/ef/Chess_ndt45.svg', b: 'https://upload.wikimedia.org/wikipedia/commons/9/98/Chess_bdt45.svg', q: 'https://upload.wikimedia.org/wikipedia/commons/4/47/Chess_qdt45.svg', k: 'https://upload.wikimedia.org/wikipedia/commons/f/f0/Chess_kdt45.svg' } };
-    // Adjusted Elo range to 400-1350 to better reflect true bot strength
     const bots = Array.from({length:20}, (_, i) => ({name: `Bot ${i+1}`, elo: 400 + (i*50), icon: ["🤖","🤠","👶","🧠","👔","🌙","⚡","🎓","🕶️","🎭","👑","🏆","🎖️","🔥","🧊","☠️","👽","🐲","🧙","🧛"][i]}));
-    let state = { game: new Chess(), user: {name: 'Player', img: null}, bot: null, selected: null, valid: [] };
+    let state = { game: new Chess(), user: {name: 'Player', img: null}, bot: null, selected: null, valid: [], isThinking: false };
+
+    const PST = {
+        p: [0, 0, 0, 0, 0, 0, 0, 0, 50, 50, 50, 50, 50, 50, 50, 50, 10, 10, 20, 30, 30, 20, 10, 10, 5, 5, 10, 25, 25, 10, 5, 5, 0, 0, 0, 20, 20, 0, 0, 0, 5, -5, -10, 0, 0, -10, -5, 5, 5, 10, 10, -20, -20, 10, 10, 5, 0, 0, 0, 0, 0, 0, 0, 0],
+        n: [-50, -40, -30, -30, -30, -30, -40, -50, -40, -20, 0, 0, 0, 0, -20, -40, -30, 0, 10, 15, 15, 10, 0, -30, -30, 5, 15, 20, 20, 15, 5, -30, -30, 0, 15, 20, 20, 15, 0, -30, -30, 5, 10, 15, 15, 10, 5, -30, -40, -20, 0, 5, 5, 0, -20, -40, -50, -40, -30, -30, -30, -30, -40, -50],
+        k: [-30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -30, -40, -40, -50, -50, -40, -40, -30, -20, -30, -30, -40, -40, -30, -30, -20, -10, -20, -20, -20, -20, -20, -20, -10, 20, 20, 0, 0, 0, 0, 20, 20, 20, 30, 10, 0, 0, 10, 30, 20]
+    };
 
     window.onload = () => initBots();
 
@@ -145,11 +153,18 @@
 
     function startMatch(bot) {
         state.bot = bot;
-        state.game.reset();
+        resetMatch();
         showScreen('screen-game');
+    }
+
+    function resetMatch() {
+        state.game.reset();
+        state.isThinking = false;
+        document.getElementById('status-msg').innerText = "";
+        document.getElementById('log').innerHTML = '';
         const userImg = state.user.img ? `<img src="${state.user.img}" style="width:50px; height:50px; border-radius:50%; object-fit:cover;">` : '<div class="avatar">👤</div>';
         document.getElementById('user-profile').innerHTML = `${userImg}<div>${state.user.name}<br>Rating: 1500</div>`;
-        document.getElementById('opp-profile').innerHTML = `<div class="avatar">${bot.icon}</div><div>${bot.name}<br>Elo: ${bot.elo}</div>`;
+        document.getElementById('opp-profile').innerHTML = `<div class="avatar">${state.bot.icon}</div><div>${state.bot.name}<br>Elo: ${state.bot.elo}</div>`;
         renderBoard();
     }
 
@@ -172,14 +187,18 @@
     }
 
     function handleSquare(sq) {
+        if (state.game.game_over() || state.isThinking) return;
         if (state.selected) {
             const move = state.game.move({ from: state.selected, to: sq, promotion: 'q' });
             if (move) {
-                renderBoard();
-                logMove(move);
                 state.selected = null;
                 state.valid = [];
-                setTimeout(botMove, 250);
+                renderBoard(); 
+                logMove(move);
+                
+                if (!state.game.game_over()) {
+                    setTimeout(botMove, 100);
+                }
             } else {
                 state.selected = null;
                 state.valid = [];
@@ -195,12 +214,64 @@
         }
     }
 
+    async function botMove() {
+        state.isThinking = true;
+        document.getElementById('status-msg').innerText = "Opponent is thinking...";
+        
+        try {
+            await new Promise(r => setTimeout(r, 50));
+            const allMoves = state.game.moves({ verbose: true });
+            if (allMoves.length === 0) return;
+            
+            const depth = Math.min(3, Math.floor((state.bot.elo - 400) / 300) + 1);
+            let isWhite = state.game.turn() === 'w';
+            let scoredMoves = [];
+
+            // Score all moves
+            for (let move of allMoves) {
+                state.game.move(move);
+                let val = minimax(state.game, depth - 1, -Infinity, Infinity, !isWhite);
+                state.game.undo();
+                scoredMoves.push({ move, val });
+            }
+
+            // Sort moves by value
+            scoredMoves.sort((a, b) => isWhite ? b.val - a.val : a.val - b.val);
+
+            // Determine variance based on ELO (1500+ bots have low variance, <1500 have high)
+            // Pick from the top N candidates
+            const poolSize = Math.max(1, Math.min(5, Math.floor((1500 - state.bot.elo) / 250) + 2));
+            const bestMoves = scoredMoves.slice(0, poolSize);
+            const chosen = bestMoves[Math.floor(Math.random() * bestMoves.length)];
+
+            const moveObj = state.game.move(chosen.move);
+            renderBoard();
+            logMove(moveObj);
+            checkGameOver();
+        } catch (e) { console.error(e); } finally { 
+            state.isThinking = false;
+            document.getElementById('status-msg').innerText = "";
+        }
+    }
+
     function evaluateBoard(game) {
         let total = 0;
         const pieces = { p: 10, n: 30, b: 30, r: 50, q: 90, k: 900 };
-        game.board().forEach(row => row.forEach(p => {
-            if (p) total += (p.color === 'w' ? 1 : -1) * pieces[p.type];
-        }));
+        const board = game.board();
+        
+        for(let r=0; r<8; r++) {
+            for(let c=0; c<8; c++) {
+                const p = board[r][c];
+                if(p) {
+                    let val = pieces[p.type];
+                    if (PST[p.type]) {
+                        const index = p.color === 'w' ? (r * 8 + c) : (63 - (r * 8 + c));
+                        val += PST[p.type][index] / 10;
+                    }
+                    total += (p.color === 'w' ? 1 : -1) * val;
+                }
+            }
+        }
         return total;
     }
 
@@ -232,22 +303,14 @@
         }
     }
 
-    function botMove() {
-        const moves = state.game.moves();
-        if (moves.length === 0) return;
-        // Adjusted scaling: (ELO-400)/300 ensures max depth at ~1300 ELO
-        const depth = Math.min(4, Math.floor((state.bot.elo - 400) / 300) + 1);
-        let bestMove = null;
-        let bestVal = Infinity;
-        for (let move of moves) {
-            state.game.move(move);
-            let val = minimax(state.game, depth - 1, -Infinity, Infinity, true);
-            state.game.undo();
-            if (val < bestVal) { bestVal = val; bestMove = move; }
+    function checkGameOver() {
+        if (state.game.game_over()) {
+            let msg = state.game.in_checkmate() ? (state.game.turn() === 'w' ? "CHECKMATE: Black Wins!" : "CHECKMATE: White Wins!") : "Game Over: Draw";
+            const entry = document.createElement('div');
+            entry.style.color = '#779556'; entry.style.fontWeight = 'bold'; entry.style.marginTop = '10px';
+            entry.innerText = msg;
+            document.getElementById('log').appendChild(entry);
         }
-        state.game.move(bestMove);
-        renderBoard();
-        logMove({color: 'b', piece: state.game.get(bestMove.substring(2,4)).type, to: bestMove.substring(2,4)});
     }
 
     function logMove(move) {
