@@ -1,0 +1,268 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Simian City - Concrete Jungle</title>
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://w3.org viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>&#129447;</text></svg>">
+    
+    <style>
+        body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background-color: #050510; font-family: 'Segoe UI', sans-serif; color: white; overflow: hidden; transition: background-color 0.5s; }
+        body.day-mode { background-color: #00b4ff; color: #333; }
+        canvas { background-color: #0a0a20; border-bottom: 5px solid #00d2ff; display: none; box-shadow: 0 0 60px rgba(0, 210, 255, 0.3); }
+        canvas.day-mode { background-color: #87CEEB; border-bottom: 5px solid #4CAF50; }
+        #menu, #gameOver { text-align: center; background: white; padding: 40px; border-radius: 15px; box-shadow: 0 10px 20px rgba(0,0,0,0.3); color: #333; z-index: 101; }
+        #gameOver { position: absolute; display: none; } 
+        .btn { padding: 15px 25px; font-size: 20px; margin: 10px; cursor: pointer; border: none; border-radius: 8px; background: #4CAF50; color: white; font-weight: bold; }
+        #toggleContainer { position: absolute; top: 10px; left: 10px; z-index: 100; }
+        .toggle-btn { padding: 10px 20px; cursor: pointer; border-radius: 5px; border: 2px solid #00d2ff; background: #1a1a2e; color: white; font-weight: bold; outline: none; }
+        .day-mode .toggle-btn { background: #fff; color: #333; border-color: #4CAF50; }
+        .flipped-icon { transform: scaleX(-1); display: inline-block; }
+        #ui { position: absolute; top: 50px; width: 850px; text-align: center; font-size: 28px; font-weight: bold; pointer-events: none; z-index: 10; font-family: 'Courier New', monospace; }
+        
+        /* New styling for the bottom left image */
+        .corner-image {
+            position: fixed;
+            bottom: -17px;
+            left: 10px;
+            width: 150px; /* Adjust size as needed */
+            height: auto;
+            z-index: 200;
+            pointer-events: none; /* Prevents image from blocking clicks/gameplay */
+        }
+    </style>
+</head>
+<body id="gameBody">
+    <img src="https://iili.io/q4IJf9a.png" class="corner-image" alt="Corner Decoration">
+
+    <div id="toggleContainer">
+        <button class="toggle-btn" onclick="toggleNightMode(); this.blur();">&#127769; Toggle Night/Day</button>
+    </div>
+
+    <div id="menu">
+        <h1>&#127750; Simian City</h1>
+        <p>Concrete Jungle Edition</p>
+        <button class="btn" onclick="startGame('\u{1F412}')"><span class="flipped-icon">&#128018;</span> Monkey</button>
+        <button class="btn" onclick="startGame('\u{1F98D}')"><span class="flipped-icon">&#129421;</span> Gorilla</button>
+        <button class="btn" onclick="startGame('\u{1F9A7}')"><span class="flipped-icon">&#129447;</span> Orangutan</button>
+    </div>
+
+    <div id="gameOver">
+        <h1 style="color: #e11d48;">GAME OVER</h1>
+        <p>Stop Monkeying Around!</p>
+        <h2 style="font-size: 40px;">SCORE: <span id="finalScore">0</span></h2>
+        <button class="btn" onclick="location.reload()">PLAY AGAIN</button>
+    </div>
+    
+    <div id="ui" style="display:none">
+        <div>SCORE: <span id="currentScore">0</span></div>
+    </div>
+
+    <canvas id="gameCanvas" width="950" height="450"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const menu = document.getElementById('menu');
+        const gameOverUI = document.getElementById('gameOver');
+        const finalScoreText = document.getElementById('finalScore');
+        const ui = document.getElementById('ui');
+        const body = document.getElementById('gameBody');
+        
+        let isNight = true;
+        let score = 0;
+        let gameActive = false;
+        let obstacles = [];
+        let frame = 0;
+        let bgOffset = 0;
+        
+        const backgroundBuildings = [];
+        const stars = [];
+        const clouds = [{x: 100, y: 70, s: 0.8}, {x: 400, y: 100, s: 1.2}, {x: 700, y: 50, s: 0.5}];
+        const simianTypes = ['\u{1F412}', '\u{1F98D}', '\u{1F9A7}'];
+        const puns = [
+            "RICK APELEY: NEVER GONNA GIBBON YOU UP TONIGHT \u{1F3A4}", 
+            "BANANA REPUBLIC \u{1F34C}", "APE-EX LEGENDS \u{1F3C6}", 
+            "MONKEY BUSINESS \u{1F4BC}", "DON'T APE ME \u{1F645}", 
+            "PRIME-ATE REAL ESTATE \u{1F3E0}", "GUERILLA WARFARE \u{1F396}", 
+            "ORANGU-TANGY JUICE \u{1F379}", "GOING BANANAS \u{1F92A}"
+        ];
+
+        function toggleNightMode() {
+            isNight = !isNight;
+            body.classList.toggle('day-mode');
+            canvas.classList.toggle('day-mode');
+        }
+
+        function initBackground() {
+            for(let s=0; s<50; s++) stars.push({ x: Math.random() * 950, y: Math.random() * 200, size: Math.random() * 2 });
+            for(let i=0; i<60; i++) {
+                const height = 220 + Math.random() * 180;
+                const width = 115 + Math.random() * 30; 
+                const pun = Math.random() > 0.5 ? puns[Math.floor(Math.random()*puns.length)] : null;
+                const windows = [];
+                const startH = pun ? 95 : 20;
+                for(let w=10; w<width-15; w+=25) {
+                    for(let h=startH; h<height-40; h+=40) { 
+                        windows.push({ x: w, y: h, active: Math.random() > 0.4, occupant: Math.random() > 0.7 ? simianTypes[Math.floor(Math.random()*3)] : null, flip: Math.random() > 0.5 ? -1 : 1 });
+                    }
+                }
+                backgroundBuildings.push({ x: i * 140, w: width, h: height, windows, pun, hasSatellite: Math.random() > 0.6 });
+            }
+        }
+        initBackground();
+
+        const GROUND_Y = 445; 
+        const player = { x: 150, y: GROUND_Y, dy: 0, jumpForce: -21, gravity: 0.9, grounded: true, emoji: '' };
+
+        function startGame(emoji) {
+            player.emoji = emoji;
+            menu.style.display = 'none'; 
+            ui.style.display = 'block'; 
+            canvas.style.display = 'block';
+            gameActive = true;
+            loop();
+        }
+
+        window.addEventListener('keydown', (e) => {
+            if ((e.code === 'Space' || e.code === 'ArrowUp') && player.grounded && gameActive) {
+                e.preventDefault();
+                player.dy = player.jumpForce;
+                player.grounded = false;
+            }
+        });
+
+        function wrapAndCenterText(text, centerX, startY, maxWidth, lineHeight) {
+            const words = text.split(' ');
+            let lines = [];
+            let currentLine = words[0];
+            for (let i = 1; i < words.length; i++) {
+                if (ctx.measureText(currentLine + " " + words[i]).width < maxWidth) {
+                    currentLine += " " + words[i];
+                } else {
+                    lines.push(currentLine);
+                    currentLine = words[i];
+                }
+            }
+            lines.push(currentLine);
+            let startYAdjusted = startY - ((lines.length - 1) * lineHeight) / 2;
+            lines.forEach((line, index) => {
+                ctx.fillText(line, centerX, startYAdjusted + (index * lineHeight));
+            });
+        }
+
+        function drawSky() {
+            if (isNight) {
+                ctx.font = '50px serif';
+                ctx.fillText('🌙', 850, 80);
+                ctx.fillStyle = "white";
+                stars.forEach(s => { ctx.beginPath(); ctx.arc(s.x, s.y, s.size, 0, Math.PI * 2); ctx.fill(); });
+            } else {
+                ctx.font = '60px serif';
+                ctx.fillText('☀️', 850, 90);
+                ctx.font = '40px serif';
+                clouds.forEach(c => {
+                    ctx.fillText('☁️', c.x, c.y);
+                    c.x -= c.s;
+                    if (c.x < -100) c.x = 1000;
+                });
+            }
+        }
+
+        function drawBackground() {
+            bgOffset -= 2;
+            if (bgOffset < -8400) bgOffset = 0;
+            backgroundBuildings.forEach((b) => {
+                let drawX = b.x + bgOffset;
+                if (drawX > 1000) return; if (drawX < -250) drawX += 8400; 
+                if (b.hasSatellite) {
+                    ctx.fillStyle = isNight ? '#334155' : '#64748b';
+                    ctx.beginPath(); ctx.arc(drawX + 30, canvas.height - b.h - 5, 10, 0, Math.PI, true); ctx.fill();
+                    ctx.fillRect(drawX + 28, canvas.height - b.h - 5, 4, 10);
+                }
+                ctx.fillStyle = isNight ? '#0f172a' : '#5a616d';
+                ctx.fillRect(drawX, canvas.height - b.h, b.w, b.h);
+                if (b.pun) {
+                    const signH = 75;
+                    ctx.fillStyle = isNight ? '#1e293b' : '#cbd5e1';
+                    ctx.fillRect(drawX + 8, canvas.height - b.h + 8, b.w - 16, signH); 
+                    ctx.strokeStyle = isNight ? '#ff00ff' : '#4f46e5';
+                    ctx.strokeRect(drawX + 8, canvas.height - b.h + 8, b.w - 16, signH);
+                    ctx.fillStyle = isNight ? '#00d2ff' : '#1e1b4b';
+                    ctx.font = 'bold 10px "Segoe UI"'; ctx.textAlign = 'center';
+                    wrapAndCenterText(b.pun, drawX + b.w/2, canvas.height - b.h + 8 + (signH/2), b.w - 20, 13);
+                }
+                ctx.textAlign = 'left';
+                b.windows.forEach(win => {
+                    if (win.active || !isNight) {
+                        ctx.fillStyle = isNight ? '#1e293b' : '#f8fafc'; 
+                        ctx.fillRect(drawX + win.x, (canvas.height - b.h) + win.y, 18, 24);
+                        if (win.occupant) {
+                            ctx.save(); ctx.translate(drawX + win.x + 9, (canvas.height - b.h) + win.y + 18);
+                            ctx.scale(win.flip, 1); ctx.font = '14px serif'; ctx.textAlign = 'center';
+                            ctx.fillText(win.occupant, 0, 0); ctx.restore();
+                        }
+                    }
+                });
+            });
+        }
+
+        function loop() {
+            if (!gameActive) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawSky();
+            drawBackground();
+            player.dy += player.gravity; player.y += player.dy;
+            if (player.y >= GROUND_Y) { player.y = GROUND_Y; player.dy = 0; player.grounded = true; }
+            ctx.fillStyle = isNight ? "#00d2ff" : "#4CAF50"; ctx.fillRect(0, 440, 950, 2);
+            ctx.save(); ctx.translate(player.x + 25, player.y); ctx.scale(-1, 1);
+            ctx.font = '60px serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom'; 
+            ctx.fillText(player.emoji, 0, 0); ctx.restore();
+
+            if (frame % 110 === 0) {
+                const isTall = Math.random() > 0.5;
+                let w = isTall ? 55 : 190;
+                let h = isTall ? 125 : 65; 
+                obstacles.push({ x: 1000, w: w, h: h, type: 'city' });
+            }
+            if (frame % 110 === 55 && score > 600) { 
+                obstacles.push({ x: 1000, w: 80, h: 50, y: 220 + Math.random() * 30, type: 'fly' });
+            }
+            let gameSpeed = Math.min(15, 8 + score/4000);
+            for (let i = obstacles.length - 1; i >= 0; i--) {
+                let obs = obstacles[i]; obs.x -= gameSpeed; 
+                
+                let pX = player.x + 15; 
+                let pW = 20; 
+                let pH = 50; 
+                let pY = player.y - pH;
+
+                if (obs.type === 'city') {
+                    ctx.fillStyle = isNight ? '#1a1a2e' : '#334155'; ctx.fillRect(obs.x, canvas.height - obs.h, obs.w, obs.h);
+                    ctx.strokeStyle = isNight ? '#00d2ff' : '#1e293b'; ctx.strokeRect(obs.x, canvas.height - obs.h, obs.w, obs.h);
+                    ctx.fillStyle = isNight ? '#00d2ff' : '#ffffff';
+                    for(let wx = 10; wx < obs.w - 10; wx += 15) {
+                        for(let wh = 10; wh < obs.h - 10; wh += 20) { ctx.fillRect(obs.x + wx, (canvas.height - obs.h) + wh, 6, 8); }
+                    }
+                    if (pX < obs.x + obs.w && pX + pW > obs.x && player.y > canvas.height - obs.h) endGame();
+                } else {
+                    ctx.font = '80px serif'; ctx.fillText('\u{1F681}', obs.x, obs.y);
+                    if (pX < obs.x + 65 && pX + pW > obs.x && player.y - 45 < obs.y && player.y > obs.y - 40) endGame();
+                }
+                if (obs.x < -200) obstacles.splice(i, 1);
+            }
+            
+            if (gameActive) {
+                score++; document.getElementById('currentScore').innerText = score; frame++;
+                requestAnimationFrame(loop);
+            }
+        }
+
+        function endGame() {
+            gameActive = false;
+            ui.style.display = 'none';
+            finalScoreText.innerText = score;
+            gameOverUI.style.display = 'block';
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,324 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Swing Dash</title>
+    <style>
+        body { margin: 0; overflow: hidden; background: #000; font-family: 'Arial Black', sans-serif; color: white; user-select: none; }
+        canvas { display: block; position: absolute; top: 0; left: 0; z-index: 1; }
+        #ui-layer { position: absolute; inset: 0; pointer-events: none; display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 10; }
+        
+        .ui-panel { 
+            pointer-events: auto; 
+            display: flex; 
+            flex-direction: column; 
+            align-items: center; 
+            width: 100%; 
+            height: 100%; 
+            justify-content: center; 
+            background: radial-gradient(circle, rgba(26,26,26,0.5) 0%, #000 100%);
+        }
+
+        #death-screen { background: rgba(0,0,0,0.85); display: none; }
+        .title-img { width: 450px; max-width: 80%; filter: drop-shadow(0 0 15px cyan); margin-bottom: 40px; }
+        .btn-group { display: flex; align-items: center; gap: 30px; }
+        .play-btn { width: 160px; cursor: pointer; transition: 0.1s; }
+        .sub-btn { width: 75px; cursor: pointer; transition: 0.1s; }
+        .play-btn:hover, .sub-btn:hover { transform: scale(1.1); }
+
+        #icon-kit, #credits-panel { position: absolute; background: rgba(0,0,0,0.95); border: 4px solid #00ffff; padding: 30px; display: none; pointer-events: auto; text-align: center; border-radius: 15px; max-width: 80%; z-index: 20; box-shadow: 0 0 30px rgba(0, 255, 255, 0.2); }
+        .icon-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; margin-top: 15px; }
+        .icon-option { border: 3px solid #333; padding: 10px; cursor: pointer; border-radius: 10px; background: #111; min-width: 100px; }
+        .icon-option img { width: 55px; height: 46px; object-fit: contain; display: block; margin: 0 auto 5px auto; }
+        .icon-option.selected { border-color: #00ffff; background: #002222; }
+        
+        .credits-content { font-size: 16px; line-height: 1.4; color: #eee; font-family: Arial, sans-serif; }
+        .practice-logo { width: 180px; margin-top: 10px; border-radius: 5px; }
+
+        #hud { position: absolute; top: 20px; width: 100%; text-align: center; font-size: 32px; text-shadow: 0 0 10px cyan; display: none; }
+        #coin-display { position: absolute; top: 20px; left: 20px; font-size: 24px; color: gold; text-shadow: 0 0 5px orange; pointer-events: none; }
+        .close-btn { margin-top: 20px; padding: 10px 30px; background: #00ffff; border: none; cursor: pointer; font-family: inherit; border-radius: 8px; color: #000; font-weight: bold; }
+    </style>
+</head>
+<body>
+
+    <div id="ui-layer">
+        <div id="coin-display">Coins: <span id="coinCount">0</span></div>
+        
+        <div id="menu" class="ui-panel">
+            <img src="https://iili.io/BAWJNDJ.png" class="title-img">
+            <div class="btn-group">
+                <img src="https://i.namu.wiki/i/iJMdxfhYHHHioP1dIGT-HAkC-rlC6tnkBMqKqAMU4nyGyFTlR_jQf1nseSj2SqfUt2E7LJ0zIWmZXik4zHFukQ.webp" class="sub-btn" onclick="toggleShop()">
+                <img src="https://i.namu.wiki/i/mVOHn7Z7Vvd5VbzafsQXS5nrlNrZZOuV46pIWO4mYj6rh-7KDRa67QN5RXSmixdFESzRLt7o7TI4NQb0N_HOgg.webp" class="play-btn" onclick="startGame()">
+                <img src="https://i.namu.wiki/i/Kn9v_mR6Oe3lAFj7SvOo5Tj_Q2qv5fmEqMdCOSu8WQgTgH6k7Iq4cYFMIYABz9-c3ksVveuYCZvUa38vCDmZNg.webp" class="sub-btn" onclick="toggleCredits()">
+            </div>
+        </div>
+
+        <div id="death-screen" class="ui-panel" style="background: rgba(0,0,0,0.85); display:none;">
+            <div style="font-size: 64px; color: #ff3333; text-shadow: 0 0 20px red; margin-bottom: 20px;">CRASHED</div>
+            <button onclick="startGame()" style="background:#0f0; padding:15px 45px; font-size:24px; border:none; cursor:pointer; border-radius:12px; font-family:inherit; box-shadow: 0 5px 0 #008800;">RETRY</button>
+            <button onclick="goHome()" style="background:#444; color:white; padding:10px 20px; margin-top:15px; border:none; border-radius:8px; cursor:pointer; font-family:inherit;">MENU</button>
+        </div>
+
+        <div id="icon-kit">
+            <h2 style="color:#00ffff; margin-top:0;">ICON KIT</h2>
+            <div class="icon-grid" id="iconGrid"></div>
+            <button onclick="toggleShop()" class="close-btn">BACK</button>
+        </div>
+
+        <div id="credits-panel">
+            <h2 style="color:#00ffff; margin-top:0;">CREDITS</h2>
+            <div class="credits-content">
+                <b style="color:#00ffff; font-family:'Arial Black'">Swing Dash v1.0</b><br>
+                Made by Hazza<br><br>
+                Inspired by and uses assets from <b>Geometry Dash</b><br>
+                made by <b>RobTop Games</b><br><br>
+                Made for:<br>
+                <img src="https://iili.io/q4IJf9a.png" class="practice-logo">
+            </div>
+            <button onclick="toggleCredits()" class="close-btn">CLOSE</button>
+        </div>
+
+        <div id="hud"><span id="meters">0</span>m</div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+<script>
+const canvas = document.getElementById('gameCanvas');
+const ctx = canvas.getContext('2d');
+
+function resize() {
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
+}
+window.addEventListener('resize', resize);
+resize();
+
+// Assets
+const bgMusic = new Audio('https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3');
+bgMusic.loop = true;
+
+const bgTexture = new Image();
+bgTexture.src = 'https://images-wixmp-ed30a86b8c4ca887773594c2.wixmp.com/f/2f961ba4-4243-4889-928c-e7f4c2d38614/dggqyse-76b77fd2-a577-44f7-b3f4-151cdec2a610.png/v1/fill/w_952,h_704,q_80,strp/geometry_dash_background__free_to_use__by_greaterhtrae_dggqyse-fullview.jpg?token=eyJ0eXAiOiJKV1QiLCJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ1cm46YXBwOjdlMGQxODg5ODIyNjQzNzNhNWYwZDQxNWVhMGQyNmUwIiwiaXNzIjoidXJuOmFwcDo3ZTBkMTg4OTgyMjY0MzczYTVmMGQ0MTVlYTBkMjZlMCIsIm9iaiI6W1t7ImhlaWdodCI6Ijw9NzA0IiwicGF0aCI6Ii9mLzJmOTYxYmE0LTQyNDMtNDg4OS05MjhjLWU3ZjRjMmQzODYxNC9kZ2dxeXNlLTc2Yjc3ZmQyLWE1NzctNDRmNy1iM2Y0LTE1MWNkZWMyYTYxMC5wbmciLCJ3aWR0aCI6Ijw9OTUyIn1dXSwiYXVkIjpbInVybjpzZXJ2aWNlOmltYWdlLm9wZXJhdGlvbnMiXX0.dlgHwL0DlVTlpXN4jH30xvKJR3NCoBPbVv53pOE146s';
+
+let gameState = 'MENU';
+let coins = parseInt(localStorage.getItem('gdCoins')) || 0;
+let unlockedIcons = JSON.parse(localStorage.getItem('unlockedIcons')) || [0];
+let selectedIconIdx = parseInt(localStorage.getItem('selectedIcon')) || 0;
+let bgScroll = 0;
+
+const SPEEDS = { slow: 6, normal: 9, fast: 12, veryFast: 15, extreme: 19 };
+let currentSpeed = SPEEDS.normal;
+let distance = 0, frame = 0, gravity = 1;
+let obstacles = [], particles = [], collectibles = [];
+
+const iconData = [
+    { src: 'https://iili.io/BAXlKa2.png', price: 0, w: 52, h: 46 }, 
+    { src: 'https://iili.io/BAEElJ1.png', price: 25, w: 52, h: 46 },
+    { src: 'https://iili.io/BAXl244.png', price: 50, w: 52, h: 46 }, 
+    { src: 'https://iili.io/BAXcpTX.png', price: 75, w: 52, h: 46 },
+    { src: 'https://iili.io/BAXldGf.png', price: 100, w: 52, h: 46 }
+];
+
+const iconImages = iconData.map(d => { const img = new Image(); img.src = d.src; return img; });
+const coinImg = new Image(); coinImg.src = 'https://static.wikia.nocookie.net/gd-ultimate/images/3/38/UserCoinVerified.png/revision/latest?cb=20180717164727';
+
+const player = { x: 220, y: 0, w: 52, h: 46, vy: 0, angle: 0, alive: true };
+
+function spawnParticle(x, y, color, type='trail') {
+    particles.push({
+        x, y, color,
+        vx: (Math.random() - 0.5) * (type === 'death' ? 14 : 6),
+        vy: (Math.random() - 0.5) * (type === 'death' ? 14 : 6),
+        life: 1.0,
+        size: type === 'death' ? Math.random() * 10 + 4 : Math.random() * 4 + 2,
+    });
+}
+
+function startGame() {
+    document.getElementById('menu').style.display = 'none';
+    document.getElementById('death-screen').style.display = 'none';
+    document.getElementById('hud').style.display = 'block';
+    bgMusic.play().catch(() => {});
+    gameState = 'PLAYING';
+    distance = 0; frame = 0; obstacles = []; collectibles = []; particles = [];
+    player.y = canvas.height / 2; player.vy = 0; player.alive = true; gravity = 1;
+}
+
+function goHome() {
+    document.getElementById('death-screen').style.display = 'none';
+    document.getElementById('menu').style.display = 'flex';
+    document.getElementById('hud').style.display = 'none';
+    bgMusic.pause(); bgMusic.currentTime = 0;
+    gameState = 'MENU';
+}
+
+function die() {
+    if (!player.alive) return;
+    player.alive = false;
+    bgMusic.pause();
+    for(let i=0; i<30; i++) spawnParticle(player.x + 26, player.y + 23, '#ff5500', 'death');
+    setTimeout(() => { if (gameState === 'PLAYING') document.getElementById('death-screen').style.display = 'flex'; }, 800);
+}
+
+function spawnObstacle() {
+    let x = canvas.width + 100;
+    let hue = (distance / 4) % 360;
+    let rand = Math.random();
+    if (rand < 0.5) {
+        obstacles.push({ x, r: 140, h: 95, onTop: Math.random() > 0.5, type: 'dome', hue });
+    } else if (rand < 0.7) {
+        obstacles.push({ x, w: 120, h: 160 + Math.random()*80, onTop: Math.random() > 0.5, type: 'curve', hue });
+    } else {
+        let gap = Math.max(175, 270 - (distance/50));
+        let centerY = 200 + Math.random() * (canvas.height - 400);
+        obstacles.push({ x, w: 85, topY: 65, topH: centerY - gap/2 - 65, botY: centerY + gap/2, botH: canvas.height - (centerY+gap/2) - 65, type: 'pillar', hue });
+    }
+    if (Math.random() > 0.6) collectibles.push({ x: x + 300, y: 150 + Math.random() * (canvas.height - 300), w: 35, h: 35 });
+}
+
+function update() {
+    if(gameState !== 'PLAYING') return;
+    if (player.alive) {
+        frame++;
+        distance += currentSpeed / 12;
+        bgScroll -= currentSpeed * 0.3; // Parallax scrolling speed
+        document.getElementById('meters').innerText = Math.floor(distance);
+        player.vy += 0.65 * gravity;
+        player.y += player.vy;
+        if (player.y <= 65) { player.y = 65; player.vy = 0; }
+        if (player.y + player.h >= canvas.height - 65) { player.y = canvas.height - 65 - player.h; player.vy = 0; }
+        player.angle += ((gravity === 1 ? 0.35 : -0.35) - player.angle) * 0.1;
+    }
+
+    obstacles.forEach((o, i) => {
+        o.x -= currentSpeed;
+        if (player.alive) {
+            let pw = iconData[selectedIconIdx].w, ph = iconData[selectedIconIdx].h;
+            if (o.type === 'dome') {
+                let dx = (player.x + pw/2) - o.x;
+                let dy = (player.y + ph/2) - (o.onTop ? 65 : canvas.height - 65);
+                if ((dx*dx)/(o.r*o.r) + (dy*dy)/(o.h*o.h) <= 0.95) die();
+            } else if (player.x + 10 < o.x + o.w && player.x + pw - 10 > o.x) {
+                if (o.type === 'pillar') { if (player.y < o.topY + o.topH || player.y + ph > o.botY) die(); }
+                else { if (o.onTop ? player.y < o.h + 65 : player.y + ph > canvas.height - o.h - 65) die(); }
+            }
+        }
+        if (o.x < -600) obstacles.splice(i, 1);
+    });
+
+    collectibles.forEach((c, i) => {
+        c.x -= currentSpeed;
+        if (player.alive && player.x < c.x + c.w && player.x + 52 > c.x && player.y < c.y + c.h && player.y + 46 > c.y) {
+            coins++; updateUI(); collectibles.splice(i, 1);
+        }
+    });
+
+    particles.forEach((p, i) => {
+        p.x += p.vx - (player.alive ? currentSpeed*0.4 : 0);
+        p.y += p.vy; p.life -= 0.02;
+        if (p.life <= 0) particles.splice(i, 1);
+    });
+
+    if (player.alive && frame % Math.floor(1000 / currentSpeed) === 0) spawnObstacle();
+}
+
+function draw() {
+    ctx.imageSmoothingEnabled = false;
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    
+    // Draw Scrolled Background
+    let bgW = canvas.height * (bgTexture.width / bgTexture.height); // Maintain aspect ratio relative to screen height
+    let xMod = bgScroll % bgW;
+    
+    // Draw three panels to ensure no gaps
+    ctx.drawImage(bgTexture, xMod, 0, bgW, canvas.height);
+    ctx.drawImage(bgTexture, xMod + bgW, 0, bgW, canvas.height);
+    ctx.drawImage(bgTexture, xMod - bgW, 0, bgW, canvas.height);
+    
+    // Tint overlay
+    ctx.fillStyle = `hsla(${(distance/4)%360}, 60%, 10%, 0.7)`;
+    ctx.fillRect(0,0,canvas.width, canvas.height);
+
+    if(gameState === 'PLAYING') {
+        particles.forEach(p => { ctx.globalAlpha = p.life; ctx.fillStyle = p.color; ctx.fillRect(p.x, p.y, p.size, p.size); });
+        ctx.globalAlpha = 1;
+
+        ctx.fillStyle = "#000"; ctx.fillRect(0, 0, canvas.width, 65); ctx.fillRect(0, canvas.height - 65, canvas.width, 65);
+        ctx.strokeStyle = `hsl(${(distance/4)%360}, 100%, 50%)`; ctx.lineWidth = 4;
+        ctx.strokeRect(0, 0, canvas.width, 65); ctx.strokeRect(0, canvas.height - 65, canvas.width, 65);
+
+        obstacles.forEach(o => {
+            ctx.fillStyle = "#0a0a0a"; ctx.strokeStyle = `hsl(${o.hue}, 100%, 50%)`; ctx.lineWidth = 4;
+            if (o.type === 'dome') {
+                ctx.beginPath();
+                if (o.onTop) ctx.ellipse(o.x, 65, o.r, o.h, 0, 0, Math.PI);
+                else ctx.ellipse(o.x, canvas.height - 65, o.r, o.h, 0, Math.PI, 0);
+                ctx.fill(); ctx.stroke();
+            } else if (o.type === 'pillar') {
+                ctx.fillRect(o.x, o.topY, o.w, o.topH); ctx.strokeRect(o.x, o.topY, o.w, o.topH);
+                ctx.fillRect(o.x, o.botY, o.w, o.botH); ctx.strokeRect(o.x, o.botY, o.w, o.botH);
+            } else {
+                ctx.beginPath();
+                if (o.onTop) ctx.roundRect(o.x, 65, o.w, o.h, [0, 0, 40, 40]);
+                else ctx.roundRect(o.x, canvas.height - o.h - 65, o.w, o.h, [40, 40, 0, 0]);
+                ctx.fill(); ctx.stroke();
+            }
+        });
+
+        collectibles.forEach(c => ctx.drawImage(coinImg, c.x, c.y, c.w, c.h));
+
+        if (player.alive) {
+            ctx.save();
+            let data = iconData[selectedIconIdx];
+            ctx.translate(player.x + data.w/2, player.y + data.h/2);
+            ctx.rotate(player.angle);
+            ctx.drawImage(iconImages[selectedIconIdx], -data.w/2, -data.h/2, data.w, data.h);
+            ctx.restore();
+        }
+    }
+    requestAnimationFrame(draw);
+}
+
+function toggleCredits() {
+    const p = document.getElementById('credits-panel');
+    p.style.display = p.style.display === 'block' ? 'none' : 'block';
+    document.getElementById('icon-kit').style.display = 'none';
+}
+function toggleShop() {
+    const kit = document.getElementById('icon-kit');
+    kit.style.display = kit.style.display === 'block' ? 'none' : 'block';
+    document.getElementById('credits-panel').style.display = 'none';
+    renderShop();
+}
+function renderShop() {
+    const grid = document.getElementById('iconGrid'); grid.innerHTML = '';
+    iconData.forEach((data, i) => {
+        const isUnlocked = unlockedIcons.includes(i);
+        const isSelected = selectedIconIdx === i;
+        const div = document.createElement('div');
+        div.className = `icon-option ${isSelected ? 'selected' : ''}`;
+        div.innerHTML = `<img src="${data.src}"><span>${isUnlocked ? (isSelected ? 'EQUIPPED' : 'SELECT') : data.price + ' C'}</span>`;
+        div.onclick = () => { 
+            if (isUnlocked) selectedIconIdx = i; 
+            else if (coins >= data.price) { coins -= data.price; unlockedIcons.push(i); selectedIconIdx = i; }
+            localStorage.setItem('gdCoins', coins);
+            localStorage.setItem('unlockedIcons', JSON.stringify(unlockedIcons));
+            localStorage.setItem('selectedIcon', selectedIconIdx);
+            renderShop(); updateUI(); 
+        };
+        grid.appendChild(div);
+    });
+}
+function updateUI() { document.getElementById('coinCount').innerText = coins; }
+
+window.addEventListener('mousedown', () => { if (gameState === 'PLAYING' && player.alive) gravity *= -1; });
+window.addEventListener('keydown', (e) => { if (e.code === 'Space' && gameState === 'PLAYING' && player.alive) gravity *= -1; });
+
+setInterval(update, 1000/60);
+updateUI(); draw();
+</script>
+</body>
+</html>

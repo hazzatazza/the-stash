@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>School Escape</title>
+    <style>
+        body { background: #1a1a1a; display: flex; flex-direction: column; align-items: center; color: #eee; font-family: 'Segoe UI', sans-serif; margin: 0; padding: 10px; overflow: hidden; }
+        h1 { margin: 5px 0; font-size: 24px; color: #ffeb3b; text-shadow: 2px 2px #000; }
+        canvas { background: #87CEEB; border: 6px solid #333; box-shadow: 0 0 15px rgba(0,0,0,0.5); max-height: 72vh; width: auto; }
+        .ui-panel { margin-top: 10px; background: #2a2a2a; padding: 12px 30px; border-radius: 12px; border: 2px solid #444; display: flex; gap: 25px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .stat-box { display: flex; flex-direction: column; align-items: center; }
+        .label { font-size: 0.75em; color: #bbb; text-transform: uppercase; letter-spacing: 1px; }
+        .value { font-size: 1.3em; font-weight: bold; color: #ffeb3b; }
+        
+        /* New styles for the corner image */
+        .corner-image {
+            position: fixed;
+            bottom: 20px;
+            left: 20px;
+            width: 120px; /* Adjust size as needed */
+            height: auto;
+            z-index: 100;
+            pointer-events: none; /* Prevents the image from blocking clicks */
+        }
+    </style>
+</head>
+<body>
+    <h1>School Escape</h1>
+    
+    <img src="https://iili.io/q4IJf9a.png" class="corner-image" alt="Decoration">
+
+    <canvas id="gameCanvas" width="800" height="450"></canvas>
+    <div class="ui-panel">
+        <div class="stat-box"><span class="label">Score</span><span id="score" class="value">0</span></div>
+        <div class="stat-box"><span class="label">Best</span><span id="highScore" class="value">0</span></div>
+        <div class="stat-box"><span class="label">Misses</span><span id="misses" class="value" style="color:#ff5252">0/3</span></div>
+        <div class="stat-box"><span class="label">Flood</span><span id="speed" class="value" style="color:#4fc3f7">Low</span></div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        let score = 0, highScore = localStorage.getItem('schoolEscapeHigh') || 0, misses = 0;
+        let gameOver = false, missionAccomplished = false, gameTime = 0, speedMultiplier = 1.0;
+        const MAX_SPEED = 3.0;
+        
+        const keys = { Left: false, Right: false };
+        const paddle = { x: 400, vx: 0, accel: 1.2, friction: 0.88, y: 380 };
+        let gravity = 0.16;
+        let activeJoey = null;
+        let clouds = [{x: 100, y: 50, s: 0.5}, {x: 400, y: 80, s: 0.3}, {x: 700, y: 40, s: 0.7}];
+        let rain = [];
+
+        const studentNames = [
+            "JOEY BOWMAN", "BILLY BYRD", "SAMMY SLIDE", "TIMMY TUMBLE", 
+            "BOBBY BOUNCE", "CHARLIE CHUTE", "DANNY DROP", "EDDIE EXIT", 
+            "FRANKY FALL", "GARY GLIDE", "HARRY HOP", "STUDENT #42",
+            "KYLE KICKFLIP", "LEO LEAP", "MIKEY METEOR", "NATE NOSE-DIVE", "ALGEBRA ANDY", "BALAKE BALONIE"
+        ];
+
+        function resetGame() { score = 0; misses = 0; gameOver = false; missionAccomplished = false; speedMultiplier = 1.0; activeJoey = null; updateUI(); }
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('misses').innerText = misses + "/3";
+            let status = speedMultiplier >= MAX_SPEED ? "MAX" : (speedMultiplier > 2.0 ? "Critical" : (speedMultiplier > 1.5 ? "Rising" : "Low"));
+            document.getElementById('speed').innerText = status;
+        }
+
+        function drawBackground() {
+            let stormFactor = (speedMultiplier - 1) / (MAX_SPEED - 1);
+            let grad = ctx.createLinearGradient(0, 0, 0, 400);
+            grad.addColorStop(0, stormFactor > 0.5 ? "#2c3e50" : "#4a90e2");
+            grad.addColorStop(1, "#87CEEB");
+            ctx.fillStyle = grad; ctx.fillRect(0, 0, 800, 400);
+
+            clouds.forEach(c => {
+                c.x += c.s; if (c.x > 850) c.x = -100;
+                ctx.fillStyle = stormFactor > 0.6 ? "rgba(100, 100, 110, 0.9)" : "rgba(255, 255, 255, 0.8)";
+                ctx.beginPath(); ctx.arc(c.x, c.y, 20, 0, Math.PI * 2); ctx.arc(c.x+15, c.y-10, 25, 0, Math.PI * 2); ctx.arc(c.x+30, c.y, 20, 0, Math.PI * 2); ctx.fill();
+            });
+
+            if (stormFactor > 0.4 && !gameOver && !missionAccomplished) {
+                if (rain.length < 50) rain.push({x: Math.random()*800, y: Math.random()*400, l: Math.random()*10+5});
+                ctx.strokeStyle = "rgba(174, 194, 224, 0.5)"; ctx.lineWidth = 1;
+                rain.forEach(r => {
+                    ctx.beginPath(); ctx.moveTo(r.x, r.y); ctx.lineTo(r.x - 2, r.y + r.l); ctx.stroke();
+                    r.y += 10; if (r.y > 400) { r.y = -10; r.x = Math.random()*800; }
+                    if (r.y > 395) {
+                        ctx.beginPath(); ctx.arc(r.x, 400, 2, 0, Math.PI); ctx.stroke();
+                    }
+                });
+            }
+
+            ctx.fillStyle = "#5d6d7e"; ctx.beginPath(); 
+            ctx.moveTo(0, 400); ctx.lineTo(150, 250); ctx.lineTo(300, 400); 
+            ctx.moveTo(250, 400); ctx.lineTo(450, 200); ctx.lineTo(650, 400); ctx.fill();
+
+            ctx.fillStyle = "#333"; ctx.fillRect(0, 400, 800, 50);
+            for(let i=0; i<60; i++) { ctx.fillStyle = "rgba(255,255,255,0.05)"; ctx.fillRect(Math.random()*800, 400+Math.random()*50, 2, 2); }
+            ctx.strokeStyle = "#f1c40f"; ctx.lineWidth = 4; ctx.beginPath(); ctx.moveTo(0, 425); ctx.lineTo(800, 425); ctx.stroke();
+        }
+
+        function drawSchool() {
+            ctx.fillStyle = "#8d2d2d"; ctx.fillRect(0, 50, 150, 350);
+            ctx.strokeStyle = "#7a2525"; ctx.lineWidth = 1;
+            for(let i=0; i<350; i+=10) { ctx.beginPath(); ctx.moveTo(0, 50+i); ctx.lineTo(150, 50+i); ctx.stroke(); }
+            
+            let floodHeight = Math.min(348, 20 + (speedMultiplier * 22));
+            if (floodHeight >= 345) missionAccomplished = true;
+
+            ctx.save(); ctx.beginPath(); ctx.rect(0, 50, 150, 350); ctx.clip();
+            ctx.fillStyle = "rgba(0, 105, 148, 0.6)"; 
+            ctx.fillRect(0, 400-floodHeight, 150, floodHeight);
+            ctx.fillStyle = "rgba(255, 255, 255, 0.1)"; ctx.beginPath();
+            for(let x=0; x<=150; x++) { ctx.lineTo(x, (400-floodHeight) + Math.sin(x*0.05 + gameTime*0.1)*5); }
+            ctx.lineTo(150, 400); ctx.fill();
+            ctx.restore();
+
+            for(let i=0; i<3; i++) {
+                for(let j=0; j<6; j++) {
+                    ctx.fillStyle = "#333"; ctx.fillRect(25 + (i*40), 90 + (j*50), 25, 35);
+                    ctx.strokeStyle = "#fff"; ctx.lineWidth = 2; ctx.strokeRect(25 + (i*40), 90 + (j*50), 25, 35);
+                }
+            }
+            ctx.fillStyle = "#fff"; ctx.font = "bold 22px Arial"; ctx.textAlign = "center"; ctx.fillText("SCHOOL", 75, 80);
+        }
+
+        function drawAmbulance(x, y) {
+            ctx.fillStyle = "#f0f0f0"; ctx.fillRect(x, y, 90, 50); ctx.fillRect(x + 90, y + 15, 35, 35);
+            ctx.fillStyle = "#d32f2f"; ctx.fillRect(x, y + 20, 125, 10);
+            ctx.fillRect(x + 35, y + 5, 10, 30); ctx.fillRect(x + 25, y + 15, 30, 10);
+            ctx.fillStyle = "#333"; ctx.fillRect(x + 100, y + 20, 20, 15);
+            ctx.fillStyle = "#222"; ctx.beginPath(); ctx.arc(x + 20, y + 50, 9, 0, Math.PI * 2); ctx.fill();
+            ctx.beginPath(); ctx.arc(x + 100, y + 50, 9, 0, Math.PI * 2); ctx.fill();
+            let lightColor = (gameTime % 20 < 10) ? "#f44336" : "#2196f3";
+            ctx.fillStyle = lightColor; ctx.shadowBlur = 10; ctx.shadowColor = lightColor;
+            ctx.fillRect(x + 95, y + 10, 15, 5); ctx.shadowBlur = 0;
+        }
+
+        function drawHuman(x, y, color, isJoey, limbAngle, velocity, name) {
+            ctx.save(); ctx.translate(x, y);
+            ctx.strokeStyle = color; ctx.lineWidth = 3; ctx.lineCap = "round";
+            ctx.beginPath(); ctx.arc(0, -25, 6, 0, Math.PI * 2); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, -19); ctx.lineTo(0, 0); ctx.stroke();
+            let angle = Math.sin(limbAngle) * 1.2;
+            if (isJoey) {
+                ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(18 * Math.cos(angle), -15 + 10 * Math.sin(angle)); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, -15); ctx.lineTo(-18 * Math.cos(angle), -15 - 10 * Math.sin(angle)); ctx.stroke();
+            } else {
+                let side = (x < paddle.x) ? 1 : -1;
+                ctx.beginPath(); ctx.moveTo(0, -12); ctx.lineTo(18 * side, -8); ctx.stroke();
+            }
+            let walk = isJoey ? angle : Math.sin(gameTime * 0.1) * (Math.abs(velocity) * 1.5);
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(walk || 5, 15); ctx.stroke();
+            ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-(walk || 5), 15); ctx.stroke();
+            ctx.fillStyle = isJoey ? "black" : "white"; ctx.font = "bold " + (isJoey ? "13px" : "11px") + " Arial";
+            ctx.textAlign = "center"; ctx.fillText(name, 0, isJoey ? -45 : 35); ctx.restore();
+        }
+
+        function spawnJoey() {
+            const startX = 130;
+            const targetX = 160 + (Math.random() * 440);
+            let baseVY = -2.0 * speedMultiplier;
+            let currentGravity = gravity * speedMultiplier;
+            const a = 0.5 * currentGravity;
+            const b = baseVY;
+            const c = -(paddle.y - 120);
+            const time = (-b + Math.sqrt(b * b - 4 * a * c)) / (2 * a);
+            
+            activeJoey = { 
+                x: startX, y: 120, 
+                vx: (targetX - startX) / time, 
+                vy: baseVY, 
+                limbAngle: 0,
+                hasBounced: false,
+                name: studentNames[Math.floor(Math.random() * studentNames.length)]
+            };
+        }
+
+        function update() {
+            if (gameOver || missionAccomplished) return;
+            gameTime++;
+            if (keys.Left) paddle.vx -= paddle.accel; if (keys.Right) paddle.vx += paddle.accel;
+            paddle.vx *= paddle.friction; paddle.x += paddle.vx;
+            paddle.x = Math.max(180, Math.min(680, paddle.x));
+
+            if (!activeJoey) spawnJoey();
+            
+            let currentGravity = gravity * speedMultiplier;
+            activeJoey.vy += currentGravity; 
+            activeJoey.x += activeJoey.vx; 
+            activeJoey.y += activeJoey.vy; 
+            activeJoey.limbAngle += 0.06 * speedMultiplier; 
+
+            if (activeJoey.y > paddle.y - 20 && activeJoey.x > paddle.x - 60 && activeJoey.x < paddle.x + 60 && activeJoey.vy > 0) {
+                activeJoey.hasBounced = true;
+                activeJoey.vy = -6.8 - (Math.random() * 1.0);
+                activeJoey.vx = Math.min(10, (2.2 + Math.random() * 3.0) * speedMultiplier);
+            }
+
+            if (activeJoey.y > canvas.height) {
+                misses++; updateUI(); activeJoey = null;
+                if (misses >= 3) gameOver = true;
+            } else if (activeJoey.x > 700 && activeJoey.y > 300) {
+                if (activeJoey.hasBounced) {
+                    score++; 
+                    if (speedMultiplier < MAX_SPEED) speedMultiplier += 0.1;
+                    updateUI(); activeJoey = null;
+                } else { activeJoey.vx = -1; }
+            }
+        }
+
+        function draw() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawBackground(); drawSchool(); drawAmbulance(670, 345);
+            drawHuman(paddle.x - 35, paddle.y, "#1976d2", false, 0, paddle.vx, "TONY"); 
+            drawHuman(paddle.x + 35, paddle.y, "#2e7d32", false, 0, paddle.vx, "DANIEL"); 
+            ctx.strokeStyle = "#ffeb3b"; ctx.lineWidth = 5; ctx.beginPath(); ctx.moveTo(paddle.x - 30, paddle.y - 8); ctx.lineTo(paddle.x + 30, paddle.y - 8); ctx.stroke();
+            if (activeJoey) drawHuman(activeJoey.x, activeJoey.y, "#fb8c00", true, activeJoey.limbAngle, 0, activeJoey.name);
+
+            if (gameOver || missionAccomplished) {
+                ctx.fillStyle = "rgba(0,0,0,0.85)"; ctx.fillRect(0,0,800,450);
+                ctx.fillStyle = "white"; ctx.textAlign="center"; ctx.font="bold 40px Arial";
+                ctx.fillText(missionAccomplished ? "MISSION ACCOMPLISHED" : "SCHOOL SUBMERGED", 400, 180);
+                ctx.fillStyle="#4CAF50"; ctx.fillRect(300, 250, 200, 50);
+                ctx.fillStyle="white"; ctx.font="bold 18px Arial"; ctx.fillText("TRY AGAIN", 400, 282);
+            }
+            update(); requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('keydown', e => { if (e.key === "ArrowLeft") keys.Left = true; if (e.key === "ArrowRight") keys.Right = true; });
+        window.addEventListener('keyup', e => { if (e.key === "ArrowLeft") keys.Left = false; if (e.key === "ArrowRight") keys.Right = false; });
+        canvas.addEventListener('mousedown', () => { if (gameOver || missionAccomplished) resetGame(); });
+        document.getElementById('highScore').innerText = highScore; updateUI(); draw();
+    </script>
+</body>
+</html>

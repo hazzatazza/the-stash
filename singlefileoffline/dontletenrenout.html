@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Don't Let Ehren Out</title>
+    <style>
+        body { background: #000; color: white; font-family: 'Segoe UI', sans-serif; margin: 0; overflow: hidden; display: flex; flex-direction: column; align-items: center; }
+        canvas { display: block; background: #111; }
+        
+        #ui-layer { 
+            position: absolute; top: 0; width: 100%; height: 80px; 
+            display: flex; justify-content: space-between; align-items: center; 
+            padding: 0 40px; box-sizing: border-box; pointer-events: none; z-index: 10;
+            background: linear-gradient(to bottom, rgba(0,0,0,0.8), transparent);
+        }
+        .stat-box { font-size: 1.8vw; font-weight: 900; text-shadow: 2px 2px #000; }
+        .p1-color { color: #4caf50; }
+        .p2-color { color: #2196f3; }
+        .game-header { font-size: 2.8vw; font-weight: 900; color: #ffeb3b; text-transform: uppercase; letter-spacing: 5px; text-shadow: 3px 3px 0 #d32f2f; }
+
+        #menu-overlay { 
+            position: absolute; inset: 0; 
+            background: linear-gradient(135deg, #2e0b3e 0%, #1a2f1a 100%);
+            z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center;
+            overflow: hidden;
+        }
+
+        .ehren-container { animation: sway 2.5s ease-in-out infinite; margin-bottom: 20px; z-index: 5; }
+        @keyframes sway { 0%, 100% { transform: rotate(-8deg) scale(1.2); } 50% { transform: rotate(8deg) scale(1.4); } }
+
+        .menu-title { font-size: 6vw; color: #ffeb3b; margin-bottom: 20px; text-shadow: 6px 6px 0 #d32f2f; font-weight: 900; z-index: 10; text-transform: uppercase; }
+        
+        .btn-area { width: 450px; display: flex; flex-direction: column; align-items: center; }
+        .btn-wrapper { position: relative; width: 100%; display: flex; flex-direction: column; align-items: center; }
+
+        .menu-btn { 
+            background: rgba(0, 0, 0, 0.7); border: 4px solid #ffeb3b; color: white; 
+            padding: 18px 0; margin: 10px 0; font-size: 1.8vw; cursor: pointer; 
+            border-radius: 20px; transition: 0.2s; width: 100%; font-weight: bold; z-index: 10;
+        }
+        .menu-btn:hover { background: #ffeb3b; color: #000; transform: scale(1.05); box-shadow: 0 0 25px rgba(255, 235, 59, 0.4); }
+
+        .diff-menu {
+            max-height: 0; overflow: hidden; width: 90%;
+            transition: max-height 0.4s ease-out; display: flex; flex-direction: column;
+            align-items: center; background: rgba(0,0,0,0.4); border-radius: 0 0 20px 20px;
+        }
+        .btn-wrapper:hover .diff-menu { max-height: 300px; margin-bottom: 10px; }
+        
+        .sub-btn {
+            background: transparent; border: none; color: #ffeb3b; padding: 10px;
+            font-size: 1.4vw; cursor: pointer; width: 100%; font-weight: bold;
+            transition: 0.2s;
+        }
+        .sub-btn:hover { background: rgba(255, 235, 59, 0.2); color: #fff; }
+
+        #menu-img { width: 550px; height: 200px; object-fit: fill; pointer-events: none; }
+        #menu-logo { position: absolute; bottom: 20px; right: 20px; width: 150px; height: auto; z-index: 11; pointer-events: none; }
+    </style>
+</head>
+<body>
+
+    <div id="menu-overlay">
+        <div class="menu-title">DON'T LET EHREN OUT</div>
+        
+        <div class="ehren-container">
+            <img id="menu-img" src="https://iili.io/B2uLPdx.png" alt="Ehren">
+        </div>
+
+        <div class="btn-area">
+            <div class="btn-wrapper">
+                <button class="menu-btn">SINGLE PLAYER (VS AI)</button>
+                <div class="diff-menu">
+                    <button class="sub-btn" onclick="startGame('1P', 'easy')">EASY</button>
+                    <button class="sub-btn" onclick="startGame('1P', 'normal')">NORMAL</button>
+                    <button class="sub-btn" onclick="startGame('1P', 'hard')">HARD</button>
+                </div>
+            </div>
+            <div class="btn-wrapper">
+                <button class="menu-btn" onclick="startGame('2P')">TWO PLAYER (LOCAL)</button>
+            </div>
+        </div>
+
+        <p style="color: #fff; margin-top: 15px; font-weight: bold; text-shadow: 2px 2px #000; z-index: 10;">P1: W/S | P2: UP/DOWN</p>
+        <img id="menu-logo" src="https://iili.io/q4IJf9a.png" alt="Logo">
+    </div>
+
+    <div id="ui-layer" style="display: none;">
+        <div class="stat-box p1-color">P1 MISSES: <span id="p1-miss">0</span>/3</div>
+        <div class="game-header">DON'T LET EHREN OUT</div>
+        <div class="stat-box p2-color">P2 MISSES: <span id="p2-miss">0</span>/3</div>
+    </div>
+
+    <canvas id="gameCanvas"></canvas>
+
+    <script>
+        const canvas = document.getElementById('gameCanvas');
+        const ctx = canvas.getContext('2d');
+        const menu = document.getElementById('menu-overlay');
+        const ui = document.getElementById('ui-layer');
+
+        let gameMode = '1P', difficulty = 'normal';
+        let isPlaying = false, gameOver = false;
+        let p1Misses = 0, p2Misses = 0, speed = 6, offset = 0;
+        let levels = [];
+        
+        const gL = { level: 1, x: 0 };
+        const gR = { level: 1, x: 0 };
+        const prisoner = { x: 0, y: 0, targetSide: 'left', targetLevel: 1, visualY: 0 };
+
+        const ehrenImg = new Image();
+        ehrenImg.src = 'https://iili.io/B2uLPdx.png';
+
+        function resize() {
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+            const margin = canvas.height * 0.22;
+            const spacing = (canvas.height - (margin * 2)) / 2;
+            levels = [margin, margin + spacing, margin + (spacing * 2)];
+            // Guard X positions moved right next to the red zones (80px wide)
+            gL.x = 100; 
+            gR.x = canvas.width - 100;
+        }
+
+        window.addEventListener('resize', resize);
+        resize();
+
+        function startGame(mode, diff = 'normal') {
+            gameMode = mode;
+            difficulty = diff;
+            isPlaying = true; gameOver = false;
+            p1Misses = 0; p2Misses = 0; speed = 6;
+            document.getElementById('p1-miss').innerText = '0';
+            document.getElementById('p2-miss').innerText = '0';
+            menu.style.display = 'none';
+            ui.style.display = 'flex';
+            resetPrisoner();
+            requestAnimationFrame(draw);
+        }
+
+        function drawEnvironment() {
+            offset = (offset + speed * 0.5) % 100;
+            levels.forEach(y => {
+                ctx.fillStyle = '#222';
+                ctx.fillRect(0, y - (canvas.height * 0.1), canvas.width, canvas.height * 0.2);
+                ctx.strokeStyle = '#333';
+                ctx.lineWidth = 2;
+                for(let i = -offset; i < canvas.width; i += 50) {
+                    ctx.beginPath(); ctx.moveTo(i, y - (canvas.height * 0.1)); ctx.lineTo(i, y + (canvas.height * 0.1)); ctx.stroke();
+                }
+                ctx.fillStyle = '#f00'; ctx.globalAlpha = 0.4; // Slightly darker red
+                ctx.fillRect(0, y - (canvas.height * 0.1), 80, canvas.height * 0.2); 
+                ctx.fillRect(canvas.width - 80, y - (canvas.height * 0.1), 80, canvas.height * 0.2); 
+                ctx.globalAlpha = 1.0;
+            });
+            ctx.fillStyle = '#050505';
+            ctx.fillRect(0, levels[0] + (canvas.height * 0.1), canvas.width, (levels[1] - levels[0]) - (canvas.height * 0.2));
+            ctx.fillRect(0, levels[1] + (canvas.height * 0.1), canvas.width, (levels[2] - levels[1]) - (canvas.height * 0.2));
+        }
+
+        function updateAI() {
+            if (gameMode === '1P' && prisoner.targetSide === 'right') {
+                let triggerPoint, reactionBase;
+                if (difficulty === 'easy') { triggerPoint = 0.85; reactionBase = 0.02; } 
+                else if (difficulty === 'hard') { triggerPoint = 0.35; reactionBase = 0.1; } 
+                else { triggerPoint = 0.65; reactionBase = 0.05; }
+
+                if (prisoner.x > canvas.width * triggerPoint) {
+                    let reactionChance = reactionBase + (speed * 0.0015); 
+                    if (Math.random() < reactionChance) gR.level = prisoner.targetLevel;
+                }
+            }
+        }
+
+        function checkBlock(g, side) {
+            // Tightened collision detection: If guard is in place, he bounces back.
+            if (g.level === prisoner.targetLevel) {
+                speed += 0.45;
+                resetPrisoner();
+            } else {
+                // If guard is NOT in place and Ehren hits the 80px red zone boundary
+                if ((side === 'left' && prisoner.x <= 130) || (side === 'right' && prisoner.x >= canvas.width - 130)) {
+                    if (side === 'left') p1Misses++;
+                    else p2Misses++;
+                    document.getElementById('p1-miss').innerText = p1Misses;
+                    document.getElementById('p2-miss').innerText = p2Misses;
+                    if (p1Misses >= 3 || p2Misses >= 3) gameOver = true;
+                    resetPrisoner();
+                }
+            }
+        }
+
+        function resetPrisoner() {
+            prisoner.x = canvas.width / 2;
+            prisoner.targetSide = Math.random() > 0.5 ? 'left' : 'right';
+            prisoner.targetLevel = Math.floor(Math.random() * 3);
+        }
+
+        function draw() {
+            if (!isPlaying) return;
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            drawEnvironment();
+            const bH = canvas.height * 0.18; const sW = bH * 2.8; 
+            ctx.save();
+            ctx.translate(prisoner.x, prisoner.visualY);
+            if (prisoner.targetSide === 'left') ctx.scale(-1, 1);
+            ctx.drawImage(ehrenImg, -sW / 2, -bH / 2, sW, bH);
+            ctx.restore();
+            prisoner.visualY += (levels[prisoner.targetLevel] - prisoner.visualY) * 0.15;
+            if (!gameOver) {
+                updateAI();
+                if (prisoner.targetSide === 'left') {
+                    prisoner.x -= speed;
+                    if (prisoner.x <= 160) checkBlock(gL, 'left');
+                } else {
+                    prisoner.x += speed;
+                    if (prisoner.x >= canvas.width - 160) checkBlock(gR, 'right');
+                }
+            }
+            const emojiSize = canvas.height * 0.12;
+            ctx.font = `${emojiSize}px serif`;
+            ctx.textAlign = "center";
+            ctx.textBaseline = "middle";
+            ctx.fillText("👮‍♂️", gL.x, levels[gL.level]);
+            ctx.save(); ctx.translate(gR.x, levels[gR.level]); ctx.scale(-1, 1); ctx.fillText("👮‍♂️", 0, 0); ctx.restore();
+            if (gameOver) {
+                ctx.fillStyle = 'rgba(0,0,0,0.9)'; ctx.fillRect(0,0,canvas.width, canvas.height);
+                ctx.fillStyle = '#ff4444'; ctx.font = 'bold 8vw sans-serif';
+                let txt = p1Misses >= 3 ? "P2 WINS!" : "P1 WINS!";
+                if (gameMode === '1P') txt = p1Misses >= 3 ? "AI DOMINATED" : "AI DEFEATED";
+                ctx.fillText(txt, canvas.width/2, canvas.height/2);
+                ctx.fillStyle = '#fff'; ctx.font = '2vw sans-serif';
+                ctx.fillText("Press R to return to Menu", canvas.width/2, canvas.height/2 + 100);
+            }
+            requestAnimationFrame(draw);
+        }
+
+        window.addEventListener('keydown', e => {
+            const k = e.key.toLowerCase();
+            if (k === 'w' && gL.level > 0) gL.level--;
+            if (k === 's' && gL.level < 2) gL.level++;
+            if (gameMode === '2P') {
+                if (e.key === 'ArrowUp' && gR.level > 0) gR.level--;
+                if (e.key === 'ArrowDown' && gR.level < 2) gR.level++;
+            }
+            if (k === 'r' && (gameOver || !isPlaying)) {
+                isPlaying = false; menu.style.display = 'flex'; ui.style.display = 'none';
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>MONKEY KING: 500 STAGE MEGA OBBY</title>
+    <style>
+        body { margin: 0; overflow: hidden; font-family: 'Arial Black', sans-serif; background: #87CEEB; }
+        #ui { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 100; }
+        
+        #bar-container { 
+            position: absolute; top: 20px; left: 50%; transform: translateX(-50%); 
+            width: 500px; height: 35px; background: rgba(0,0,0,0.6); 
+            border: 3px solid white; border-radius: 20px; overflow: hidden;
+        }
+        #bar-fill { width: 0%; height: 100%; background: #00FF00; transition: width 0.3s; }
+        #bar-text { 
+            position: absolute; width: 100%; text-align: center; top: 5px; 
+            color: white; font-size: 18px; text-shadow: 2px 2px 0px #000;
+        }
+
+        #stage-display {
+            position: absolute; bottom: 30px; left: 30px; 
+            background: #00A2FF; color: white; padding: 15px; 
+            border: 4px solid white; border-radius: 10px; font-size: 24px;
+        }
+
+        #corner-logo {
+            position: absolute; bottom: 20px; right: 20px;
+            width: 120px; height: auto; pointer-events: none;
+        }
+
+        #skin-btn {
+            position: absolute; top: 20px; right: 20px; pointer-events: all;
+            background: #FFD700; border: 3px solid white; padding: 10px 20px;
+            border-radius: 10px; cursor: pointer; font-weight: bold;
+        }
+        #skin-menu {
+            position: absolute; top: 70px; right: 20px; width: 220px; max-height: 400px;
+            background: rgba(0,0,0,0.8); border: 2px solid #FFD700; border-radius: 10px;
+            display: none; overflow-y: auto; pointer-events: all; padding: 10px;
+        }
+        .skin-option {
+            padding: 8px; margin: 4px 0; background: #333; color: white;
+            border-radius: 5px; cursor: pointer; font-size: 14px;
+        }
+
+        #overlay {
+            position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.7); display: flex; flex-direction: column;
+            justify-content: center; align-items: center; z-index: 1000; cursor: pointer;
+        }
+        #overlay h1 { color: #FFD700; font-size: 60px; margin: 0; text-shadow: 4px 4px 0px #000; }
+        #overlay p { color: white; font-size: 20px; }
+    </style>
+</head>
+<body>
+
+<div id="ui">
+    <div id="bar-container">
+        <div id="bar-fill"></div>
+        <div id="bar-text">Level: 1 / 500</div>
+    </div>
+    <div id="stage-display">STAGE 1</div>
+    <img id="corner-logo" src="https://iili.io/q4IJf9a.png">
+    <button id="skin-btn">CHANGE SKIN</button>
+    <div id="skin-menu"></div>
+</div>
+
+<div id="overlay">
+    <h1>MONKEY OBBY</h1>
+    <p>CLICK TO PLAY</p>
+</div>
+
+<script type="importmap">
+    { "imports": { "three": "https://unpkg.com/three@0.160.0/build/three.module.js" } }
+</script>
+
+<script type="module">
+    import * as THREE from 'three';
+
+    const TOTAL_STAGES = 500;
+    const colors = [0xFF0000, 0xFF7F00, 0xFFFF00, 0x00FF00, 0x0000FF, 0x4B0082, 0x9400D3];
+    const aflTeams = [
+        { n: "Adelaide", c1: 0x002b5c, c2: 0xffd200 }, { n: "Brisbane", c1: 0x7e1f3b, c2: 0xffd200 },
+        { n: "Carlton", c1: 0x031a31, c2: 0xffffff }, { n: "Collingwood", c1: 0xffffff, c2: 0x000000 },
+        { n: "Essendon", c1: 0x000000, c2: 0xcc0000 }, { n: "Fremantle", c1: 0x3b0160, c2: 0xffffff },
+        { n: "Geelong", c1: 0xffffff, c2: 0x002b5c }, { n: "Gold Coast", c1: 0xda291c, c2: 0xffd200 },
+        { n: "GWS", c1: 0xf47920, c2: 0xffffff }, { n: "Hawthorn", c1: 0x4d2412, c2: 0xffb81c },
+        { n: "Melbourne", c1: 0x001d38, c2: 0xcc0000 }, { n: "North Melb", c1: 0xffffff, c2: 0x004a89 },
+        { n: "Port Adelaide", c1: 0x000000, c2: 0x008aab }, { n: "Richmond", c1: 0x000000, c2: 0xffcc00 },
+        { n: "St Kilda", c1: 0xed1c24, c2: 0xffffff, c3: 0x000000, special: "stk" }, 
+        { n: "Sydney", c1: 0xed1c24, c2: 0xffffff }, { n: "West Coast", c1: 0x002b5c, c2: 0xf2a900 }, 
+        { n: "Western Bulldogs", c1: 0x004792, c2: 0xffffff, c3: 0xed1c24, special: "bulld" }
+    ];
+
+    const loader = new THREE.TextureLoader();
+    const bananaTex = loader.load('https://www.clker.com/cliparts/d/m/t/L/b/9/banana-md.png');
+    const listener = new THREE.AudioListener();
+    const bgMusic = new THREE.Audio(listener);
+    const cpSound = new THREE.Audio(listener);
+    const audioLoader = new THREE.AudioLoader();
+
+    audioLoader.load('https://cdn.freesound.org/previews/270/270404_5123851-lq.mp3', (b) => { bgMusic.setBuffer(b); bgMusic.setLoop(true); bgMusic.setVolume(0.2); });
+    audioLoader.load('https://cdn.freesound.org/previews/256/256113_3263906-lq.mp3', (b) => { cpSound.setBuffer(b); cpSound.setVolume(0.4); });
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x87CEEB);
+    const camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 2000);
+    camera.add(listener);
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    document.body.appendChild(renderer.domElement);
+
+    const sun = new THREE.DirectionalLight(0xffffff, 1.2);
+    sun.position.set(50, 100, 50);
+    scene.add(sun, new THREE.AmbientLight(0xffffff, 0.6));
+
+    function createMonkey(team) {
+        const group = new THREE.Group();
+        const matBrown = new THREE.MeshStandardMaterial({color: 0x5D4037});
+        const matTan = new THREE.MeshStandardMaterial({color: 0xD2B48C});
+        const matTeam = new THREE.MeshStandardMaterial({color: team.c1});
+        const matSash = new THREE.MeshStandardMaterial({color: team.c2});
+        const matLegs = new THREE.MeshStandardMaterial({color: team.c3 || team.c1});
+
+        const head = new THREE.Mesh(new THREE.CylinderGeometry(0.55, 0.55, 0.9, 16), matBrown);
+        head.position.y = 1;
+
+        const shape = new THREE.Shape();
+        shape.moveTo(-0.45, -0.2); shape.bezierCurveTo(-0.45, 0.5, 0.45, 0.5, 0.45, -0.2);
+        shape.bezierCurveTo(0.45, -0.5, 0.2, -0.4, 0, -0.4); shape.bezierCurveTo(-0.2, -0.4, -0.45, -0.5, -0.45, -0.2);
+        const face = new THREE.Mesh(new THREE.ExtrudeGeometry(shape, {depth: 0.1, bevelEnabled: false}), matTan);
+        face.position.set(0, 1.1, 0.48);
+
+        const eyeL = new THREE.Mesh(new THREE.SphereGeometry(0.06), new THREE.MeshBasicMaterial({color:0}));
+        eyeL.position.set(-0.15, 1.25, 0.6);
+        const eyeR = eyeL.clone(); eyeR.position.x = 0.15;
+        const blushL = new THREE.Mesh(new THREE.CircleGeometry(0.12, 16), new THREE.MeshBasicMaterial({color:0xffa3b1}));
+        blushL.position.set(-0.3, 1.05, 0.61);
+        const blushR = blushL.clone(); blushR.position.x = 0.3;
+        const smile = new THREE.Mesh(new THREE.TorusGeometry(0.2, 0.02, 8, 12, Math.PI), new THREE.MeshBasicMaterial({color:0}));
+        smile.rotation.x = Math.PI; smile.position.set(0, 0.95, 0.61);
+
+        const crown = new THREE.Mesh(new THREE.CylinderGeometry(0.4, 0.3, 0.4, 6), matSash);
+        crown.position.y = 1.5;
+
+        const torso = new THREE.Mesh(new THREE.BoxGeometry(0.9, 1.1, 0.5), matTeam);
+
+        if(team.special === "stk") {
+            const whiteStrip = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.12, 0.52), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            const blackStrip = new THREE.Mesh(new THREE.BoxGeometry(0.3, 1.12, 0.52), new THREE.MeshStandardMaterial({color: 0x000000}));
+            whiteStrip.position.set(0, 0, 0); blackStrip.position.set(0.3, 0, 0);
+            torso.add(whiteStrip, blackStrip);
+        } else if(team.special === "bulld") {
+            const line1 = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.15, 0.52), new THREE.MeshStandardMaterial({color: 0xffffff}));
+            const line2 = new THREE.Mesh(new THREE.BoxGeometry(0.92, 0.15, 0.52), new THREE.MeshStandardMaterial({color: 0xed1c24}));
+            line1.position.y = 0.2; line2.position.y = -0.1;
+            torso.add(line1, line2);
+        } else {
+            const sash = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.25, 0.55), matSash);
+            sash.rotation.z = 0.8; torso.add(sash);
+        }
+
+        const armL = new THREE.Mesh(new THREE.BoxGeometry(0.35, 1, 0.35), matTan); armL.position.set(-0.65, 0, 0);
+        const armR = armL.clone(); armR.position.x = 0.65;
+        const legL = new THREE.Mesh(new THREE.BoxGeometry(0.4, 1.1, 0.4), matLegs); legL.position.set(-0.25, -1, 0);
+        const legR = legL.clone(); legR.position.x = 0.25;
+
+        group.add(head, face, eyeL, eyeR, blushL, blushR, smile, crown, torso, armL, armR, legL, legR);
+        group.userData = { armL, armR, legL, legR, anim: 0 };
+        return group;
+    }
+
+    let playerGroup = new THREE.Group();
+    let monkey = createMonkey(aflTeams[13]);
+    playerGroup.add(monkey); playerGroup.position.set(0, 3, 0); scene.add(playerGroup);
+
+    const platforms = [], killBricks = [], trusses = [], checkpoints = [];
+    let nextPos = new THREE.Vector3(0, 0, 0);
+    const cpMat = new THREE.MeshStandardMaterial({color: 0xFFFF00, map: bananaTex});
+
+    for(let i=0; i<TOTAL_STAGES; i++) {
+        const cp = new THREE.Mesh(new THREE.BoxGeometry(8, 0.5, 8), cpMat);
+        cp.position.copy(nextPos); scene.add(cp); checkpoints.push(cp); platforms.push(cp);
+        if(i === 0) {
+            const floor = new THREE.Mesh(new THREE.BoxGeometry(80, 2, 80), new THREE.MeshStandardMaterial({color: 0x444444}));
+            floor.position.set(0, -1.25, 20); scene.add(floor); platforms.push(floor);
+        }
+        nextPos.z -= 15;
+        let type = Math.floor(Math.random()*4);
+        let color = colors[i%7];
+        if(type === 0) {
+            for(let j=0; j<8; j++) {
+                let s = new THREE.Mesh(new THREE.BoxGeometry(6, 0.5, 3), new THREE.MeshStandardMaterial({color: colors[j%7]}));
+                s.position.set(nextPos.x, nextPos.y + j, nextPos.z - (j*4));
+                scene.add(s); platforms.push(s); if(j === 7) nextPos.copy(s.position);
+            }
+        } else if(type === 1) {
+            for(let j=0; j<4; j++) {
+                let sp = new THREE.Mesh(new THREE.SphereGeometry(2.5, 12, 12), new THREE.MeshStandardMaterial({color}));
+                sp.position.set(nextPos.x + (Math.random()-0.5)*10, nextPos.y, nextPos.z - (j*10));
+                scene.add(sp); platforms.push(sp); if(j === 3) nextPos.copy(sp.position);
+            }
+        } else if(type === 2) {
+            const tr = new THREE.Mesh(new THREE.BoxGeometry(2, 12, 2), new THREE.MeshStandardMaterial({color, wireframe: true}));
+            tr.position.set(nextPos.x, nextPos.y + 6, nextPos.z); scene.add(tr); trusses.push(tr); platforms.push(tr);
+            nextPos.y += 11; nextPos.z -= 2;
+        } else {
+            for(let j=0; j<3; j++) {
+                let p = new THREE.Mesh(new THREE.BoxGeometry(5, 0.5, 5), new THREE.MeshStandardMaterial({color}));
+                p.position.set(nextPos.x + (Math.random()-0.5)*8, nextPos.y, nextPos.z - (j*9));
+                scene.add(p); platforms.push(p);
+                if(Math.random() > 0.6) {
+                    let k = new THREE.Mesh(new THREE.BoxGeometry(5.2, 0.6, 1.2), new THREE.MeshStandardMaterial({color: 0xff0000, emissive: 0xff0000}));
+                    k.position.set(p.position.x, p.position.y+0.4, p.position.z); scene.add(k); killBricks.push(k);
+                }
+                if(j === 2) nextPos.copy(p.position);
+            }
+        }
+        nextPos.z -= 10;
+    }
+
+    const menu = document.getElementById('skin-menu');
+    aflTeams.forEach(t => {
+        const opt = document.createElement('div'); opt.className = 'skin-option'; opt.innerText = t.n;
+        opt.onclick = (e) => {
+            e.stopPropagation();
+            playerGroup.remove(monkey);
+            monkey = createMonkey(t);
+            playerGroup.add(monkey);
+        };
+        menu.appendChild(opt);
+    });
+
+    document.getElementById('skin-btn').onclick = (e) => { 
+        e.stopPropagation();
+        menu.style.display = menu.style.display === 'block' ? 'none' : 'block'; 
+    };
+
+    let keys = {}, vel = new THREE.Vector3(), canJump = false, stage = 0, spawn = new THREE.Vector3(0, 5, 0);
+    const pivot = new THREE.Object3D(), pitch = new THREE.Object3D();
+    scene.add(pivot); pivot.add(pitch); pitch.add(camera); camera.position.set(0, 5, 12);
+
+    window.onkeydown = (e) => keys[e.code] = true;
+    window.onkeyup = (e) => keys[e.code] = false;
+
+    // POINTER LOCK FIX: Only lock if NOT clicking GUI
+    const lockPointer = () => { document.body.requestPointerLock(); };
+    document.getElementById('overlay').onclick = () => { 
+        lockPointer(); 
+        document.getElementById('overlay').style.display='none'; 
+        if(!bgMusic.isPlaying) bgMusic.play(); 
+    };
+
+    window.addEventListener('mousedown', (e) => {
+        // Only trigger pointer lock if we clicked on the canvas (the actual game), not the UI buttons
+        if(document.getElementById('overlay').style.display === 'none' && e.target.tagName === 'CANVAS') {
+            lockPointer();
+        }
+    });
+
+    document.onmousemove = (e) => {
+        if(document.pointerLockElement) {
+            pivot.rotation.y -= e.movementX * 0.003; pitch.rotation.x -= e.movementY * 0.002;
+            pitch.rotation.x = Math.max(-0.6, Math.min(0.4, pitch.rotation.x));
+        }
+    };
+
+    function loop() {
+        requestAnimationFrame(loop);
+        let move = new THREE.Vector3(), moving = false;
+        if(keys['KeyW']) { move.z -= 1; moving = true; } if(keys['KeyS']) { move.z += 1; moving = true; }
+        if(keys['KeyA']) { move.x -= 1; moving = true; } if(keys['KeyD']) { move.x += 1; moving = true; }
+        if(moving) {
+            move.applyQuaternion(pivot.quaternion).normalize();
+            monkey.rotation.y = THREE.MathUtils.lerp(monkey.rotation.y, Math.atan2(move.x, move.z), 0.15);
+            playerGroup.position.x += move.x * 0.22; playerGroup.position.z += move.z * 0.22;
+            monkey.userData.anim += 0.2;
+            monkey.userData.armL.rotation.x = Math.sin(monkey.userData.anim)*1.2; monkey.userData.armR.rotation.x = -Math.sin(monkey.userData.anim)*1.2;
+            monkey.userData.legL.rotation.x = -Math.sin(monkey.userData.anim)*1.2; monkey.userData.legR.rotation.x = Math.sin(monkey.userData.anim)*1.2;
+        } else {
+            monkey.userData.armL.rotation.x = monkey.userData.armR.rotation.x = 0;
+            monkey.userData.legL.rotation.x = monkey.userData.legR.rotation.x = 0;
+        }
+
+        let climbing = false; trusses.forEach(t => { if(playerGroup.position.distanceTo(t.position) < 3) climbing = true; });
+        if(climbing) { vel.y = keys['KeyW'] ? 0.15 : (keys['KeyS'] ? -0.15 : 0); canJump = true; } else { vel.y -= 0.016; }
+        playerGroup.position.y += vel.y;
+        if(keys['Space'] && canJump && !climbing) { vel.y = 0.42; canJump = false; }
+
+        const pBox = new THREE.Box3().setFromCenterAndSize(playerGroup.position, new THREE.Vector3(1, 2.5, 1));
+        canJump = false;
+        platforms.forEach(p => {
+            const b = new THREE.Box3().setFromObject(p);
+            if(pBox.intersectsBox(b) && vel.y <= 0 && playerGroup.position.y > p.position.y) { playerGroup.position.y = b.max.y + 1.25; vel.y = 0; canJump = true; }
+        });
+
+        checkpoints.forEach((cp, idx) => {
+            if(playerGroup.position.distanceTo(cp.position) < 5 && idx > stage) {
+                stage = idx; spawn.copy(cp.position).y += 5;
+                if(cpSound.buffer) cpSound.play();
+                document.getElementById('bar-fill').style.width = ((stage+1)/TOTAL_STAGES*100) + '%';
+                document.getElementById('bar-text').innerText = `Level: ${stage+1} / 500`;
+                document.getElementById('stage-display').innerText = `STAGE ${stage+1}`;
+            }
+        });
+
+        killBricks.forEach(k => { if(pBox.intersectsBox(new THREE.Box3().setFromObject(k))) playerGroup.position.copy(spawn); });
+        if(playerGroup.position.y < -40) playerGroup.position.copy(spawn);
+
+        pivot.position.lerp(playerGroup.position, 0.2);
+        renderer.render(scene, camera);
+    }
+    loop();
+</script>
+</body>
+</html>
