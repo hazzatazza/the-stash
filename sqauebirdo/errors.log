@@ -1,8 +1,0 @@
-[2026-05-09T10:45:19.012Z] Fetch failed (400) for https://accounts.google.com/gsi/button?theme=outline&shape=pill&size=large&logo_alignment=center&width=358&is_fedcm_supported=true&client_id=492838575572-tsmmf0abrjagqgoasumdrrm3eoias0ie.apps.googleusercontent.com&iframe_id=gsi_467256_200961&cas=Lk5gVkWbcPw3mASZlvk8Jq6oKeSB5jDzSxcqmluGakk
-Unknown error
-
-[2026-05-09T10:45:19.020Z] Fetch failed (400) for https://accounts.google.com/gsi/status?client_id=492838575572-tsmmf0abrjagqgoasumdrrm3eoias0ie.apps.googleusercontent.com&cas=Lk5gVkWbcPw3mASZlvk8Jq6oKeSB5jDzSxcqmluGakk&bs=mVBUzbWkzyKS9Z8grABxV4FgpT%2BeA0PPK3sP7q9FpdA&has_opted_out_fedcm=false
-Unknown error
-
-[2026-05-09T10:45:19.297Z] Fetch failed (400) for https://idx.liadm.com/idex/prebid/84896?duid=0f1851717525--01kjq4s4dpt1z2xkdnb4tebb9z&cd=.crazygames.com&pu=https%3A%2F%2Fwww.crazygames.com&resolve=nonId&resolve=uid2&resolve=pubmatic&resolve=magnite&resolve=index&resolve=sharethrough&resolve=thetradedesk&resolve=triplelift&resolve=medianet
-Unknown error
