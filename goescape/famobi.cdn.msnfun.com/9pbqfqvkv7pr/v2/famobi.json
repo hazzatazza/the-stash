@@ -1,0 +1,63 @@
+{
+  "gameIdOnPortal": "9PBQFQVKV7PR",
+  "toolGameId": "3d3AuY4FvGCwtzapBDRl",
+  "gameId": "go-escape",
+  "name": "Famobi Go Escape!",
+  "version": "3.0.0",
+  "exportedAt": "2025-12-03T18:24:01.922Z",
+  "features": {
+    "audio": true,
+    "copyright": true,
+    "credits": true,
+    "pause": true,
+    "progress": true,
+    "score": true,
+    "tutorial": true,
+    "version": true,
+    "visibilitychange": true,
+    "iap": true,
+    "home": true,
+    "privacy": true
+  },
+  "ads": {
+    "initial": {
+      "retry": 2000,
+      "timeout": 250,
+      "preload": 250,
+      "enabled": false
+    },
+    "interstitial": {
+      "preload": 250,
+      "retry": 2000,
+      "timeout": 250,
+      "cooldown": 60,
+      "enabled": true,
+      "placement": "breaks",
+      "eventIds": [
+        "break:result"
+      ]
+    },
+    "rewarded": {
+      "retry": 2000,
+      "timeout": 250,
+      "enabled": true,
+      "preload": 500,
+      "eventIds": [
+        "button:dailygift:double",
+        "button:result:skiplevel",
+        "button:result:gems"
+      ]
+    },
+    "banner": {
+      "retry": 2000,
+      "timeout": 250,
+      "enabled": false,
+      "preload": 250
+    }
+  },
+  "storage": {
+    "shouldCompress": false,
+    "isLegacyMode": false
+  },
+  "microsoftStart": {}
+}
