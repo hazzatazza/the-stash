@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<VAST xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="vast.xsd"
+	version="4.0">
+	<Ad id="9e1cf874-f355-4d42-951f-0e83789e48fe">
+		<InLine>
+			<AdSystem>Poki</AdSystem>
+			<AdTitle>Poki</AdTitle>
+			<Impression id="poki-house"></Impression>
+			<Creatives>
+				<Creative id="9e1cf874-f355-4d42-951f-0e83789e48fe" sequence="1">
+					<Linear>
+						<Duration>00:00:11</Duration>
+						<MediaFiles>
+							<MediaFile delivery="progressive" width="640" height="360"
+								type="video/mp4" bitrate="500" scalable="true"
+								maintainAspectRatio="true">
+								<![CDATA[https://v.poki-cdn.com/c35e99ff-d097-45e0-941a-e7294b1861d0/advertisement.h264_low.mp4]]>
+							</MediaFile>
+							<MediaFile delivery="progressive" width="854" height="480"
+								type="video/mp4" bitrate="700" scalable="true"
+								maintainAspectRatio="true">
+								<![CDATA[https://v.poki-cdn.com/c35e99ff-d097-45e0-941a-e7294b1861d0/advertisement.h264_medium.mp4]]>
+							</MediaFile>
+							<MediaFile delivery="progressive" width="1280" height="720"
+								type="video/mp4" bitrate="1500" scalable="true"
+								maintainAspectRatio="true">
+								<![CDATA[https://v.poki-cdn.com/c35e99ff-d097-45e0-941a-e7294b1861d0/advertisement.h264_high.mp4]]>
+							</MediaFile>
+							<MediaFile delivery="progressive" width="640" height="360"
+								type="video/mp4" bitrate="500" scalable="true"
+								maintainAspectRatio="true" codec="H.264">
+								<![CDATA[https://v.poki-cdn.com/c35e99ff-d097-45e0-941a-e7294b1861d0/advertisement.h264_low.mp4]]>
+							</MediaFile>
+							<MediaFile delivery="progressive" width="854" height="480"
+								type="video/mp4" bitrate="700" scalable="true"
+								maintainAspectRatio="true" codec="H.264">
+								<![CDATA[https://v.poki-cdn.com/c35e99ff-d097-45e0-941a-e7294b1861d0/advertisement.h264_medium.mp4]]>
+							</MediaFile>
+							<MediaFile delivery="progressive" width="1280" height="720"
+								type="video/mp4" bitrate="1500" scalable="true"
+								maintainAspectRatio="true" codec="H.264">
+								<![CDATA[https://v.poki-cdn.com/c35e99ff-d097-45e0-941a-e7294b1861d0/advertisement.h264_high.mp4]]>
+							</MediaFile>
+						</MediaFiles>
+					</Linear>
+				</Creative>
+			</Creatives>
+		</InLine>
+	</Ad>
+</VAST>
