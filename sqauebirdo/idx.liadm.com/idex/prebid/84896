@@ -1,0 +1,1 @@
+{"errors":[{"httpStatus":400,"message":"No origin header found.","errorCode":"bad_request"}]}
