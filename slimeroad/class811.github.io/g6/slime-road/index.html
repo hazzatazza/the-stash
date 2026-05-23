@@ -6,6 +6,19 @@
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 
 	<title>Slime Road</title>
+
+	<script>
+    // Mute annoying alert boxes from older Unity loaders
+    window.alert = (function(oldAlert) {
+        return function(message) {
+            if (message.indexOf("Uncaught SyntaxError") !== -1 || message.indexOf("Unexpected token") !== -1) {
+                console.warn("Suppressed Unity alert: " + message);
+            } else {
+                oldAlert(message);
+            }
+        };
+    })(window.alert);
+</script>
 	<meta name="robots" content="noindex,nofollow" />
 	<script>
 		window.config = {
