@@ -1,0 +1,390 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Suika Game - Pro Edition</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/matter-js/0.19.0/matter.min.js"></script>
+    <style>
+        body { 
+            margin: 0; 
+            background-color: #d28c46; 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            height: 100vh; 
+            width: 100vw;
+            overflow: hidden; 
+            font-family: 'Arial Rounded MT Bold', sans-serif;
+            /* Prevents pull-to-refresh and scrolling while playing */
+            touch-action: none; 
+        }
+
+        #scaler {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            gap: 50px; 
+            transform-origin: center center;
+            transition: transform 0.1s ease-out;
+            will-change: transform;
+        }
+
+        #game-container { 
+            position: relative; 
+            border: 12px solid #f9e4a0; 
+            border-top: none;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 0 0 30px 30px;
+            overflow: hidden; 
+            width: 500px; 
+            height: 750px;
+            flex-shrink: 0; 
+        }
+
+        #danger-line {
+            position: absolute;
+            top: 95px; 
+            width: 100%;
+            height: 0px;
+            border-top: 2px dashed rgba(255, 255, 255, 0.6);
+            z-index: 1;
+        }
+
+        #drop-line {
+            position: absolute;
+            top: 80px;
+            width: 2px;
+            height: 100%;
+            border-left: 2px dashed rgba(255, 255, 255, 0.5);
+            pointer-events: none;
+            z-index: 1;
+            transform: translateX(-50%);
+        }
+
+        #cloud-sprite {
+            position: absolute;
+            top: 5px;
+            width: 130px; 
+            height: auto;
+            transform: translateX(-50%);
+            pointer-events: none;
+            z-index: 5;
+        }
+
+        canvas { position: relative; z-index: 10; }
+
+        .bubble {
+            width: 200px;
+            height: 200px;
+            background: radial-gradient(circle at 30% 30%, rgba(255, 220, 150, 0.9), rgba(255, 140, 50, 0.6));
+            border: 4px solid rgba(255, 255, 255, 0.8);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            color: #ffffff;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            box-shadow: inset -10px -10px 30px rgba(180, 80, 0, 0.3), 0 10px 20px rgba(0,0,0,0.2);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .bubble::before {
+            content: '';
+            position: absolute;
+            top: 15%; left: 20%;
+            width: 50px; height: 25px;
+            background: rgba(255, 255, 255, 0.4);
+            border-radius: 50%;
+            transform: rotate(-25deg);
+        }
+
+        #score { font-size: 50px; line-height: 1; margin: 5px 0; }
+        .label-text { font-size: 24px; font-weight: bold; }
+        .sub-label { font-size: 14px; opacity: 0.9; margin-top: 5px; }
+
+        #game-over-ui {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.85);
+            display: none;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            z-index: 100;
+            color: white;
+            text-align: center;
+        }
+
+        #restart-btn {
+            padding: 15px 40px;
+            font-size: 22px;
+            background: #ff8c32;
+            color: white;
+            border: none;
+            border-radius: 50px;
+            cursor: pointer;
+            margin-top: 20px;
+            font-family: inherit;
+            box-shadow: 0 5px 0 #b45000;
+        }
+
+        .evolution-guide {
+            width: 200px;
+            background: rgba(255,255,255,0.2);
+            padding: 15px;
+            border-radius: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            text-align: center;
+            color: white;
+            flex-shrink: 0;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="scaler">
+        <div class="bubble">
+            <div class="label-text">Score</div>
+            <div id="score">0</div>
+            <div class="sub-label">BEST SCORE</div>
+            <div id="best-score" style="font-size: 20px;">0</div>
+        </div>
+
+        <div id="game-container">
+            <div id="danger-line"></div>
+            <div id="drop-line"></div>
+            <img id="cloud-sprite" src="cloud.png" alt="Cloud">
+            
+            <div id="game-over-ui">
+                <h1>GAME OVER</h1>
+                <p>Score: <span id="final-score">0</span></p>
+                <button id="restart-btn" onclick="location.reload()">TRY AGAIN</button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 20px;">
+            <div class="bubble">
+                <div class="label-text" style="margin-bottom: 10px;">Next</div>
+                <canvas id="next-fruit-canvas" width="100" height="100"></canvas>
+            </div>
+            <div class="evolution-guide">
+                <div style="margin-bottom: 10px; font-weight: bold;">Evolution Guide</div>
+                <img src="evolution.png" style="width: 100%;">
+            </div>
+        </div>
+    </div>
+
+<script>
+const bgm = new Audio('Cat - tibita.mp3');
+bgm.loop = true;
+bgm.volume = 0.5;
+
+const dropSound = new Audio('drop.wav');
+const popSound = new Audio('pop.wav');
+
+// Audio activation for both click and touch
+const startAudio = () => {
+    if (bgm.paused) bgm.play().catch(e => console.log("Audio blocked"));
+    window.removeEventListener('mousedown', startAudio);
+    window.removeEventListener('touchstart', startAudio);
+};
+window.addEventListener('mousedown', startAudio);
+window.addEventListener('touchstart', startAudio);
+
+const { Engine, Render, Runner, World, Bodies, Body, Events, Composite } = Matter;
+const engine = Engine.create();
+const world = engine.world;
+const width = 500;
+const height = 750;
+const GAP_ADJUSTER = 1.25;
+const DANGER_Y = 95; 
+
+let score = 0;
+let bestScore = localStorage.getItem('suikaBestScore') || 0;
+document.getElementById('best-score').innerText = bestScore;
+
+function handleResize() {
+    const scaler = document.getElementById('scaler');
+    const container = document.body;
+    const targetWidth = 1100;
+    const targetHeight = 850; 
+    const scaleX = container.clientWidth / targetWidth;
+    const scaleY = container.clientHeight / targetHeight;
+    const finalScale = Math.min(scaleX, scaleY, 1); 
+    scaler.style.transform = `scale(${finalScale})`;
+}
+
+window.addEventListener('resize', handleResize);
+handleResize();
+
+const render = Render.create({
+    element: document.getElementById('game-container'),
+    engine: engine,
+    options: { width, height, wireframes: false, background: 'transparent' }
+});
+
+Render.run(render);
+Runner.run(Runner.create(), engine);
+
+const FRUIT_DATA = [
+    { radius: 22, img: 'コスチューム1.png' },
+    { radius: 32, img: 'いちご.png' },
+    { radius: 42, img: 'ぶどう.png' },
+    { radius: 52, img: 'デコポン.png' },
+    { radius: 65, img: '柿.png' },
+    { radius: 78, img: 'りんご.png' },
+    { radius: 90, img: '梨.png' },
+    { radius: 110, img: 'もも.png' },
+    { radius: 130, img: 'パイナップル.png' },
+    { radius: 155, img: 'メロン.png' },
+    { radius: 190, img: 'スイカ.png' }
+];
+
+World.add(world, [
+    Bodies.rectangle(width/2, height + 25, width, 50, { isStatic: true }),
+    Bodies.rectangle(-25, height/2, 50, height, { isStatic: true }),
+    Bodies.rectangle(width + 25, height/2, 50, height, { isStatic: true })
+]);
+
+let currentFruit = null;
+let nextFruitIndex = Math.floor(Math.random() * 4);
+let canDrop = true;
+let isGameOver = false;
+let gameOverTimer = null;
+
+function createFruit(x, y, index, isStatic = false) {
+    const data = FRUIT_DATA[index];
+    const scaleFactor = (data.radius * 2 * GAP_ADJUSTER) / 256;
+    
+    const fruit = Bodies.circle(x, y, data.radius, {
+        label: "fruit_" + index,
+        restitution: 0.4, 
+        friction: 0.005,  
+        frictionStatic: 0.001,
+        frictionAir: 0.01,
+        isStatic: isStatic,
+        render: { 
+            sprite: { 
+                texture: data.img, 
+                xScale: scaleFactor, 
+                yScale: scaleFactor 
+            } 
+        }
+    });
+    fruit.fruitIndex = index;
+    return fruit;
+}
+
+function updateNextPreview() {
+    const canvas = document.getElementById('next-fruit-canvas');
+    const ctx = canvas.getContext('2d');
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const img = new Image();
+    img.src = FRUIT_DATA[nextFruitIndex].img;
+    img.onload = () => {
+        const size = 70; 
+        ctx.drawImage(img, (canvas.width-size)/2, (canvas.height-size)/2, size, size);
+    };
+}
+
+function spawnFruit() {
+    if(isGameOver) return;
+    const index = nextFruitIndex;
+    nextFruitIndex = Math.floor(Math.random() * 4);
+    updateNextPreview();
+    currentFruit = createFruit(width / 2, 80, index, true);
+    World.add(world, currentFruit);
+    canDrop = true;
+}
+
+// SHARED MOVEMENT LOGIC
+function moveInput(clientX) {
+    if(isGameOver || !currentFruit || !currentFruit.isStatic) return;
+    
+    const rect = document.getElementById('game-container').getBoundingClientRect();
+    const style = window.getComputedStyle(document.getElementById('scaler'));
+    const matrix = new WebKitCSSMatrix(style.transform);
+    const currentScale = matrix.a;
+
+    let x = (clientX - rect.left) / currentScale;
+    x = Math.max(25, Math.min(width - 25, x));
+    
+    document.getElementById('cloud-sprite').style.left = x + "px";
+    document.getElementById('drop-line').style.left = x + "px";
+
+    const r = FRUIT_DATA[currentFruit.fruitIndex].radius;
+    Body.setPosition(currentFruit, { x: Math.max(r, Math.min(width - r, x)), y: 80 });
+}
+
+// SHARED DROP LOGIC
+function dropInput() {
+    if (currentFruit && canDrop && !isGameOver) {
+        dropSound.currentTime = 0;
+        dropSound.play();
+        canDrop = false;
+        Body.setStatic(currentFruit, false);
+        setTimeout(spawnFruit, 800);
+    }
+}
+
+// MOUSE EVENTS
+window.addEventListener('mousemove', (e) => moveInput(e.clientX));
+window.addEventListener('click', dropInput);
+
+// TOUCH EVENTS (MOBILE)
+window.addEventListener('touchmove', (e) => {
+    moveInput(e.touches[0].clientX);
+}, { passive: false });
+
+window.addEventListener('touchend', (e) => {
+    dropInput();
+});
+
+Events.on(engine, 'collisionStart', (event) => {
+    event.pairs.forEach((pair) => {
+        const { bodyA, bodyB } = pair;
+        if (bodyA.label && bodyA.label === bodyB.label && !bodyA.isStatic && !bodyB.isStatic) {
+            const index = bodyA.fruitIndex;
+            if (index < FRUIT_DATA.length - 1) {
+                popSound.currentTime = 0;
+                popSound.play();
+                const midX = (bodyA.position.x + bodyB.position.x) / 2;
+                const midY = (bodyA.position.y + bodyB.position.y) / 2;
+                World.remove(world, [bodyA, bodyB]);
+                World.add(world, createFruit(midX, midY, index + 1));
+                score += (index + 1) * 10;
+                document.getElementById('score').innerText = score;
+                if(score > bestScore) {
+                    bestScore = score;
+                    localStorage.setItem('suikaBestScore', bestScore);
+                    document.getElementById('best-score').innerText = bestScore;
+                }
+            }
+        }
+    });
+});
+
+Events.on(engine, 'afterUpdate', () => {
+    if(isGameOver) return;
+    const fruits = Composite.allBodies(world).filter(b => b.label.includes('fruit') && !b.isStatic);
+    let isOverflowing = fruits.some(f => (f.position.y - f.circleRadius) < DANGER_Y);
+    if (isOverflowing) {
+        if (!gameOverTimer) {
+            gameOverTimer = setTimeout(() => {
+                isGameOver = true;
+                document.getElementById('final-score').innerText = score;
+                document.getElementById('game-over-ui').style.display = 'flex';
+            }, 2000);
+        }
+    } else {
+        clearTimeout(gameOverTimer);
+        gameOverTimer = null;
+    }
+});
+
+spawnFruit();
+</script>
+</body>
+</html>
