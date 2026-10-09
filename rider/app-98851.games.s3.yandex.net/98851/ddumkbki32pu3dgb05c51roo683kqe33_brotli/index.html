@@ -38,7 +38,9 @@
 			-ms-touch-action: none;
 		}
     </style>
-	<script src="/sdk.js"></script>
+	
+	<!-- Mock Yandex SDK -->
+	<script src="yandex-mock.js"></script>
 
 </head> 
  
@@ -79,7 +81,10 @@
 	<!-- Construct 2 exported games require jQuery. -->
 	<script src="jquery-2.1.1.min.js"></script>
 
-	<script src="//cdn.kiz10.com/template/plugins/md5.pack.js" type="text/javascript"></script>
+	<script>
+	  window.isIframe = true;
+	  window.Kiz10Ready = true;
+	</script>
 	
     <!-- The runtime script.  You can rename it, but don't forget to rename the reference here as well.
     This file will have been minified and obfuscated if you enabled "Minify script" during export. -->
@@ -127,4 +132,4 @@
 		};
     </script>
 </body> 
-</html> 
+</html>
