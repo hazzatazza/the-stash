@@ -1,0 +1,1 @@
+chrome-extension://djdcbmfacaaocoomokenoalbomllhnko/src/shared/message_types.js

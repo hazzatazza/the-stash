@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en-us">
+
+<head>
+  <title>Stacky Bird</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  
+  <link rel="stylesheet" href="assets/css/eurostile-extended.css">
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/main.min.css?v=1.0.5">
+  <link rel="stylesheet" href="assets/css/style.css?v=1.0.5">
+
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-MM9W5MYTQP"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag() { dataLayer.push(arguments); }
+    gtag('js', new Date());
+    gtag('config', 'G-MM9W5MYTQP');
+  </script>
+  
+  <script src="assets/js/analyticsWebPlugin.js"></script>
+
+  <script src="assets/js/googleAdsApiPlugin.js"></script>
+  <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-7799788185947239" crossorigin="anonymous"></script>
+  <script>
+    window.adsbygoogle = window.adsbygoogle || [];
+    var adBreak = adConfig = function(o) { adsbygoogle.push(o); }
+  </script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.11.1/firebase-analytics-compat.js"></script>
+
+  <script src="TemplateData/UnityProgress.js"></script>
+  <script src="Build/20986a4044eaa8551db6be07233cc1d9.js"></script>
+
+  <script>
+    var unityInstance = UnityLoader.instantiate("gameContainer", "Build/61df67ed8b648119f3a95eaa8e68b513.json", {
+      onProgress: UnityProgress
+    });
+
+    function OnUnityReady() {
+      if (unityInstance) {
+        unityInstance.SendMessage("LocalisationManager", "ChangeCurrentLanguage", "en");
+      }
+    };
+  </script>
+
+  <style>
+    /* Fullscreen Game Setup */
+    body, html { background-color: #000; margin: 0; padding: 0; overflow: hidden; height: 100%; width: 100%; }
+    #main { height: 100%; width: 100%; display: flex; flex-direction: column; }
+    .game-section { flex-grow: 1; display: flex; justify-content: center; align-items: center; }
+    .webgl-wrapper, .webgl-content, #gameContainer { width: 100% !important; height: 100% !important; }
+
+    /* Hiding the "Junk" but keeping the IDs so scripts don't crash */
+    #otherAppIcons, #aboutGame, #gameInfo, .navbar, .play-more-btn { display: none !important; }
+    
+    /* These containers stay in the code so 'style' errors don't happen, but they are invisible */
+    .inline-ads-160x600, #stackybird-io_728x90, #mainFooter, #storeLinks {
+        visibility: hidden !important;
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+        overflow: hidden !important;
+        pointer-events: none !important;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="main">
+    <nav class="navbar" style="display:none;"></nav>
+
+    <div class="game-section">
+      <div class="inline-ads-160x600"><ins class="adsbygoogle"></ins></div>
+      
+      <div class="webgl-wrapper">
+        <div class="webgl-content">
+          <div id="gameContainer"></div>
+          <ins id="stackybird-io_728x90" class="adsbygoogle"></ins>
+        </div>
+      </div>
+
+      <div class="inline-ads-160x600"><ins class="adsbygoogle"></ins></div>
+    </div>
+
+    <div id="mainFooter" style="display:none;">
+        <div id="storeLinks"></div>
+    </div>
+  </div>
+
+  <script src="assets/js/lodash.custom.min.js"></script>
+  <script src="assets/js/app.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.min.js"></script>
+</body>
+
+</html>
