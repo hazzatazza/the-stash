@@ -1,0 +1,41 @@
+<!-- 1758980801283 -->
+<html>
+<head>
+    <script src="./cloner-v3-3.js"></script>
+<script>
+if ("serviceWorker" in navigator) {
+   navigator.serviceWorker.register("./cloner-sw-v1-1.js?/famobi=cmug/8ball-pool=8-ball-pool/");
+   navigator.serviceWorker.register= async function() {
+       return Promise.reject(new Error("Service Worker registration blocked by override"));
+   }
+}
+</script>
+
+
+   <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+   <meta content="utf-8" http-equiv="encoding">
+
+   <title>Billiard Blitz Challenge</title>
+
+   <script>
+      window.famobi_gameID = "8-ball-pool"; // the actual GAMEID is added to the final version by Famobi
+      window.famobi_gameJS = ['js/all.js',
+          function() {
+              // start the game
+              //console.log("Starting game");
+          }
+      ];
+      (function (document, url, fgJS, firstJS) {
+        fgJS = document.createElement('script');
+        firstJS = document.getElementsByTagName('script')[0];
+        fgJS.src = url + encodeURIComponent(document.location.href);
+        firstJS.parentNode.insertBefore(fgJS, firstJS);
+      })(document, './patch/famobi/v1.js?/html5games/gameapi/v1.js?e=');
+   </script>
+</head>
+<body style= "margin: 0px; padding: 0px; overflow: hidden;">
+  <center>
+      <div id="mygame"></div>
+  </center>
+</body>
+</html>
