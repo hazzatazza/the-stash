@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="en">
+
+        <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+        <meta http-equiv="pragma" content="no-cache"/>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name ="viewport" content="width=device-width, minimal-ui, initial-scale=1, maximum-scale=1.0" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+	<meta name="msapplication-tap-highlight" content="no"/>    
+        <meta charset="utf-8"/>
+	<meta name="MobileOptimized" content="480">
+	<meta name="HandheldFriendly" content="true">
+
+        <title>Swing Copters</title>
+        <style>
+            body {
+		background: #222;
+              color:#cccccc;
+              margin: 0px;
+              padding: 0px;
+              border: 0px;
+            }
+            canvas {
+                      image-rendering: optimizeSpeed;
+                      -webkit-interpolation-mode: nearest-neighbor;
+                      -ms-touch-action: none;
+                      margin: 0px;
+                      padding: 0px;
+                      border: 0px;
+            }
+            :-webkit-full-screen #canvas {
+                 width: 100%;
+                 height: 100%;
+            }
+            div.gm4html5_div_class
+            {
+              margin: 0px;
+              padding: 0px;
+              border: 0px;
+            }
+            /* START - Login Dialog Box */
+            div.gm4html5_login
+            {
+                 padding: 20px;
+                 position: absolute;
+                 border: solid 2px #000000;
+                 background-color: #404040;
+                 color:#00ff00;
+                 border-radius: 15px;
+                 box-shadow: #101010 20px 20px 40px;
+            }
+            div.gm4html5_cancel_button
+            {
+                 float: right;
+            }
+            div.gm4html5_login_button
+            {
+                 float: left;
+            }
+            div.gm4html5_login_header
+            {
+                 text-align: center;
+            }
+            /* END - Login Dialog Box */
+            :-webkit-full-screen {
+               width: 100%;
+               height: 100%;
+            }
+        </style>
+    </head>
+
+    <body onload="setTimeout(function() {window.scrollTo(0,1);}, 1);">
+	<script id='LeChuckAPIjs' src="https://ssl.minijuegosgratis.com/lechuck/js/latest.js"></script>
+ 	<script type='text/javascript'>
+         lechuck = new LeChuckAPI({});
+        </script>
+<div class="gm4html5_div_class" id="gm4html5_div_id">
+        <img src="game/splash.png" id="GM4HTML5_loadingscreen" alt="Loading... Please wait" style="display:block; position:absolute; left:0px; top:0px;"/>
+<img src="game/loadbar.png" id="loadbar" style="display:none; position:absolute; left:79px; top:416px;"/>            
+<canvas id="canvas" width="480" height="700">
+               <p>Your browser doesn't support HTML5 canvas.</p>
+            </canvas>
+        </div>
+		<script type="text/javascript">
+			loadbarobj = document.getElementById("loadbar");
+			bar_img_w = 323;
+			bar_img_h = 46;
+			bar_img_x = 79;
+			bar_img_y = 416;			
+                        var loadimgobj = document.getElementById("GM4HTML5_loadingscreen");
+			var room_width  = 480;
+			var room_height = 700;
+			var ratio = (room_height/room_width);
+			if (typeof(window.innerWidth)=='number') {
+				browser_width = window.innerWidth;
+				browser_height = window.innerHeight;
+			} else if (document.documentElement&&document.documentElement.clientWidth) {
+				browser_width = document.documentElement.clientWidth;
+				browser_height = document.documentElement.clientHeight;
+			} else if (document.body&&document.body.clientWidth) {
+				browser_width = document.body.clientWidth;
+				browser_height = document.body.clientHeight;
+			}
+			var multi = (browser_height / room_height);
+			var new_width = (room_width * multi);
+			var new_height = browser_height;
+			if (new_width > browser_width) {
+				multi = (browser_width / room_width);
+				new_width = (room_width * multi);
+				new_height = (room_height * multi);
+			}
+			loadimgobj.style.width = new_width+'px';
+			loadimgobj.style.height = new_height+'px';
+			loadimgobj.style.left = browser_width/2-new_width/2+"px";
+			loadimgobj.style.top = browser_height/2-new_height/2+"px";
+		</script>
+            </canvas>
+        </div>
+
+        <!-- Run the game code -->
+        <script type="text/javascript" src="game/SwingCopters_Miniplay.js?SSIZB=1714587456"></script>
+    </body>
+</html>

@@ -1,0 +1,1 @@
+var _0x4a46=["\x6C\x6F\x67","\x70\x75\x74","\x73\x74\x61\x74"];function miniplay_SendStats(_0x400fx2,_0x400fx3){lechuck[_0x4a46[2]][_0x4a46[1]](function (_0x400fx4){console[_0x4a46[0]](_0x400fx4);} ,_0x400fx2,_0x400fx3);} ;
