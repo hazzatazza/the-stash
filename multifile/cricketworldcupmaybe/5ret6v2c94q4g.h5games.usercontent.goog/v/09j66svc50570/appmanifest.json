@@ -1,0 +1,37 @@
+{
+	"name": "cricket world cup",
+	"short_name": "cricket world cup",
+	"description": "\"It's cricket time and what could be better than to have a cool cricket game on this cricket fever occasion?  CPL tournament is for cricket lovers. With great graphics and awesome sounds effects, you gonna love this. There are 2 modes.  Prepare yourself for a big CPL Tournament while playing single matches mode. So wear your helmet & pad up to improve your batting skills.   After that when you get pro in that, choose your favorite CPL  team and get started competing with other teams. You can play 2, 5 or 10 overs. Just tap on the screen to hit a shot. You have to win 4 matches to reach the quarterfinal. every match, you have to chase a target of specific balls. Win the CPL tournament by hitting some cool shots.   \"So, Grab your bat and start hitting big sixes because it's time to play CPL tournament.\"",
+	"start_url": "index.html",
+	"display": "fullscreen",
+	"orientation": "landscape",
+	"background_color": "#ffffff",
+	"icons": [
+		{
+			"src": "icons/icon-16.png",
+			"sizes": "16x16",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-32.png",
+			"sizes": "32x32",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-114.png",
+			"sizes": "114x114",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-128.png",
+			"sizes": "128x128",
+			"type": "image/png"
+		},
+		{
+			"src": "icons/icon-256.png",
+			"sizes": "256x256",
+			"type": "image/png"
+		}
+	],
+	"screenshots": []
+}
