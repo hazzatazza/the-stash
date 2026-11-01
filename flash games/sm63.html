@@ -3,57 +3,10 @@
     <meta charset="utf-8" />
     <meta http-equiv="x-ua-compatible" content="ie=edge">
     <meta name="viewport" content="initial-scale=1, maximum-scale=1, user-scalable=no, shrink-to-fit=no" />
-    <style>
-        html, body {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            background-color: #000000;
-            overflow: hidden;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        
-        .game-container {
-            position: relative;
-            height: 100vh;
-            aspect-ratio: 4 / 3;
-        }
-
-        embed {
-            width: 100%;
-            height: 100%;
-        }
-
-        /* Adjust width here to cover less or more of the sides */
-        .bar-left, .bar-right {
-            position: absolute;
-            top: 0;
-            bottom: 0;
-            width: 0px; /* Reduced from 50px */
-            background-color: #000000;
-            z-index: 10;
-            pointer-events: none;
-        }
-
-        .bar-left {
-            left: 0;
-        }
-
-        .bar-right {
-            right: 0;
-        }
-    </style>
 </head>
 <body>
 <script src="ruffle/ruffle.js"></script>
 
-<div class="game-container">
-    <div class="bar-left"></div>
-    <div class="bar-right"></div>
-    <embed src="swf/supermario63.swf" width="100%" height="100%">
-</div>
+<embed src="swf/supermario63.swf" width="100%" height="100%">
 </body>
 </html>
