@@ -16,7 +16,6 @@
             align-items: center;
         }
         
-        /* Container that locks the game to its true 4:3 size and centers it */
         .game-container {
             position: relative;
             height: 100vh;
@@ -28,15 +27,15 @@
             height: 100%;
         }
 
-        /* Physical black cover bars on the left and right */
+        /* Adjust width here to cover less or more of the sides */
         .bar-left, .bar-right {
             position: absolute;
             top: 0;
             bottom: 0;
-            width: 50px; /* Adjust this width if needed */
+            width: 20px; /* Reduced from 50px */
             background-color: #000000;
             z-index: 10;
-            pointer-events: none; /* Allows clicks to pass through if needed */
+            pointer-events: none;
         }
 
         .bar-left {
