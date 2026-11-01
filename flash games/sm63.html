@@ -11,12 +11,50 @@
             height: 100%;
             background-color: #000000;
             overflow: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        
+        /* Container that locks the game to its true 4:3 size and centers it */
+        .game-container {
+            position: relative;
+            height: 100vh;
+            aspect-ratio: 4 / 3;
+        }
+
+        embed {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Physical black cover bars on the left and right */
+        .bar-left, .bar-right {
+            position: absolute;
+            top: 0;
+            bottom: 0;
+            width: 50px; /* Adjust this width if needed */
+            background-color: #000000;
+            z-index: 10;
+            pointer-events: none; /* Allows clicks to pass through if needed */
+        }
+
+        .bar-left {
+            left: 0;
+        }
+
+        .bar-right {
+            right: 0;
         }
     </style>
 </head>
 <body>
 <script src="ruffle/ruffle.js"></script>
 
-<embed src="swf/supermario63.swf" width="100%" height="100%" scale="showAll">
+<div class="game-container">
+    <div class="bar-left"></div>
+    <div class="bar-right"></div>
+    <embed src="swf/supermario63.swf" width="100%" height="100%">
+</div>
 </body>
 </html>
