@@ -1,0 +1,16 @@
+body{margin:0;padding:0;background-color:#000;color:#fff;}body>:not(div){display:none;}#gse-player{position:absolute;left:0;top:0;right:0;bottom:0;overflow:hidden;}@-webkit-keyframes gse-rotate{from{-webkit-transform:rotate(0deg);}to{-webkit-transform:rotate(360deg);}}@keyframes gse-rotate{0%{transform:rotateZ(0deg);}100%{transform:rotateZ(360deg);}}@-webkit-keyframes gse-webkit-rotate{from{-webkit-transform:rotateZ(0deg);}to{-webkit-transform:rotateZ(360deg);}}#gse-preloading{position:fixed;width:84px;height:84px;left:50%;top:50%;}#gse-preloading img{position:relative;width:84px;height:84px;left:-42px;top:-42px;}#gse-loading img{position:absolute;width:42px;height:42px;right:10px;bottom:10px;}#gse-preloading img,#gse-loading img{animation:gse-rotate 1s infinite linear;-webkit-animation:gse-webkit-rotate 1s infinite linear;}#gse-preloading,#gse-loading{visibility:visible;}#gse-preloading.gse-hidden,#gse-loading.gse-hidden{visibility:hidden;pointer-events:none;}
+/*
+     FILE ARCHIVED ON 08:01:26 May 08, 2017 AND RETRIEVED FROM THE
+     INTERNET ARCHIVE ON 10:09:51 Nov 02, 2026.
+     JAVASCRIPT APPENDED BY WAYBACK MACHINE, COPYRIGHT INTERNET ARCHIVE.
+
+     ALL OTHER CONTENT MAY ALSO BE PROTECTED BY COPYRIGHT (17 U.S.C.
+     SECTION 108(a)(3)).
+*/
+/*
+playback timings (ms):
+  capture_cache.get: 0.52
+  load_resource: 106.794
+  PetaboxLoader3.resolve: 37.556
+  PetaboxLoader3.datanode: 40.885
+*/
