@@ -1,0 +1,59 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#101e18" />
+    <link rel="icon" type="image/png" href="/favicon.png" />
+    <title>PREMIERSHIP SZN — PFL</title>
+    <script type="module" crossorigin src="/assets/index-Dxbi3txt.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CUyrSGZi.css">
+  </head>
+  <body>
+    <div id="app">
+      <main id="game-root" aria-label="Premiership SZN game field"></main>
+      <header class="topbar">
+        <div class="identity"><span class="eyebrow">PFL · PREMIERSHIP FOOTBALL LEAGUE</span><h1>PREMIERSHIP <em>SZN</em></h1></div>
+        <div class="scoreboard" aria-label="Scoreboard"><span class="broadcast-score-brand" id="broadcast-score-brand">PFL LIVE</span><span class="score-side home-side"><span class="home" id="score-home-name">ADE</span><strong id="home-score">0.0 (0)</strong></span><span class="score-middle"><span class="match-clock" id="match-clock">Q1 03:00</span><small id="score-margin">LEVEL</small></span><span class="score-side away-side"><strong id="away-score">0.0 (0)</strong><span class="away" id="score-away-name">WCE</span></span></div>
+        <div class="phase">EXHIBITION <span>·</span> MATCH DAY</div>
+      </header>
+      <div id="aim-status" class="aim-status" hidden aria-live="polite"><div class="aim-head"><strong id="aim-mode">KICK AIM</strong><span id="aim-power">0% POWER</span></div><div class="aim-meter"><span id="aim-power-fill"></span></div><small id="aim-landing">PREDICTED LANDING 6m</small><small id="aim-bonus">MAX 55m</small><div id="kick-selector" class="kick-selector" hidden aria-label="Set-shot kick type"><button id="kick-drop-punt" data-kick-type="drop punt" type="button">DROP PUNT</button><button id="kick-snap" data-kick-type="snap" type="button">SNAP</button><button id="kick-banana" data-kick-type="banana" type="button">BANANA</button><button id="kick-normal" type="button">NORMAL KICK</button></div><div id="curve-selector" class="curve-selector" hidden aria-label="Kick curve direction"><button id="curve-left" data-curve-sign="-1" type="button">↶ LEFT</button><button id="curve-right" data-curve-sign="1" type="button">RIGHT ↷</button></div><small id="set-shot-ready" hidden>BACKING UP TO SET · DRAG WHEN READY</small><small id="aim-instructions">HOLD LEFT CLICK · DRAG TO AIM · RELEASE TO SEND · ESC CANCEL</small></div>
+      <div id="set-shot-runup" class="set-shot-runup" hidden>SET SHOT · RUN-UP</div>
+      <div id="mark-status" class="mark-status" hidden><strong id="mark-label">MARK TAKEN</strong> <span>BACK UP TO SET · Q KICK · E HANDBALL · FORWARD/SIDEWAYS PLAY ON</span></div>
+      <div id="disposal-clock" class="disposal-clock" hidden aria-live="off"></div>
+      <div id="play-event" class="play-event" hidden aria-live="polite"></div>
+      <div id="attendance-card" class="attendance-card" hidden aria-live="polite"><small>ATTENDANCE</small><strong>0</strong></div>
+      <div id="stadium-announcement" class="stadium-announcement" hidden aria-live="polite"></div>
+      <div id="broadcast-layer" class="broadcast-layer"><section id="broadcast-intro" class="broadcast-intro" hidden aria-label="Match introduction"></section><div id="broadcast-ribbon" class="broadcast-ribbon" hidden aria-live="polite"></div><div id="broadcast-player" class="broadcast-player" hidden></div><section id="broadcast-replay" class="broadcast-replay" hidden aria-label="Live match replay"><div class="broadcast-replay-card"><div class="broadcast-replay-top"><strong>↺ PFL REPLAY</strong><span class="broadcast-replay-label"></span><span class="broadcast-camera-label">WIDE BROADCAST</span></div><div class="broadcast-replay-actions"><button type="button" data-broadcast-action="skip-replay">SKIP REPLAY · SPACE / ENTER</button></div></div></section></div>
+      <div id="quarter-intro" class="quarter-intro" hidden aria-live="polite"></div>
+      <section id="tutorial-overlay" class="tutorial-overlay" hidden aria-live="polite"></section>
+      <div id="career-save-alert" class="career-save-alert" hidden role="alert"></div>
+      <section id="feedback-panel" class="feedback-panel" hidden aria-label="Ideas and feedback"></section>
+      <section id="match-panel" class="match-panel" aria-live="polite"><div class="game-loading"><img src="/premiership-szn-artwork.png" alt="Premiership Szn"><span>LOADING PREMIERSHIP SZN…</span></div></section>
+      <section id="save-transfer-panel" class="save-transfer-panel" hidden role="dialog" aria-modal="true" aria-label="Save backup"><div class="save-transfer-card"><span class="match-kicker">PREMIERSHIP SZN</span><h2>SAVE BACKUP</h2><p>Export saves from the browser, then import that file here. Existing saves are kept when importing.</p><p id="web-save-warning" class="league-note" hidden>Browser saves stay on this device. Clearing this site’s data may delete them. Export a backup regularly.</p><div class="match-actions"><button type="button" data-save-action="export">EXPORT SAVES</button><button type="button" data-save-action="import">IMPORT BACKUP</button><button type="button" class="secondary" data-save-action="close">CLOSE</button></div><input id="save-transfer-file" type="file" accept=".json,application/json" hidden><p id="save-transfer-message" aria-live="polite"></p></div></section>
+      <section id="opposition-overlay" class="opposition-overlay" hidden aria-label="Opposition possession"><div class="sim-eyebrow">LIVE MATCH UPDATE</div><strong id="opposition-name">PERTH OUTLAWS POSSESSION</strong><ol id="sim-feed" aria-live="polite"></ol><div class="sim-footer"><span id="sim-count">PLAY 1 / 5</span><button id="sim-skip" type="button">FAST FORWARD »</button></div><div class="sim-track"><span id="sim-progress"></span></div></section>
+      <section id="sandbox-tools" class="sandbox-tools" hidden aria-label="Sandbox controls"><div class="sandbox-heading"><strong>SANDBOX</strong><span id="sandbox-counts">TEAMMATES 1/16 · DEFENDERS 0/16</span></div><p id="sandbox-hint">Choose a player type, then click the oval to place them.</p><div class="sandbox-actions"><button type="button" data-sandbox-action="teammate">+ TEAMMATE</button><button type="button" data-sandbox-action="defender">+ DEFENDER</button><button type="button" data-sandbox-action="move">MOVE PLAYERS</button><button type="button" data-sandbox-action="remove">REMOVE SELECTED</button><button type="button" data-sandbox-action="play">PLAY</button><button type="button" data-sandbox-action="reset-ball">RESET BALL</button><button type="button" data-sandbox-action="menu">MENU</button></div><small id="sandbox-selection">YOUR PLAYER · MIDFIELD</small></section>
+      <aside class="bottom-left" aria-label="Controls"><span class="panel-title">CONTROLS</span><div><kbd>W</kbd><kbd>A</kbd><kbd>S</kbd><kbd>D</kbd> / <kbd>↑</kbd><kbd>←</kbd><kbd>↓</kbd><kbd>→</kbd> Move / play on <span class="divider">·</span> <kbd>SHIFT</kbd> Sprint <span class="divider">·</span> <kbd>TAB</kbd> Switch</div><div><kbd>Q</kbd> Kick aim <span class="divider">·</span> <kbd>X</kbd> Snap <span class="divider">·</span> <kbd>C</kbd> Banana <span class="divider">·</span> <kbd>E</kbd> Handball</div><div><kbd>B</kbd> Bounce <span class="divider">·</span> <kbd>T</kbd> Smother <span class="divider">·</span> <kbd>ESC</kbd> Cancel / pause</div><div><kbd>R</kbd> Drop punt / cycle <span id="live-kick-style">DROP PUNT</span> <span class="divider">·</span> <kbd>Z</kbd> Auto camera</div></aside>
+      <div id="debug-panel" hidden aria-hidden="true"><div id="debug-content"></div><input id="flight-debug" type="checkbox"><input id="targets-debug" type="checkbox"><input id="roles-debug" type="checkbox"><input id="contest-debug" type="checkbox"><input id="formation-debug" type="checkbox"><input id="centre-debug" type="checkbox"><input id="mark-area-debug" type="checkbox"><input id="tackle-debug" type="checkbox"></div>
+      <div class="corner-mark">PFL / 01</div>
+    </div>
+    <script>
+      (() => {
+        let ready = false;
+        const failed = () => {
+          const loader = document.querySelector('#match-panel .game-loading');
+          if (ready || !loader) return;
+          loader.setAttribute('role', 'alert');
+          loader.textContent = 'PREMIERSHIP SZN COULD NOT LOAD. CHECK YOUR CONNECTION AND REFRESH.';
+        };
+        window.addEventListener('premiership:ready', () => { ready = true; }, { once: true });
+        window.addEventListener('error', event => {
+          if (event.target === window || event.target?.tagName === 'SCRIPT') failed();
+        }, true);
+        window.addEventListener('unhandledrejection', failed);
+        setTimeout(failed, 30000);
+      })();
+    </script>
+  <script type="module" src="https://static.cloudflareinsights.com/beacon.min.js/vce701823e78c4301a35b7e07294d87301792088814092" integrity="sha512-UKNk8GbxkABxKcXYuLkO16EleLGUkcvJWtpSNmExE0Too3ZaFAxTscNWEc1OdAv5/BikHawapSCaiD2XCmp+Bw==" data-cf-beacon='{"version":"2024.11.0","token":"b058eb33a3e846deacd025ce424d9dbe","r":1,"spa":2}' crossorigin="anonymous"></script>
+</body>
+</html>
