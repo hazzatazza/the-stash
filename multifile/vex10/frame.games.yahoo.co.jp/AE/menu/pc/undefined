@@ -1,0 +1,12 @@
+<link rel="stylesheet" href="https://s.yimg.jp/images/riff/3.4.0/css/riff-icon.min.css">
+<link rel="stylesheet" href="https://s.yimg.jp/images/games/api/menuView/1.0.1/ygames_menuView.css">
+<div id="yjg-menu">
+  <nav>
+    <ul class="yjg-menu-link">
+      <li><a class="arrowText casualIcon" href="https://games.yahoo.co.jp/play" target="_top">かんたんゲーム一覧へ</a></li>
+    </ul>
+    <ul class="yjg-menu-link yjg-menu-link-ygame">
+      <li><a class="arrowText ygamesIcon" href="https://games.yahoo.co.jp/" target="_top">Yahoo!ゲームへ</a></li>
+    </ul>
+  </nav>
+</div><!--/.yjg-menu -->

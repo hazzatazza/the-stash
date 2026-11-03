@@ -1,0 +1,199 @@
+html, body {
+  background: #ebebeb;
+  -webkit-text-size-adjust: 100%;
+}
+body {
+  padding: 5px;
+}
+.arrowText:after, .arrowText:before {
+  display: block;
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  content: "";
+}
+.arrowText:before {
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  right: 10px;
+  background: #32acff;
+}
+.arrowText:after {
+  -webkit-transform: rotate(45deg);
+  transform: rotate(45deg);
+  right: 13px;
+  background: #fff;
+}
+#yjg-menu {
+  width: 100%;
+  height: 100%;
+  font-size: 14px;
+  line-height: 1.2;
+  background: #ebebeb;
+  font-family: "Helvetica Neue",Helvetica,Arial,Verdana,Roboto,"Droid Sans","游ゴシック",YuGothic,"ヒラギノ角ゴ ProN W3","Hiragino Kaku Gothic ProN","メイリオ",Meiryo;
+}
+.yjg-menu-info {
+  margin: 5px 0 10px;
+  padding: 0;
+  background: #fff;
+  border-radius: 10px;
+  border: 1px solid #bdbdbd;
+}
+.yjg-menu-info dt {
+  display: none;
+}
+.yjg-menu-info dd {
+  position: relative;
+  margin: 0;
+  padding: 0;
+}
+.yjg-menu-info dd a,
+.yjg-menu-info dd p {
+  display: table;
+  table-layout: fixed;
+  width: 100%;
+  margin: 0;
+  padding: 8px 5px;
+  font-size: 14px;
+  line-height: 1.5;
+  text-decoration: none;
+}
+.yjg-menu-info dd a {
+  color: #32acff;
+}
+.yjg-menu-info dd p {
+  color: #333;
+}
+.yjg-menu-info .riff-Icon--infoCircle {
+  display: table-cell;
+  width: 35px;
+  padding-left: 5px;
+  color: #ffb931;
+  font-size: 24px;
+  vertical-align: middle;
+}
+.yjg-menu-info .yjg-menu-infoText {
+  display: table-cell;
+  width: 100%;
+  padding-right: 20px;
+  text-decoration: none;
+  vertical-align: middle;
+}
+.yjg-menu-link {
+  margin: 0 0 10px 0;
+  padding: 0;
+  border: 1px solid #bdbdbd;
+}
+.yjg-menu-link li {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+.yjg-menu-link li:last-child {
+  border: 0;
+}
+.yjg-menu-link li a {
+  display: block;
+  margin-left: 10px;
+  padding-left: 30px;
+  color: #32acff;
+  font-size: 14px;
+  line-height: 42px;
+  text-decoration: none;
+}
+.yjg-menu-text {
+  padding: 10px 5px;
+  font-size: 12px;
+  text-align: center;
+  color: #fff;
+  background: #797979;
+}
+.yjg-menu-link-partner {
+  margin-bottom: 5px;
+  border: 1px solid #797979;
+}
+.yjg-menu-link-partner dd {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+  background: #fff;
+  border-bottom: 1px solid #eee;
+}
+.yjg-menu-link-partner dd a {
+  display: block;
+  margin: 0;
+  padding-left: 10px;
+  color: #32acff;
+  font-size: 14px;
+  line-height: 36px;
+  text-decoration: none;
+}
+.yjg-menu-link-ygame {
+  margin: 10px 0;
+  border-top: 1px solid #bdbdbd;
+}
+.yjg-menu-ad {
+  margin: 0;
+  text-align: center;
+}
+.yjg-menu-ad p {
+  display: block;
+  width: 215px;
+  height: 75px;
+  box-sizing: border-box;
+  margin: 0 auto 5px;
+  padding: 0;
+}
+.yjg-menu-ad a {
+  display: block;
+}
+.yjg-menu-ad p img {
+  width: 100%;
+  vertical-align: middle;
+}
+.casualIcon {
+  background: url('https://s.yimg.jp/images/games/smartphone/img/icon_set_blue_04.png') -1px -720px no-repeat;
+  -webkit-background-size: 25px 1009px;
+  background-size: 25px 1009px;
+}
+.crownIcon {
+  background: url('https://s.yimg.jp/images/games/smartphone/img/icon-crown.png') 0px 10px no-repeat;
+  -webkit-background-size: 25px 18px;
+  background-size: 25px 18px;
+}
+.ygamesIcon {
+  background: url('https://s.yimg.jp/c/icon/s/bsc/2.0/games80.png') 0px 8px no-repeat;
+  -webkit-background-size: 25px 25px;
+  background-size: 25px 25px;
+}
+@media only screen and (min-width: 550px){
+  #yjg-menu {
+    display: table;
+    table-layout: fixed;
+  }
+  #yjg-menu nav {
+    display: table-cell;
+    width: 100%;
+  }
+  .yjg-menu-ad {
+    display: table-cell;
+    width: 223px;
+    padding: 5px 0 0 8px;
+    vertical-align: top;
+  }
+  .yjg-menu-ad p {
+    width: 100%;
+  }
+  .yjg-menu-ad p:first-child {
+    padding: 0 0 10px 0;
+  }
+}
+

@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge">
+    <meta id="viewport" name="viewport"
+        content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui, shrink-to-fit=no" />
+    <meta name="mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+
+    <title>Vex 9</title>
+
+    <link rel="icon" type="image/png" href="assets/icon.png">
+    <link rel="apple-touch-icon" type="image/png" href="assets/icon.png" />
+    <link rel="stylesheet" href="assets/css/app.css" type="text/css" />
+
+    <script src="libs/phaser.min.js" defer></script>
+    <script src="libs/SpinePlugin.min.js" defer></script>
+
+    <script type="text/javascript">
+        // =================================================================
+        // 🧼 EXTERMINADOR AGRESIVO DE SERVICE WORKERS (ANTI-CACHÉ) 🧼
+        // =================================================================
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                for (let registration of registrations) {
+                    registration.unregister();
+                }
+            }).catch(function (e) { console.log("SW bypass active"); });
+        }
+
+        // =================================================================
+        // 🧪 EL ANTÍDOTO UNIVERSAL POR PROTOTIPO (PARA TODOS LOS OBJETOS)
+        // =================================================================
+        try {
+            Object.defineProperty(Object.prototype, 'ASSET_LOCATION', {
+                get: function () { return "assets/"; },
+                set: function (v) { },
+                configurable: true
+            });
+            Object.defineProperty(Object.prototype, 'gmoEnabled', {
+                get: function () { return false; },
+                set: function (v) { },
+                configurable: true
+            });
+        } catch (e) { }
+
+        // =================================================================
+        // 🧱 EL MEGA-PROXY INTELIGENTE RECURSIVO (DESBLOQUEO DE INPUTS) 🧱
+        // =================================================================
+        const deepProxyHandler = {
+            get: function (target, prop) {
+                if (prop === 'ASSET_LOCATION') return "assets/";
+                if (prop === 'gmoEnabled') return false;
+
+                if (prop === 'Utils' || prop === 'config' || prop === 'settings' || prop === 'Constants' || prop === 'Hosts') {
+                    return new Proxy(function () { return false; }, deepProxyHandler);
+                }
+
+                return function () {
+                    // 🔥 TRUCO MAESTRO PARA addListeners 🔥
+                    // El juego pasa: addListeners(onPause, onResume, onMute, onUnmute)
+                    // Ejecutamos forzosamente el SEGUNDO argumento (onResume) para despertar el motor
+                    if (prop === 'addListeners' && arguments.length >= 2 && typeof arguments[1] === 'function') {
+                        console.log("🚀 Forzando el reanudado del motor de Phaser...");
+                        setTimeout(arguments[1], 0); // Ejecuta onResume() de inmediato
+                        return Promise.resolve(true);
+                    }
+
+                    // Para el resto de funciones estándar, disparamos los callbacks normales
+                    for (let arg of arguments) {
+                        if (typeof arg === 'function') {
+                            setTimeout(arg, 0);
+                        }
+                    }
+
+                    return Promise.resolve(true);
+                };
+            }
+        };
+        // 🧠 EL EXTERMINADOR INTELIGENTE AUTOMÁTICO
+        // Revisa cada 50ms si el loader existe y lo borra de raíz del mapa
+        var loaderKiller = setInterval(function () {
+            var badge = document.getElementById('loader');
+            if (badge) {
+                badge.remove(); // ¡Eliminado por completo del DOM!
+                console.log("💥 Loader interceptado y desintegrado de la pantalla");
+                clearInterval(loaderKiller); // Apagamos el bucle una vez cumplida la misión
+            }
+        }, 50);
+
+        // Generamos el clon inmune definitivo usando el handler correcto
+        const masterMock = new Proxy(function () { return false; }, deepProxyHandler);
+
+        // Inyectamos el escudo en todas las variables globales posibles
+        window._azerionIntegration = masterMock;
+        window._azerionIntegrationSDK = masterMock;
+        window.h5branding = masterMock;
+        window.gamedistribution = masterMock;
+        window.GD_OPTIONS = masterMock;
+        window.azerion = masterMock;
+        window.h = window.h || masterMock;
+
+        // =================================================================
+        // 🔓 FORCEJEO DE TECLADO INTERCEPTOR (F12 LIBRE SIEMPRE)
+        // =================================================================
+        window.addEventListener('keydown', function (e) {
+            if (e.keyCode === 123 || (e.ctrlKey && e.shiftKey && e.keyCode === 73)) {
+                e.stopPropagation();
+            }
+        }, true);
+        window.addEventListener('contextmenu', function (e) { e.stopPropagation(); }, true);
+    </script>
+</head>
+
+<body>
+    <div id="content"> </div>
+    <div id="loader">Loading...</div>
+    <div id="orientation"></div>
+
+    <script type="text/javascript">
+        var gameName = "vex9.min.js";
+        var azAdWrapper = window._azerionIntegration;
+        var _azFeedback = function () { };
+
+        function addScript(src, buster, callback) {
+            var s = document.createElement('script');
+            s.setAttribute('src', src + '?v=' + buster);
+            if (typeof callback === 'function') {
+                s.onload = callback;
+            }
+            document.body.appendChild(s);
+        }
+
+        // Carga forzada saltándose cachés antiguas
+        addScript('version.js', Date.now(), function () {
+            addScript(gameName, Date.now(), function () {
+                if (typeof Game !== 'undefined') {
+                    new Game();
+                } else {
+                    console.error("El motor no pudo inicializarse correctamente.");
+                }
+            });
+        });
+    </script>
+</body>
+
+</html>
