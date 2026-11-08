@@ -1,0 +1,1080 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Blobby.io</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      user-select: none;
+    }
+    html, body {
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background-color: #0b0f19;
+      color: #fff;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+    }
+    #game-container {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      overflow: hidden;
+      background: #f4f6fb;
+    }
+    canvas {
+      display: block;
+      width: 100vw;
+      height: 100vh;
+    }
+    /* Fullscreen Glassmorphism Overlay Menu */
+    .fullscreen-menu {
+      position: absolute;
+      inset: 0;
+      width: 100vw;
+      height: 100vh;
+      min-height: 100vh;
+      overflow-y: auto;
+      background:
+        radial-gradient(ellipse at 50% 0%, rgba(34, 197, 94, 0.20) 0%, transparent 42%),
+        radial-gradient(circle at 8% 85%, rgba(59, 130, 246, 0.16) 0%, transparent 30%),
+        radial-gradient(circle at 92% 80%, rgba(234, 179, 8, 0.13) 0%, transparent 28%),
+        linear-gradient(145deg, #0b1220 0%, #020617 72%);
+      backdrop-filter: blur(14px);
+      display: flex;
+      flex-direction: column;
+      align-items: stretch;
+      justify-content: center;
+      z-index: 100;
+      padding: clamp(14px, 3vh, 32px) clamp(14px, 4vw, 64px);
+    }
+
+    .menu-panel {
+      position: relative;
+      isolation: isolate;
+      background: linear-gradient(145deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.62));
+      border: 1px solid rgba(255, 255, 255, 0.13);
+      border-radius: 30px;
+      padding: clamp(22px, 4vh, 42px) clamp(18px, 4vw, 64px);
+      width: 100%;
+      max-width: 1500px;
+      min-height: min(88vh, 900px);
+      margin: auto;
+      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.12);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .menu-panel > h1 {
+      width: 100%;
+      text-align: center;
+      font-family: 'Chewy', cursive;
+      font-size: clamp(4.5rem, 12vw, 10rem);
+      line-height: 0.98;
+      letter-spacing: 1px;
+      color: #f8fafc;
+      margin: 0 0 8px;
+      padding: 0 8px;
+      background: linear-gradient(180deg, #fff9c2 0%, #fde047 42%, #f59e0b 100%);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      filter: drop-shadow(0 7px 0 rgba(120, 53, 15, 0.42)) drop-shadow(0 12px 24px rgba(234, 179, 8, 0.22));
+    }
+
+    .menu-panel > .sub {
+      font-size: clamp(12px, 1.2vw, 15px);
+      max-width: 760px;
+      line-height: 1.6;
+      margin-bottom: clamp(16px, 3vh, 30px);
+    }
+
+    .tab-bar,
+    .tab-content {
+      width: min(100%, 720px);
+    }
+
+    @media (max-width: 600px) {
+      .fullscreen-menu { padding: 10px; }
+      .menu-panel { min-height: calc(100vh - 20px); border-radius: 22px; padding: 24px 16px; }
+      .menu-panel > h1 { font-size: clamp(4rem, 18vw, 6rem); }
+      .grid-selector { flex-wrap: wrap; }
+      .theme-btn, .diff-btn { min-width: 28%; }
+    }
+
+    @media (max-height: 720px) {
+      .menu-panel { min-height: 0; }
+      .menu-panel > h1 { font-size: clamp(3.8rem, 9vw, 7rem); }
+    }
+
+    /* Tab Switcher Styling */
+    .tab-bar {
+      display: flex;
+      background: rgba(15, 23, 42, 0.8);
+      padding: 5px;
+      border-radius: 14px;
+      width: 100%;
+      margin-bottom: 24px;
+      border: 1px solid rgba(255, 255, 255, 0.05);
+    }
+    .tab-btn {
+      flex: 1;
+      padding: 10px;
+      border: none;
+      background: transparent;
+      color: #94a3b8;
+      font-weight: 800;
+      font-size: 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: all 0.25s ease;
+    }
+    .tab-btn.active {
+      background: #22c55e;
+      color: #022c10;
+      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
+    }
+
+    .tab-content {
+      width: 100%;
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Balanced two-column setup keeps the logo clear and gives each option room. */
+    .menu-panel {
+      justify-content: flex-start;
+      padding-top: clamp(22px, 3.5vh, 38px);
+      padding-bottom: clamp(22px, 3.5vh, 38px);
+    }
+    .menu-panel > h1 {
+      flex: 0 0 auto;
+      font-size: clamp(4.5rem, 9vw, 8.5rem);
+      margin-bottom: 4px;
+    }
+    .menu-panel > .sub { margin-bottom: 20px; }
+    .tab-bar { max-width: 1040px; margin-bottom: 20px; }
+    .tab-content { max-width: 1040px; }
+    .setup-grid {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+      gap: clamp(18px, 3vw, 42px);
+      align-items: start;
+      width: 100%;
+    }
+    .setup-column { min-width: 0; }
+    .setup-column .form-group { margin-bottom: 20px; }
+    .play-btn { width: 100%; margin-top: 2px; }
+    .best-score, .status-msg { text-align: center; }
+    @media (max-width: 700px) {
+      .setup-grid { grid-template-columns: 1fr; gap: 0; }
+      .menu-panel > h1 { font-size: clamp(4rem, 17vw, 6rem); }
+      .tab-bar { margin-bottom: 16px; }
+    }
+
+    /* Controls & Options Form */
+    .form-group {
+      margin-bottom: 16px;
+      width: 100%;
+    }
+    .form-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 800;
+      color: #94a3b8;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      margin-bottom: 6px;
+      text-align: left;
+    }
+    .name-input {
+      width: 100%;
+      padding: 12px 16px;
+      border: 2px solid #334155;
+      border-radius: 12px;
+      background: #0f172a;
+      color: #fff;
+      font-weight: 700;
+      font-size: 16px;
+      text-align: center;
+      outline: none;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .name-input:focus {
+      border-color: #22c55e;
+      box-shadow: 0 0 10px rgba(34, 197, 94, 0.25);
+    }
+    .grid-selector {
+      display: flex;
+      justify-content: space-between;
+      gap: 8px;
+    }
+    .theme-btn, .diff-btn {
+      flex: 1;
+      padding: 9px 6px;
+      border: 2px solid #334155;
+      border-radius: 10px;
+      background: #0f172a;
+      color: #cbd5e1;
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .theme-btn.active, .diff-btn.active {
+      background: #22c55e;
+      color: #022c10;
+      border-color: #22c55e;
+    }
+    .color-picker-wrapper {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      background: #0f172a;
+      padding: 8px 14px;
+      border-radius: 12px;
+      border: 2px solid #334155;
+    }
+    .color-picker {
+      -webkit-appearance: none;
+      border: none;
+      width: 40px;
+      height: 32px;
+      border-radius: 8px;
+      cursor: pointer;
+      background: none;
+    }
+    .color-picker::-webkit-color-swatch-wrapper {
+      padding: 0;
+    }
+    .color-picker::-webkit-color-swatch {
+      border: 2px solid #fff;
+      border-radius: 6px;
+    }
+    .color-label {
+      font-size: 14px;
+      font-weight: 700;
+      color: #cbd5e1;
+    }
+    .play-btn {
+      width: 100%;
+      padding: 14px;
+      border: none;
+      border-radius: 14px;
+      background: linear-gradient(135deg, #fde047 0%, #eab308 100%);
+      color: #1c1300;
+      font-weight: 900;
+      font-size: 20px;
+      letter-spacing: 0.5px;
+      cursor: pointer;
+      margin-top: 8px;
+      box-shadow: 0 6px 20px rgba(234, 179, 8, 0.35);
+      transition: transform 0.15s, box-shadow 0.15s;
+    }
+    .play-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(234, 179, 8, 0.45);
+    }
+    .play-btn:active {
+      transform: translateY(1px);
+    }
+    .best-score {
+      color: #94a3b8;
+      font-size: 13px;
+      font-weight: 700;
+      margin-top: 14px;
+    }
+    .status-msg {
+      margin-top: 6px;
+      font-size: 12px;
+      color: #64748b;
+    }
+
+    /* Credits Tab Specifics */
+    .credits-box {
+      text-align: center;
+      padding: 12px 6px;
+      color: #e2e8f0;
+    }
+    .credits-box h2 {
+      font-size: 28px;
+      font-weight: 900;
+      color: #fde047;
+      margin-bottom: 12px;
+      letter-spacing: -0.5px;
+    }
+    .credits-box p {
+      font-size: 15px;
+      line-height: 1.8;
+      color: #cbd5e1;
+      font-weight: 600;
+    }
+    .credits-box a {
+      color: #fde047;
+      text-decoration: underline;
+      font-weight: 800;
+      transition: color 0.2s;
+    }
+    .credits-box a:hover {
+      color: #fef08a;
+    }
+    .algebra-logo {
+      height: 24px;
+      vertical-align: middle;
+      margin: 0 4px;
+      display: inline-block;
+    }
+  </style>
+</head>
+<body>
+
+  <div id="game-container">
+    <canvas id="canvas"></canvas>
+    
+    <!-- Fullscreen Menu Container -->
+    <div id="menu-ui" class="fullscreen-menu">
+      <div class="menu-panel">
+        <h1 class="text-4xl font-black text-white mb-2 tracking-tight">BLOBBY.IO</h1>
+        <p class="sub text-slate-400 text-xs mb-4 text-center">Eat pellets & smaller blobs. Hide behind green viruses! Space splits, W feeds.</p>
+
+        <!-- Navigation Tabs -->
+        <div class="tab-bar">
+          <button class="tab-btn active" onclick="switchTab('play')">PLAY</button>
+          <button class="tab-btn" onclick="switchTab('credits')">CREDITS</button>
+        </div>
+
+        <!-- Tab Content: Play Options -->
+        <div id="tab-play" class="tab-content active">
+          <div class="setup-grid">
+            <div class="setup-column">
+          <div class="form-group">
+            <label class="form-label">Player Name</label>
+            <input type="text" id="player-name-input" class="name-input" placeholder="Enter your name" maxlength="15">
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Blob Color</label>
+            <div class="color-picker-wrapper">
+              <input type="color" id="player-color-picker" class="color-picker" value="#3b82f6">
+              <span class="color-label" id="color-hex-text">#3b82f6</span>
+            </div>
+          </div>
+
+            </div>
+            <div class="setup-column">
+          <div class="form-group">
+            <label class="form-label">Map Theme</label>
+            <div class="grid-selector" id="theme-selector">
+              <button class="theme-btn active" onclick="setTheme('Light')">Light</button>
+              <button class="theme-btn" onclick="setTheme('Dark')">Dark</button>
+              <button class="theme-btn" onclick="setTheme('Neon')">Neon</button>
+              <button class="theme-btn" onclick="setTheme('Retro')">Retro</button>
+            </div>
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Difficulty</label>
+            <div class="grid-selector">
+              <button class="diff-btn" onclick="setDiff('Easy')">Easy</button>
+              <button class="diff-btn active" id="btn-Normal" onclick="setDiff('Normal')">Normal</button>
+              <button class="diff-btn" onclick="setDiff('Hard')">Hard</button>
+            </div>
+          </div>
+
+            </div>
+          </div>
+
+          <button class="play-btn" onclick="startGame()">PLAY</button>
+          <div class="best-score" id="best-score-text">Best size 0</div>
+          <div class="status-msg" id="status-text">Pick your setup and press Play.</div>
+        </div>
+
+        <!-- Tab Content: Credits -->
+        <div id="tab-credits" class="tab-content">
+          <div class="credits-box">
+            <h2>Blobby.io</h2>
+            <p>Created by <a href="https://games.yakton.net" target="_blank">Yakton Games</a></p>
+            <p>Modified by Hazza</p>
+            <div class="mt-4 pt-3 border-t border-slate-700/60 text-sm">
+              <span>an </span>
+              <img src="https://i.ibb.co/krpP9zq/algebralogo.png" alt="algebra practise" class="algebra-logo">
+              <span> original</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    let W = window.innerWidth;
+    let H = window.innerHeight;
+
+    const THEMES = {
+      Light: { bg: '#f4f6fb', grid: '#d9dfec', border: '#8791b4', void: '#c7cde0', text: '#fff' },
+      Dark:  { bg: '#0b0f19', grid: '#1e293b', border: '#334155', void: '#020617', text: '#fff' },
+      Neon:  { bg: '#090014', grid: '#260042', border: '#a855f7', void: '#030008', text: '#fff' },
+      Retro: { bg: '#2b1d0c', grid: '#443019', border: '#855b28', void: '#170f05', text: '#fff' }
+    };
+
+    function switchTab(tabName) {
+      document.querySelectorAll('.tab-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.innerText.toLowerCase() === tabName);
+      });
+      document.querySelectorAll('.tab-content').forEach(content => {
+        content.classList.toggle('active', content.id === 'tab-' + tabName);
+      });
+    }
+
+    function hd(el, w, h, dpr) {
+      const c = document.getElementById('canvas');
+      c.width = window.innerWidth;
+      c.height = window.innerHeight;
+      const ctx = c.getContext('2d');
+      return [c, ctx];
+    }
+    function on(el, ev, fn) { el.addEventListener(ev, fn); }
+    function st(txt) { 
+      const s = document.getElementById('status-text');
+      if (s) s.innerText = txt;
+    }
+    function best(name, val) {
+      const k = 'best-' + name;
+      const cur = +localStorage.getItem(k) || 0;
+      if (val > cur) {
+        localStorage.setItem(k, val);
+        return val;
+      }
+      return cur;
+    }
+    function fx(n) {}
+    function rr(ctx, x, y, w, h, r) {
+      ctx.beginPath();
+      ctx.roundRect(x, y, w, h, r);
+    }
+    function gloop(upd, draw) {
+      let last = performance.now();
+      function loop(now) {
+        const dt = Math.min(0.1, (now - last) / 1000);
+        last = now;
+        upd(dt);
+        draw();
+        requestAnimationFrame(loop);
+      }
+      requestAnimationFrame(loop);
+    }
+
+    const BLOB = (() => {
+      const radius = m => Math.sqrt(m) * 4;
+      const speed = m => 300 * Math.pow(m, -.22);
+      const canEat = (a, b) => a.m > b.m * 1.25 && Math.hypot(a.x - b.x, a.y - b.y) < radius(a.m) - radius(b.m) * .45;
+      const zoomFor = total => Math.max(.28, 2.2 / (1 + Math.sqrt(total) * 0.08));
+      const DIFF = {
+        Easy: { bots: 14, sight: .7, aggr: .35, split: false, label: 'Easy' },
+        Normal: { bots: 18, sight: 1, aggr: .7, split: false, label: 'Normal' },
+        Hard: { bots: 24, sight: 1.35, aggr: 1, split: true, label: 'Hard' }
+      };
+      return { radius, speed, canEat, zoomFor, DIFF };
+    })();
+
+    // Helper to convert Hex color to HSL hue & shade
+    function hexToHue(hex) {
+      let c = hex.replace('#','');
+      if (c.length === 3) c = c.split('').map(x => x + x).join('');
+      const r = parseInt(c.substr(0, 2), 16) / 255;
+      const g = parseInt(c.substr(2, 2), 16) / 255;
+      const b = parseInt(c.substr(4, 2), 16) / 255;
+      const max = Math.max(r, g, b), min = Math.min(r, g, b);
+      let h, s, l = (max + min) / 2;
+      if (max === min) {
+        h = 0;
+      } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+          case r: h = (g - b) / d + (g < b ? 6 : 0); break;
+          case g: h = (b - r) / d + 2; break;
+          case b: h = (r - g) / d + 4; break;
+        }
+        h /= 6;
+      }
+      return Math.round(h * 360);
+    }
+
+    function blobs(el) {
+      const WORLD = 4000, PEL = 600, VIRUS_COUNT = 28;
+      const [c, x] = hd(el, W, H, 1.1);
+
+      const nameInput = document.getElementById('player-name-input');
+      const colorPicker = document.getElementById('player-color-picker');
+      const colorHexText = document.getElementById('color-hex-text');
+
+      try {
+        nameInput.value = localStorage.getItem('blobs-player-name') || 'You';
+        const savedColor = localStorage.getItem('blobs-player-color') || '#3b82f6';
+        colorPicker.value = savedColor;
+        colorHexText.innerText = savedColor;
+      } catch(e) {
+        nameInput.value = 'You';
+      }
+
+      colorPicker.addEventListener('input', () => {
+        colorHexText.innerText = colorPicker.value;
+        try { localStorage.setItem('blobs-player-color', colorPicker.value); } catch(e) {}
+      });
+
+      let selectedTheme = localStorage.getItem('blobs-theme') || 'Light';
+
+      window.setTheme = function(t) {
+        selectedTheme = t;
+        try { localStorage.setItem('blobs-theme', t); } catch(e) {}
+        document.querySelectorAll('#theme-selector .theme-btn').forEach(b => {
+          b.classList.toggle('active', b.innerText === t);
+        });
+      };
+
+      setTheme(selectedTheme);
+
+      window.addEventListener('resize', () => {
+        W = window.innerWidth;
+        H = window.innerHeight;
+        c.width = W;
+        c.height = H;
+      });
+
+      const NAMES = [
+        'Algebro', 'Balake', 'Big Rock', 'Raymond', 'Neegy', 'Admin', 'Doo', 'Noodle', 'Jerry', 'Destroyer101', 'TheChamp', 'DragonGuy', 'Gamer203', 'IoKing', 'Bob', 'Jeff', 'Tungsahur', 'SharkLad',
+        'ApexPredator', 'BlobMaster', 'SwiftNova', 'TitanLord', 'CyberNinja', 'NeonGhost', 'ShadowCell', 'StormRider', 'VenomByte', 'CosmicPulse', 'Pip', 'Moss', 'Blu', 'Zed', 'Nova', 'Alvin', 'PayMe', 'GOAT'
+      ];
+      const hue = h => `hsl(${h},75%,58%)`, dark = h => `hsl(${h},70%,38%)`;
+      const bestNow = () => { try { return +localStorage.getItem('best-blobs') || 0 } catch(e) { return 0 } };
+      let diff = 'Normal'; try { const d = localStorage.getItem('blobs-diff'); if (BLOB.DIFF[d]) diff = d } catch(e) {}
+      let scr = 'menu', P = [], me = null, pel = [], viruses = [], cam = { x: WORLD / 2, y: WORLD / 2, z: .9 }, ptr = { x: W / 2 + 1, y: H / 2 }, keys = {}, tm = 0, overT = 0, newBest = false,
+          peak = 0, eaten = 0, life = 0, popups = [], lastTick = 0, deadT = 0, touch = false;
+      const D = () => BLOB.DIFF[diff];
+      const R = BLOB.radius, tot = p => p.cells.reduce((a, b) => a + b.m, 0);
+
+      const spawnPel = () => ({ x: 20 + Math.random() * (WORLD - 40), y: 20 + Math.random() * (WORLD - 40), m: 1 + (Math.random() < .08 ? 2 : 0), h: Math.random() * 360, vx: 0, vy: 0 });
+      const spawnVirus = (x, y, m = 130) => {
+        let vx = x, vy = y;
+        if (!vx || !vy) {
+          for (let attempt = 0; attempt < 30; attempt++) {
+            const rx = 150 + Math.random() * (WORLD - 300);
+            const ry = 150 + Math.random() * (WORLD - 300);
+            let ok = true;
+            for (const v of viruses) {
+              const minDist = VR(m) + VR(v.m) + 120;
+              if (Math.hypot(rx - v.x, ry - v.y) < minDist) {
+                ok = false;
+                break;
+              }
+            }
+            if (ok || attempt === 29) {
+              vx = rx;
+              vy = ry;
+              break;
+            }
+          }
+        }
+        return { x: vx || WORLD / 2, y: vy || WORLD / 2, m, vx: 0, vy: 0 };
+      };
+
+      function newPlayer(name, bot, m, playerHue) {
+        const h = bot ? Math.random() * 360 : playerHue;
+        return { name, bot, h, cells: [{ x: 100 + Math.random() * (WORLD - 200), y: 100 + Math.random() * (WORLD - 200), m, vx: 0, vy: 0, merge: 0 }], dir: { x: 0, y: 0 }, think: Math.random(), respawn: 0, kills: 0, targetPrey: null };
+      }
+
+      function begin() {
+        const playerName = nameInput.value.trim() || 'You';
+        const playerHue = hexToHue(colorPicker.value);
+        try { 
+          localStorage.setItem('blobs-player-name', playerName);
+          localStorage.setItem('blobs-player-color', colorPicker.value);
+        } catch(e) {}
+
+        scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0;
+        for (let i = 0; i < PEL; i++) pel.push(spawnPel());
+        for (let i = 0; i < VIRUS_COUNT; i++) viruses.push(spawnVirus());
+
+        me = newPlayer(playerName, false, 10, playerHue); 
+        me.cells[0].x = WORLD / 2 + (Math.random() - .5) * 600; 
+        me.cells[0].y = WORLD / 2 + (Math.random() - .5) * 600; 
+        P.push(me);
+
+        const names = NAMES.slice().sort(() => Math.random() - .5);
+        for (let i = 0; i < D().bots; i++) P.push(newPlayer(names[i % names.length], true, 10 + Math.random() * 70, 0));
+        cam.x = me.cells[0].x; cam.y = me.cells[0].y; cam.z = BLOB.zoomFor(10);
+        st(`Eat pellets and smaller blobs. Space splits, W feeds. ${diff} bots.`);
+      }
+      const fxs = n => { try { fx(n) } catch(e) {} };
+
+      function steer(p) {
+        if (p.bot) return;
+        let dx = ptr.x - W / 2, dy = ptr.y - H / 2;
+        if (keys.arrowleft || keys.a) dx = -100; if (keys.arrowright || keys.d) dx = 100;
+        if (keys.arrowup || keys.w2) dy = -100; if (keys.arrowdown || keys.s) dy = 100;
+        if ((keys.arrowleft || keys.a) && (keys.arrowright || keys.d)) dx = 0;
+        const L = Math.hypot(dx, dy);
+        if (L < 12) { p.dir.x = 0; p.dir.y = 0 } else { const k = Math.min(1, L / 90); p.dir.x = dx / L * k; p.dir.y = dy / L * k }
+      }
+
+      function isBlockedByVirus(x1, y1, x2, y2) {
+        for (const v of viruses) {
+          const vr = VR(v.m);
+          const dx = x2 - x1, dy = y2 - y1;
+          const len = Math.hypot(dx, dy);
+          if (len === 0) continue;
+          const ndx = dx / len, ndy = dy / len;
+          const vx = v.x - x1, vy = v.y - y1;
+          const proj = vx * ndx + vy * ndy;
+          if (proj > 0 && proj < len) {
+            const cx = x1 + ndx * proj;
+            const cy = y1 + ndy * proj;
+            if (Math.hypot(v.x - cx, v.y - cy) < vr * 0.9) {
+              return true;
+            }
+          }
+        }
+        return false;
+      }
+
+      function think(p) {
+        const d = D(), big = p.cells.reduce((a, b) => b.m > a.m ? b : a), r = R(big.m);
+        const view = (r * 7 + 260) * d.sight; 
+        let fx0 = 0, fy0 = 0, flee = false, prey = null, pd = 1e9;
+
+        for (const q of P) {
+          if (q === p) continue;
+          for (const o of q.cells) {
+            const dist = Math.hypot(o.x - big.x, o.y - big.y); 
+            if (dist > view) continue;
+
+            const blocked = isBlockedByVirus(big.x, big.y, o.x, o.y);
+            const isChasing = p.targetPrey === o;
+
+            if (o.m > big.m * 1.2) { 
+              if (!blocked || dist < r * 3) {
+                const k = (view - dist) / view + .2; 
+                fx0 += (big.x - o.x) / dist * k * 2; 
+                fy0 += (big.y - o.y) / dist * k * 2; 
+                flee = true;
+              }
+            } else if (big.m > o.m * 1.3 && dist < pd && Math.random() < d.aggr + .3) {
+              if (!blocked || isChasing || Math.random() < 0.1) {
+                prey = o; 
+                pd = dist;
+                p.targetPrey = o;
+              }
+            }
+          }
+        }
+        if (!prey) p.targetPrey = null;
+
+        if (flee) { const L = Math.hypot(fx0, fy0) || 1; p.dir.x = fx0 / L; p.dir.y = fy0 / L; return }
+        if (prey) {
+          const L = pd || 1; p.dir.x = (prey.x - big.x) / L; p.dir.y = (prey.y - big.y) / L;
+          if (d.split && big.m > prey.m * 2.6 && big.m > 60 && pd < R(big.m) * 3.2 && p.cells.length < 3) split(p);
+          return;
+        }
+
+        let bp = null, bd = (450 * d.sight) ** 2;
+        for (let i = 0; i < pel.length; i += 2) { 
+          const o = pel[(i + (Math.random() * 2 | 0)) % pel.length];
+          if (isBlockedByVirus(big.x, big.y, o.x, o.y) && Math.random() < 0.9) continue;
+          const q = (o.x - big.x) ** 2 + (o.y - big.y) ** 2; 
+          if (q < bd) { bd = q; bp = o; } 
+        }
+        if (bp) { const L = Math.sqrt(bd) || 1; p.dir.x = (bp.x - big.x) / L; p.dir.y = (bp.y - big.y) / L }
+        else { const a = Math.random() * 6.283; p.dir.x = Math.cos(a); p.dir.y = Math.sin(a) }
+
+        if (big.x < 150) p.dir.x = Math.abs(p.dir.x); if (big.x > WORLD - 150) p.dir.x = -Math.abs(p.dir.x);
+        if (big.y < 150) p.dir.y = Math.abs(p.dir.y); if (big.y > WORLD - 150) p.dir.y = -Math.abs(p.dir.y);
+      }
+
+      function aimDir(p) {
+        const L = Math.hypot(p.dir.x, p.dir.y);
+        if (L > .05) return { x: p.dir.x / L, y: p.dir.y / L };
+        return { x: 1, y: 0 };
+      }
+
+      function split(p) {
+        if (p.cells.length >= 12) return;
+        const dir = aimDir(p), add = [];
+        p.cells.forEach(cl => {
+          if (cl.m < 36 || p.cells.length + add.length >= 12) return;
+          cl.m /= 2; cl.merge = 30; cl.wobble = 1.0;
+          add.push({ x: cl.x, y: cl.y, m: cl.m, vx: dir.x * 620, vy: dir.y * 620, merge: 30, wobble: 1.0 });
+        });
+        if (add.length) { p.cells.push(...add); if (!p.bot) fxs('swipe') }
+      }
+
+      function feed(p) {
+        const dir = aimDir(p);
+        p.cells.forEach(cl => {
+          if (cl.m < 35) return; 
+          cl.m -= 10;
+          const r = R(cl.m); 
+          const ejected = { x: cl.x + dir.x * (r + 8), y: cl.y + dir.y * (r + 8), m: 9, h: p.h, vx: dir.x * 520, vy: dir.y * 520, big: true };
+          pel.push(ejected);
+        });
+        if (!p.bot) fxs('tick');
+      }
+
+      function explodeCell(p, clIdx) {
+        const cl = p.cells[clIdx];
+        const pieces = Math.min(10, 12 - p.cells.length);
+        if (pieces <= 1) return;
+        const pieceMass = cl.m / pieces;
+        cl.m = pieceMass;
+        cl.merge = 30;
+        for (let i = 1; i < pieces; i++) {
+          const angle = (i / pieces) * Math.PI * 2 + Math.random() * 0.5;
+          p.cells.push({
+            x: cl.x + Math.cos(angle) * 10,
+            y: cl.y + Math.sin(angle) * 10,
+            m: pieceMass,
+            vx: Math.cos(angle) * 450,
+            vy: Math.sin(angle) * 450,
+            merge: 30
+          });
+        }
+      }
+
+      function upd(dt) {
+        tm += dt; if (scr != 'play') { if (scr == 'over') overT += dt; return }
+        life += dt;
+        steer(me);
+        P.forEach(p => {
+          if (p.bot && p.cells.length) { p.think -= dt; if (p.think <= 0) { p.think = .25 + Math.random() * .2; think(p) } }
+          if (p.bot && !p.cells.length) { p.respawn -= dt; if (p.respawn <= 0) { const n = newPlayer(p.name, true, 10, 0); p.cells = n.cells; p.h = n.h } }
+        });
+
+        viruses.forEach(v => {
+          if (v.vx || v.vy) {
+            v.x += v.vx * dt; v.y += v.vy * dt;
+            const f = Math.pow(.01, dt); v.vx *= f; v.vy *= f;
+            if (Math.abs(v.vx) + Math.abs(v.vy) < 4) v.vx = v.vy = 0;
+            v.x = Math.max(50, Math.min(WORLD - 50, v.x)); v.y = Math.max(50, Math.min(WORLD - 50, v.y));
+          }
+        });
+
+        P.forEach(p => {
+          const worldPtrX = (ptr.x - W / 2) / cam.z + cam.x;
+          const worldPtrY = (ptr.y - H / 2) / cam.z + cam.y;
+
+          p.cells.forEach((cl, clIdx) => {
+            let sp = BLOB.speed(cl.m);
+            let dirX = p.dir.x;
+            let dirY = p.dir.y;
+
+            if (!p.bot && p.cells.length > 1) {
+              let totalM = 0, avgX = 0, avgY = 0;
+              p.cells.forEach(c => { totalM += c.m; avgX += c.x * c.m; avgY += c.y * c.m; });
+              avgX /= totalM; avgY /= totalM;
+
+              const distToCenter = Math.hypot(worldPtrX - avgX, worldPtrY - avgY);
+              const maxDist = Math.max(...p.cells.map(c => Math.hypot(c.x - avgX, c.y - avgY)));
+
+              if (distToCenter < maxDist * 1.2) {
+                const toCenterX = avgX - cl.x;
+                const toCenterY = avgY - cl.y;
+                const distC = Math.hypot(toCenterX, toCenterY);
+                if (distC > 1) {
+                  dirX = toCenterX / distC;
+                  dirY = toCenterY / distC;
+                  sp *= 0.8;
+                }
+              }
+            }
+
+            cl.x += (dirX * sp + cl.vx) * dt; cl.y += (dirY * sp + cl.vy) * dt;
+            const f = Math.pow(.02, dt); cl.vx *= f; cl.vy *= f;
+            if (cl.merge > 0) cl.merge -= dt; if (cl.wobble > 0) cl.wobble = Math.max(0, cl.wobble - dt * 2.0);
+            const r = R(cl.m); cl.x = Math.max(r * .5, Math.min(WORLD - r * .5, cl.x)); cl.y = Math.max(r * .5, Math.min(WORLD - r * .5, cl.y));
+            if (cl.m > 120) cl.m -= cl.m * .0015 * dt * (cl.m > 1000 ? 2 : 1);
+
+            viruses.forEach(v => {
+              const vr = VR(v.m);
+              const dist = Math.hypot(cl.x - v.x, cl.y - v.y);
+
+              // Pop instantly as soon as outer edge of blob touches outer spiked edge of virus
+              if (cl.m > 130 && dist < r + vr) {
+                explodeCell(p, clIdx);
+              }
+            });
+          });
+
+          for (let i = 0; i < p.cells.length; i++) for (let j = i + 1; j < p.cells.length; j++) {
+            const a = p.cells[i], b = p.cells[j]; if (a.dead || b.dead) continue;
+            const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || .01, ra = R(a.m), rb = R(b.m);
+            if (a.merge > 0 || b.merge > 0) {
+              const over = ra + rb - d; if (over > 0) { const k = over / 2 / d * Math.min(1, dt * 12); a.x -= dx * k; a.y -= dy * k; b.x += dx * k; b.y += dy * k }
+            } else if (d < Math.max(ra, rb) * .75) { a.m += b.m; a.wobble = 0.8; b.dead = true; if (!p.bot) fxs('click') }
+          }
+          p.cells = p.cells.filter(cl => !cl.dead);
+        });
+
+        pel.forEach((o, pi) => { 
+          if (o.vx || o.vy) { 
+            o.x += o.vx * dt; o.y += o.vy * dt; 
+            const f = Math.pow(.01, dt); o.vx *= f; o.vy *= f; 
+            if (Math.abs(o.vx) + Math.abs(o.vy) < 4) o.vx = o.vy = 0; 
+            o.x = Math.max(5, Math.min(WORLD - 5, o.x)); o.y = Math.max(5, Math.min(WORLD - 5, o.y));
+
+            if (o.big) {
+              viruses.forEach(v => {
+                const vr = VR(v.m);
+                if (Math.hypot(o.x - v.x, o.y - v.y) < vr) {
+                  v.m += o.m;
+                  o.dead = true;
+                  if (v.m >= 180) {
+                    const dirL = Math.hypot(o.vx, o.vy) || 1;
+                    v.m = 100;
+                    viruses.push(spawnVirus(v.x + (o.vx/dirL)*90, v.y + (o.vy/dirL)*90, 130));
+                    viruses[viruses.length - 1].vx = (o.vx/dirL) * 550;
+                    viruses[viruses.length - 1].vy = (o.vy/dirL) * 550;
+                  }
+                }
+              });
+            }
+          } 
+        });
+        pel = pel.filter(o => !o.dead);
+
+        let ate = 0;
+        P.forEach(p => p.cells.forEach(cl => {
+          const r = R(cl.m);
+          for (let i = pel.length - 1; i >= 0; i--) {
+            const o = pel[i]; if (Math.abs(o.x - cl.x) > r || Math.abs(o.y - cl.y) > r) continue;
+            if ((o.x - cl.x) ** 2 + (o.y - cl.y) ** 2 < r * r) { cl.m += o.m; pel.splice(i, 1); if (p === me) ate++ }
+          }
+        }));
+        if (ate && tm - lastTick > .06) { lastTick = tm; fxs('tick') }
+        while (pel.length < PEL) pel.push(spawnPel());
+        while (viruses.length < VIRUS_COUNT) viruses.push(spawnVirus());
+
+        for (const a of P) for (const b of P) {
+          if (a === b) continue;
+          for (const ca of a.cells) {
+            if (ca.dead) continue;
+            for (const cb of b.cells) {
+              if (cb.dead || !BLOB.canEat(ca, cb)) continue;
+              ca.m += cb.m; cb.dead = true;
+              if (a === me) { eaten++; fxs('coin'); popups.push({ t: 0, x: cb.x, y: cb.y, s: '+' + Math.round(cb.m), c: '#fde047' }); if (!b.cells.some(q => !q.dead)) popups.push({ t: 0, x: cb.x, y: cb.y - 26, s: 'ate ' + b.name, c: '#fff' }) }
+              if (b === me && !b.cells.some(q => !q.dead)) popups.push({ t: 0, x: ca.x, y: ca.y, s: a.name + ' ate you', c: '#f87171' });
+              if (!b.cells.some(q => !q.dead)) a.kills++;
+            }
+          }
+        }
+        P.forEach(p => { const had = p.cells.length; p.cells = p.cells.filter(cl => !cl.dead); if (p.bot && had && !p.cells.length) p.respawn = 3 + Math.random() * 3 });
+        if (me.cells.length) {
+          const T = tot(me); peak = Math.max(peak, Math.round(T));
+          let cx = 0, cy = 0, mm = 0; me.cells.forEach(q => { cx += q.x * q.m; cy += q.y * q.m; mm += q.m }); cx /= mm; cy /= mm;
+          cam.x += (cx - cam.x) * Math.min(1, dt * 6); cam.y += (cy - cam.y) * Math.min(1, dt * 6);
+          const spread = Math.max(...me.cells.map(q => Math.hypot(q.x - cx, q.y - cy) + R(q.m)));
+          cam.z += (Math.min(BLOB.zoomFor(T), (Math.min(W, H) * .42) / Math.max(spread, 60)) - cam.z) * Math.min(1, dt * 2.5);
+          st(`Mass ${Math.round(T)}   Best ${Math.max(bestNow(), peak)}`);
+        } else {
+          deadT += dt;
+          if (deadT > 1.1) finish();
+        }
+        popups.forEach(q => q.t += dt); popups = popups.filter(q => q.t < 1.2);
+      }
+
+      function finish() {
+        scr = 'over'; overT = 0; newBest = peak > bestNow(); const b = best('blobs', peak); fxs('lose');
+        st(`You were eaten. Biggest size ${peak}. Best ${b}. Tap to play again.`);
+      }
+
+      const getBtnPos = () => ({ split: { x: W - 52, y: H - 52, r: 34 }, feed: { x: W - 52, y: H - 130, r: 26 } });
+      function pos(e) { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H] }
+      const hit = (b, px, py) => Math.hypot(px - b.x, py - b.y) < b.r + 8;
+      on(c, 'pointerdown', e => {
+        e.preventDefault(); const [px, py] = pos(e);
+        if (scr == 'menu') return;
+        if (scr == 'over') { if (overT > .7) { scr = 'menu'; syncMenu(); } return }
+        if (e.pointerType != 'mouse') touch = true;
+        const btn = getBtnPos();
+        if (me.cells.length) {
+          if (hit(btn.split, px, py)) { split(me); return }
+          if (hit(btn.feed, px, py)) { feed(me); return }
+        }
+        ptr.x = px; ptr.y = py;
+        try { c.setPointerCapture(e.pointerId) } catch(_) {}
+      });
+      on(c, 'pointermove', e => { const [px, py] = pos(e); ptr.x = px; ptr.y = py });
+      on(document, 'keydown', e => {
+        if (document.activeElement === nameInput) return;
+        const k = e.key.toLowerCase();
+        if (e.key == ' ') { e.preventDefault(); if (scr == 'play' && !e.repeat && me.cells.length) split(me); else if (scr == 'menu') startGame() }
+        else if (k == 'w' && scr == 'play') { if (!e.repeat && me.cells.length) feed(me) }
+        else if (k.startsWith('arrow') || k == 'a' || k == 'd' || k == 's') { keys[k] = 1; if (k.startsWith('arrow')) e.preventDefault() }
+      });
+      on(document, 'keyup', e => { delete keys[e.key.toLowerCase()] });
+
+      const S = (wx, wy) => [(wx - cam.x) * cam.z + W / 2, (wy - cam.y) * cam.z + H / 2];
+
+      const VR = m => Math.sqrt(m) * 8.5;
+      function drawVirus(v) {
+        const [sx, sy] = S(v.x, v.y), r = VR(v.m) * cam.z;
+        if (sx < -r || sx > W + r || sy < -r || sy > H + r) return;
+        
+        const points = 36;
+        x.fillStyle = '#2eff2e';
+        x.strokeStyle = '#1fb824';
+        x.lineWidth = Math.max(4, 7 * cam.z);
+        x.lineJoin = 'miter';
+        x.beginPath();
+        for (let i = 0; i < points; i++) {
+          const angle = (i / points) * Math.PI * 2;
+          const dist = (i % 2 === 0) ? r : r * 0.93;
+          const px = sx + Math.cos(angle) * dist;
+          const py = sy + Math.sin(angle) * dist;
+          if (i === 0) x.moveTo(px, py);
+          else x.lineTo(px, py);
+        }
+        x.closePath();
+        x.fill();
+        x.stroke();
+      }
+
+      const darker = h => `hsl(${h},75%,28%)`;
+      function drawCell(cl, p, isMe) {
+        const [sx, sy] = S(cl.x, cl.y), r = R(cl.m) * cam.z;
+        if (sx < -r || sx > W + r || sy < -r || sy > H + r) return;
+        
+        const numPts = 64; // High resolution circle for perfectly smooth curves
+        const extraWobble = (cl.wobble || 0) * r * 0.08;
+        const baseAmp = Math.max(0.5, r * 0.012) + extraWobble;
+        
+        // Smooth organic jelly blob path
+        x.beginPath();
+        for (let i = 0; i <= numPts; i++) {
+          const angle = (i / numPts) * Math.PI * 2;
+          const wobble = Math.sin(angle * 4 + tm * 5 + (cl.x * 0.005)) * baseAmp 
+                      + Math.cos(angle * 3 - tm * 4 + (cl.y * 0.005)) * (baseAmp * 0.5);
+          const pr = Math.max(2, r + wobble);
+          const px = sx + Math.cos(angle) * pr;
+          const py = sy + Math.sin(angle) * pr;
+          if (i === 0) x.moveTo(px, py);
+          else x.lineTo(px, py);
+        }
+        x.closePath();
+        
+        // Slightly darker stroke/outline
+        x.fillStyle = hue(p.h);
+        x.strokeStyle = darker(p.h);
+        x.lineWidth = Math.max(3, Math.min(8, r * 0.08 * cam.z));
+        x.fill();
+        x.stroke();
+        
+        // Inner subtle sheen highlight
+        x.fillStyle = '#ffffff25'; 
+        x.beginPath(); 
+        x.arc(sx - r * .26, sy - r * .28, r * .32, 0, Math.PI * 2); 
+        x.fill();
+
+        if (r > 13) {
+          x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round'; x.strokeStyle = '#000a'; x.fillStyle = '#fff';
+          const fs = Math.max(11, Math.min(26, r * .42)); x.font = `900 ${fs}px system-ui`; x.lineWidth = fs * .18;
+          
+          x.strokeText(p.name, sx, sy + fs * .1); x.fillText(p.name, sx, sy + fs * .1);
+          
+          if (r > 26) {
+            x.font = `800 ${fs * .6}px system-ui`; x.lineWidth = 3; const t = String(Math.round(cl.m)); 
+            x.strokeText(t, sx, sy + fs * .9); x.fillText(t, sx, sy + fs * .9);
+          }
+        }
+      }
+
+      function draw() {
+        syncMenu();
+        if (scr == 'menu') return;
+        
+        const theme = THEMES[selectedTheme] || THEMES.Light;
+        x.fillStyle = theme.bg; x.fillRect(0, 0, W, H);
+
+        const gs = 60 * cam.z; if (gs > 8) {
+          x.strokeStyle = theme.grid; x.lineWidth = 1; x.beginPath();
+          const ox = ((-cam.x * cam.z + W / 2) % gs + gs) % gs, oy = ((-cam.y * cam.z + H / 2) % gs + gs) % gs;
+          for (let gx = ox; gx < W; gx += gs) { x.moveTo(gx, 0); x.lineTo(gx, H) } for (let gy = oy; gy < H; gy += gs) { x.moveTo(0, gy); x.lineTo(W, gy) } x.stroke();
+        }
+
+        const [ax, ay] = S(0, 0), [bx, by] = S(WORLD, WORLD);
+        x.fillStyle = theme.void; x.fillRect(0, 0, W, Math.max(0, ay)); x.fillRect(0, Math.min(H, by), W, H); x.fillRect(0, 0, Math.max(0, ax), H); x.fillRect(Math.min(W, bx), 0, W, H);
+        x.strokeStyle = theme.border; x.lineWidth = 3; x.strokeRect(ax, ay, bx - ax, by - ay);
+
+        pel.forEach(o => { const [sx, sy] = S(o.x, o.y); if (sx < -8 || sx > W + 8 || sy < -8 || sy > H + 8) return;
+          x.fillStyle = hue(o.h); x.beginPath(); x.arc(sx, sy, Math.max(2, (o.big ? 7 : 4) * cam.z + 1), 0, 7); x.fill() });
+
+        // Draw all player/bot cells first
+        P.forEach(p => p.cells.forEach(cl => drawCell(cl, p, p === me)));
+        // Draw viruses on top of blobs so hiding blobs are hidden underneath
+        viruses.forEach(v => drawVirus(v));
+
+        popups.forEach(q => { const [sx, sy] = S(q.x, q.y); x.globalAlpha = Math.max(0, 1 - q.t / 1.2); x.textAlign = 'center'; x.font = '900 18px system-ui'; x.lineWidth = 4; x.strokeStyle = '#000a'; x.lineJoin = 'round'; x.strokeText(q.s, sx, sy - q.t * 40); x.fillStyle = q.c; x.fillText(q.s, sx, sy - q.t * 40); x.globalAlpha = 1 });
+
+        const T = me.cells.length ? Math.round(tot(me)) : 0;
+        x.fillStyle = '#0f172acc'; rr(x, 10, 10, 150, 46, 12); x.fill(); x.textAlign = 'left'; x.fillStyle = '#94a3b8'; x.font = '700 11px system-ui'; x.fillText('SIZE', 22, 28); x.fillStyle = '#fff'; x.font = '900 22px system-ui'; x.fillText(String(T), 22, 50);
+        const lb = P.filter(p => p.cells.length).map(p => ({ n: p.name, m: tot(p), me: p === me })).sort((a, b) => b.m - a.m).slice(0, 6);
+        x.fillStyle = '#0f172acc'; rr(x, W - 170, 10, 160, 20 + lb.length * 20, 12); x.fill(); x.fillStyle = '#94a3b8'; x.font = '700 11px system-ui'; x.fillText('TOP BLOBS', W - 158, 25);
+        lb.forEach((q, i) => { x.fillStyle = q.me ? '#fde047' : '#e2e8f0'; x.font = (q.me ? '900' : '600') + ' 13px system-ui'; x.textAlign = 'left'; x.fillText(`${i + 1}. ${q.n}`, W - 158, 44 + i * 20); x.textAlign = 'right'; x.fillText(String(Math.round(q.m)), W - 18, 44 + i * 20) });
+
+        if (touch && me.cells.length) {
+          const btn = getBtnPos();
+          [[btn.split, 'SPLIT'], [btn.feed, 'FEED']].renderables = [[btn.split, 'SPLIT'], [btn.feed, 'FEED']].forEach(([b, t]) => { x.fillStyle = '#0f172acc'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#fde047'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '900 12px system-ui'; x.fillText(t, b.x, b.y + 4) });
+        }
+
+        if (!me.cells.length && scr == 'play') { x.fillStyle = '#0008'; x.fillRect(0, 0, W, H) }
+        if (scr == 'over') {
+          x.fillStyle = '#000c'; x.fillRect(0, 0, W, H); x.textAlign = 'center';
+          x.fillStyle = '#fff'; x.font = '900 36px "Arial Black",system-ui'; x.fillText('YOU WERE EATEN', W / 2, H / 2 - 90);
+          x.fillStyle = '#fde047'; x.font = '900 64px "Arial Black",system-ui'; x.fillText(String(peak), W / 2, H / 2 - 15);
+          x.fillStyle = '#94a3b8'; x.font = '700 15px system-ui'; x.fillText('BIGGEST SIZE' + (newBest ? '   NEW BEST!' : '   Best ' + bestNow()), W / 2, H / 2 + 12);
+          x.fillStyle = '#e2e8f0'; x.font = '600 17px system-ui'; x.fillText(`Blobs eaten: ${eaten}   Time: ${Math.floor(life / 60)}:${String(Math.floor(life%60)).padStart(2, '0')}`, W / 2, H / 2 + 60);
+          if (overT > .7) { x.fillStyle = '#fff'; x.globalAlpha = .6 + .4 * Math.sin(tm * 5); x.font = '700 18px system-ui'; x.fillText('Tap to go back to the menu', W / 2, H / 2 + 120); x.globalAlpha = 1 }
+        }
+      }
+
+      const syncMenu = () => {
+        const m = scr == 'menu';
+        c.style.display = m ? 'none' : 'block';
+        document.getElementById('menu-ui').style.display = m ? 'flex' : 'none';
+      };
+
+      window.setDiff = function(d) {
+        diff = d;
+        document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
+        event.target.classList.add('active');
+        try { localStorage.setItem('blobs-diff', diff) } catch(_) {}
+      };
+
+      window.startGame = function() {
+        begin();
+      };
+
+      document.getElementById('best-score-text').innerText = 'Best size ' + bestNow();
+      syncMenu();
+      st('Pick your setup and press Play.');
+      return gloop(upd, draw);
+    }
+
+    window.onload = () => blobs(document.getElementById('game-container'));
+  </script>
+</body>
+</html>
