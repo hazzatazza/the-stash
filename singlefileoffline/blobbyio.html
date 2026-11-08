@@ -436,6 +436,17 @@
       .bg-blob.b1, .bg-blob.b5 { opacity: 0.5; }
       .fullscreen-menu { padding: 14px; }
     }
+    .mode-picker { margin: 12px 0 2px; gap: 14px; }
+    .mode-name { min-width: 150px; text-align: center; font-family: 'Titan One', 'Fredoka', system-ui, sans-serif; font-size: 19px; color: var(--text); }
+    .mode-name.teams { background: linear-gradient(90deg, #ef4444, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
+    #spec-ui { position: absolute; left: 50%; bottom: 22px; transform: translateX(-50%); display: none; align-items: center; justify-content: center; gap: 10px; flex-wrap: wrap; max-width: 94vw; padding: 10px 14px; border-radius: 14px; background: rgba(20,11,36,.9); border: 1.5px solid var(--line); font-family: 'Fredoka', system-ui, sans-serif; color: var(--text); z-index: 30; }
+    #spec-ui .sp-mid { display: flex; flex-direction: column; align-items: center; min-width: 110px; }
+    #spec-ui .sp-label { font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+    #spec-ui .sp-name { font-weight: 600; font-size: 16px; }
+    .sp-btn { font-family: inherit; font-weight: 600; font-size: 14px; color: var(--text); background: #2a1a4a; border: 1px solid var(--line); border-radius: 10px; padding: 8px 12px; cursor: pointer; }
+    .sp-btn:hover { background: var(--purple); border-color: var(--purple); }
+    .sp-btn.wide { padding: 8px 16px; }
+    .sp-btn.ghost { background: transparent; }
   </style>
 </head>
 <body>
@@ -465,10 +476,16 @@
               <button class="skin-arrow" onclick="cycleSkin(1)" aria-label="Next skin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
             </div>
             <div class="skin-name" id="skin-name">Solid colour</div>
+            <div class="skin-picker mode-picker">
+              <button class="skin-arrow" onclick="cycleMode(-1)" aria-label="Previous mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+              <div class="mode-name" id="mode-name">Free for all</div>
+              <button class="skin-arrow" onclick="cycleMode(1)" aria-label="Next mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+            </div>
+            <div class="skin-name" id="mode-desc">Everyone for themselves</div>
             <button class="play-btn" onclick="startGame()">Play</button>
 
             <div class="settings">
-              <div class="form-group">
+              <div class="form-group" id="colour-group">
                 <span class="form-label">Colour</span>
                 <div class="color-picker-wrapper">
                   <span class="color-label" id="color-hex-text">#3b82f6</span>
@@ -502,7 +519,6 @@
 
           <div id="tab-credits" class="tab-content">
             <div class="credits-box">
-              <p>Based on Blob Rush by <a href="https://games.yakton.net" target="_blank">Yakton Games</a></p>
               <p>Made by Hazza</p>
               <div class="orig">an <img src="https://i.ibb.co/krpP9zq/algebralogo.png" alt="algebra practise" class="algebra-logo"> original</div>
               <button class="link-btn" onclick="switchTab('play')">Back</button>
@@ -515,6 +531,13 @@
       </div>
     </div>
 
+    <div id="spec-ui">
+      <button class="sp-btn" onclick="specStep(-1)" aria-label="Previous teammate">&#9664;</button>
+      <div class="sp-mid"><span class="sp-label">SPECTATING</span><span class="sp-name" id="spec-name">-</span></div>
+      <button class="sp-btn" onclick="specStep(1)" aria-label="Next teammate">&#9654;</button>
+      <button class="sp-btn wide" onclick="retryGame()">Play again</button>
+      <button class="sp-btn wide ghost" onclick="leaveGame()">Leave</button>
+    </div>
     <button id="pause-btn" title="Pause (Esc)" onclick="pauseGame()"><i></i><i></i></button>
 
     <div id="pause-ui" class="overlay">
@@ -523,6 +546,7 @@
         <div class="opt-row"><span>Minimap</span><button class="tog on" id="tog-minimap" onclick="toggleOpt('minimap')">On</button></div>
         <div class="opt-row"><span>Music</span><button class="tog on" id="tog-music" onclick="toggleOpt('music')">On</button></div>
         <div class="opt-row"><span>Sound effects</span><button class="tog on" id="tog-sfx" onclick="toggleOpt('sfx')">On</button></div>
+        <div class="opt-row"><span>Kill feed</span><button class="tog on" id="tog-killfeed" onclick="toggleOpt('killfeed')">On</button></div>
         <button class="play-btn" onclick="resumeGame()">Resume</button>
         <button class="ghost-btn" onclick="leaveGame()">Leave game</button>
         <p class="pause-hint">Esc to resume</p>
@@ -531,7 +555,7 @@
 
     <div id="over-ui" class="overlay">
       <div class="box">
-        <h2>You were eaten</h2>
+        <h2 id="over-title">You were eaten</h2>
         <div class="over-label">BIGGEST SIZE</div>
         <div class="over-size" id="over-size">0</div>
         <div class="over-sub" id="over-best"></div>
@@ -542,7 +566,7 @@
     </div>
   </div>
 
-  <script>
+<script>
     let W = window.innerWidth;
     let H = window.innerHeight;
 
@@ -584,7 +608,7 @@
       return cur;
     }
     const OPT = (() => {
-      const d = { sfx: true, music: true, minimap: true };
+      const d = { sfx: true, music: true, minimap: true, killfeed: true };
       try { Object.assign(d, JSON.parse(localStorage.getItem('blobs-opt') || '{}')) } catch (e) {}
       return d;
     })();
@@ -683,21 +707,6 @@
       }
       requestAnimationFrame(loop);
     }
-
-    const BLOB = (() => {
-      const radius = m => Math.sqrt(m) * 4;
-      const speed = m => 300 * Math.pow(m, -.22);
-      const EAT_RATIO = 1.05; // any blob at least this much bigger eats the smaller one it overlaps
-      const canEat = (a, b) => a.m > b.m * EAT_RATIO && Math.hypot(a.x - b.x, a.y - b.y) < radius(a.m) - radius(b.m) * .3;
-      const zoomFor = total => Math.max(.28, 2.2 / (1 + Math.sqrt(total) * 0.08));
-      const DIFF = {
-        Easy: { bots: 20, sight: .7, aggr: .35, split: false, label: 'Easy' },
-        Normal: { bots: 30, sight: 1, aggr: .7, split: false, label: 'Normal' },
-        Hard: { bots: 40, sight: 1.35, aggr: 1, split: true, label: 'Hard' }
-      };
-      return { radius, speed, canEat, zoomFor, DIFF };
-    })();
-
     // Helper to convert Hex color to HSL hue & shade
     function hexToHue(hex) {
       let c = hex.replace('#','');
@@ -728,11 +737,9 @@
     const SKIN_IMG = {};
     SKINS.forEach(n => { const im = new Image(); im.src = SKIN_URL(n); SKIN_IMG[n] = im; });
     const skinReady = n => { const im = n && SKIN_IMG[n]; return im && im.complete && im.naturalWidth > 0 ? im : null };
-
     function blobs(el) {
       const WORLD = 4000, PEL = 600, VIRUS_COUNT = 28;
       const [c, x] = hd(el, W, H, 1.1);
-
       const nameInput = document.getElementById('player-name-input');
       const colorPicker = document.getElementById('player-color-picker');
       const colorHexText = document.getElementById('color-hex-text');
@@ -773,83 +780,60 @@
         c.height = H;
       });
 
-      const NAMES = [
-        'Algebro', 'Balake', 'Big Rock', 'Raymond', 'Neegy', 'Admin', 'Doo', 'Noodle', 'Jerry', 'Destroyer101', 'TheChamp', 'DragonGuy', 'Gamer203', 'IoKing', 'Bob', 'Jeff', 'Tungsahur', 'SharkLad',
-        'ApexPredator', 'BlobMaster', 'SwiftNova', 'TitanLord', 'CyberNinja', 'NeonGhost', 'ShadowCell', 'StormRider', 'VenomByte', 'CosmicPulse', 'Pip', 'Moss', 'Blu', 'Zed', 'Nova', 'Alvin', 'PayMe', 'GOAT', 'Gloop', 'Squish', 'Biscuit', 'Wobbles', 'Gus', 'Mochi', 'Pudding', 'Zorp'
-      ];
-      const hue = h => `hsl(${h},75%,58%)`, dark = h => `hsl(${h},70%,38%)`;
-      const bestNow = () => { try { return +localStorage.getItem('best-blobs') || 0 } catch(e) { return 0 } };
-      let diff = 'Normal'; try { const d = localStorage.getItem('blobs-diff'); if (BLOB.DIFF[d]) diff = d } catch(e) {}
-      let scr = 'menu', P = [], me = null, pel = [], viruses = [], cam = { x: WORLD / 2, y: WORLD / 2, z: .9 }, ptr = { x: W / 2 + 1, y: H / 2 }, keys = {}, tm = 0, overT = 0, newBest = false,
-          peak = 0, eaten = 0, life = 0, popups = [], lastTick = 0, deadT = 0, touch = false, paused = false;
-      const D = () => BLOB.DIFF[diff];
-      const R = BLOB.radius, tot = p => p.cells.reduce((a, b) => a + b.m, 0);
-
-      const spawnPel = () => ({ x: 20 + Math.random() * (WORLD - 40), y: 20 + Math.random() * (WORLD - 40), m: 1 + (Math.random() < .08 ? 2 : 0), h: Math.random() * 360, vx: 0, vy: 0 });
-      const spawnVirus = (x, y, m = 130) => {
-        let vx = x, vy = y;
-        if (!vx || !vy) {
-          for (let attempt = 0; attempt < 30; attempt++) {
-            const rx = 150 + Math.random() * (WORLD - 300);
-            const ry = 150 + Math.random() * (WORLD - 300);
-            let ok = true;
-            for (const v of viruses) {
-              const minDist = VR(m) + VR(v.m) + 120;
-              if (Math.hypot(rx - v.x, ry - v.y) < minDist) {
-                ok = false;
-                break;
-              }
-            }
-            if (ok || attempt === 29) {
-              vx = rx;
-              vy = ry;
-              break;
-            }
-          }
-        }
-        return { x: vx || WORLD / 2, y: vy || WORLD / 2, m, vx: 0, vy: 0 };
+      const NAMES = ['Algebro','Balake','Big Rock','Raymond','Neegy','Admin','Doo','Noodle','Jerry','Destroyer101','TheChamp','DragonGuy','Gamer203','IoKing','Bob','Jeff','Tungsahur','SharkLad','ApexPredator','BlobMaster','SwiftNova','TitanLord','CyberNinja','NeonGhost','ShadowCell','StormRider','VenomByte','CosmicPulse','Alvin','PayMe','GOAT','Gloop','Squish','Biscuit','Wobbles','Pudding','Zorp','moneyguyis7','cashapp','whatsupdawg','accordian','terrence','denny','matcha','goofball','fredfredfredisfred'];
+      const hexToHsl = hex => { let t = hex.replace('#', ''); if (t.length === 3) t = t.split('').map(q => q + q).join(''); const r = parseInt(t.substr(0, 2), 16) / 255, g = parseInt(t.substr(2, 2), 16) / 255, b = parseInt(t.substr(4, 2), 16) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, sat = 0; if (mx !== mn) { const d = mx - mn; sat = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = (mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60 } return [h, sat, l] };
+      const shade = (hex, dl) => { const [h, sat, l] = hexToHsl(hex); return `hsl(${Math.round(h)},${Math.round(sat * 100)}%,${Math.round(Math.max(.05, Math.min(.95, l + dl)) * 100)}%)` };
+      const hue = h => `hsl(${h},75%,58%)`;
+      const fillOf = p => p.col || hue(p.h), strokeOf = p => p.col ? shade(p.col, -.2) : darker(p.h);
+      const R = m => Math.sqrt(m) * 4, VR = m => Math.sqrt(m) * 8.5, SP = m => 310 * Math.pow(m, -.2), EAT = 1.05;
+      const DIFFS = { Easy: { bots: 20, sight: .7, aggr: .35, split: false }, Normal: { bots: 30, sight: 1, aggr: .7, split: false }, Hard: { bots: 40, sight: 1.35, aggr: 1, split: true } };
+      const bestNow = () => { try { return +localStorage.getItem('best-blobs') || 0 } catch (e) { return 0 } };
+      let diff = 'Normal'; try { const d0 = localStorage.getItem('blobs-diff'); if (DIFFS[d0]) diff = d0 } catch (e) {}
+      const D = () => DIFFS[diff];
+      const TEAM = { red: '#ef4444', blue: '#3b82f6' };
+      let gameMode = 'ffa', curMode = 'ffa', feedLog = [], spec = null;
+      try { const gm = localStorage.getItem('blobs-mode'); if (gm == 'ffa' || gm == 'teams') gameMode = gm } catch (e) {}
+      const friendly = (a, b) => curMode == 'teams' && !!a.team && a.team === b.team;
+      let scr = 'menu', P = [], me = null, pel = [], viruses = [], cam = { x: WORLD / 2, y: WORLD / 2, z: .9 }, ptr = { x: W / 2 + 1, y: H / 2 };
+      let tm = 0, peak = 10, eaten = 0, life = 0, newBest = false, deadT = 0, touch = false, paused = false, popups = [];
+      const S = (wx, wy) => [(wx - cam.x) * cam.z + W / 2, (wy - cam.y) * cam.z + H / 2];
+      const rnd = (a, b) => a + Math.random() * (b - a), tot = p => p.cells.reduce((s, q) => s + q.m, 0);
+      const byId = id => document.getElementById(id), fxs = n => { try { fx(n) } catch (e) {} };
+      const syncMenu = () => {
+        const m = scr == 'menu';
+        c.style.display = m ? 'none' : 'block';
+        byId('menu-ui').style.display = m ? 'flex' : 'none';
+        byId('over-ui').style.display = scr == 'over' ? 'flex' : 'none';
+        byId('pause-ui').style.display = scr == 'play' && paused ? 'flex' : 'none';
+        byId('pause-btn').style.display = scr == 'play' && !paused && me && me.cells.length ? 'flex' : 'none';
+        byId('spec-ui').style.display = scr == 'play' && curMode == 'teams' && me && !me.cells.length ? 'flex' : 'none';
       };
-
-      function newPlayer(name, bot, m, playerHue) {
-        const h = bot ? Math.random() * 360 : playerHue;
-        return { name, bot, h, cells: [{ x: 100 + Math.random() * (WORLD - 200), y: 100 + Math.random() * (WORLD - 200), m, vx: 0, vy: 0, merge: 0 }], dir: { x: 0, y: 0 }, think: Math.random(), respawn: 0, kills: 0, targetPrey: null };
-      }
-
+      const pickName = () => { const used = new Set(P.map(q => q.name)), free = NAMES.filter(n => !used.has(n)); return free[Math.floor(Math.random() * free.length)] || NAMES[0] };
+      const mkBot = () => { const p = newP(pickName(), rnd(0, 360), true); if (Math.random() < .35) p.skin = SKINS[Math.floor(Math.random() * SKINS.length)]; return p };
+      function newP(name, h, bot) { return { name, h, bot, skin: '', tx: WORLD / 2, ty: WORLD / 2, t: 0, targetPrey: null, cells: [{ x: rnd(300, WORLD - 300), y: rnd(300, WORLD - 300), m: bot ? rnd(10, 35) : 10, vx: 0, vy: 0, merge: 0, wobble: 0 }] } }
+      const spawnPel = () => ({ x: rnd(20, WORLD - 20), y: rnd(20, WORLD - 20), m: Math.random() < .08 ? 3 : 1, h: rnd(0, 360), vx: 0, vy: 0 });
+      const spawnVirus = (x, y, m = 130) => {
+        if (x == null) for (let a = 0; a < 30; a++) { x = rnd(150, WORLD - 150); y = rnd(150, WORLD - 150); if (!viruses.some(v => Math.hypot(x - v.x, y - v.y) < VR(m) + VR(v.m) + 120)) break }
+        return { x, y, m, vx: 0, vy: 0 };
+      };
       function begin() {
-        const playerName = nameInput.value.trim() || 'You';
-        const playerHue = hexToHue(colorPicker.value);
-        try { 
-          localStorage.setItem('blobs-player-name', playerName);
-          localStorage.setItem('blobs-player-color', colorPicker.value);
-        } catch(e) {}
-
-        paused = false; scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0;
+        AudioFX.ensure(); AudioFX.sync(true); fxs('ui');
+        try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
+        paused = false; scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0; curMode = gameMode; feedLog = []; spec = null;
+        me = newP((nameInput.value.trim() || 'You').slice(0, 15), hexToHue(colorPicker.value), false); me.skin = selectedSkin; if (curMode == 'teams') { me.team = Math.random() < .5 ? 'red' : 'blue'; me.col = TEAM[me.team] } else me.col = colorPicker.value; P.push(me);
+        const cnt = { red: me.team == 'red' ? 1 : 0, blue: me.team == 'blue' ? 1 : 0 };
+        for (let i = 0; i < D().bots; i++) { const b = mkBot(); if (curMode == 'teams') { b.team = cnt.red < cnt.blue ? 'red' : cnt.blue < cnt.red ? 'blue' : (Math.random() < .5 ? 'red' : 'blue'); cnt[b.team]++; b.col = TEAM[b.team] } P.push(b) }
         for (let i = 0; i < PEL; i++) pel.push(spawnPel());
         for (let i = 0; i < VIRUS_COUNT; i++) viruses.push(spawnVirus());
-
-        me = newPlayer(playerName, false, 10, playerHue); me.skin = selectedSkin; 
-        me.cells[0].x = WORLD / 2 + (Math.random() - .5) * 600; 
-        me.cells[0].y = WORLD / 2 + (Math.random() - .5) * 600; 
-        P.push(me);
-
-        const names = NAMES.slice().sort(() => Math.random() - .5);
-        for (let i = 0; i < D().bots; i++) P.push(newPlayer(names[i % names.length], true, 10 + Math.random() * 70, 0));
-        cam.x = me.cells[0].x; cam.y = me.cells[0].y; cam.z = BLOB.zoomFor(10);
-        st(`Eat pellets and smaller blobs. Space splits, W feeds. ${diff} bots.`);
-        AudioFX.ensure(); AudioFX.sync(true); fxs('ui');
+        cam.x = me.cells[0].x; cam.y = me.cells[0].y; cam.z = .9;
+        st(curMode == 'teams' ? `You are on the ${me.team} team. Last team standing wins.` : `Eat pellets and smaller blobs. Space splits, W feeds. ${diff} bots.`); syncMenu();
       }
-      const fxs = n => { try { fx(n) } catch(e) {} };
-
-      function steer(p) {
-        if (p.bot) return;
-        let dx = ptr.x - W / 2, dy = ptr.y - H / 2;
-        if (keys.arrowleft || keys.a) dx = -100; if (keys.arrowright || keys.d) dx = 100;
-        if (keys.arrowup || keys.w2) dy = -100; if (keys.arrowdown || keys.s) dy = 100;
-        if ((keys.arrowleft || keys.a) && (keys.arrowright || keys.d)) dx = 0;
-        const L = Math.hypot(dx, dy);
-        if (L < 12) { p.dir.x = 0; p.dir.y = 0 } else { const k = Math.min(1, L / 90); p.dir.x = dx / L * k; p.dir.y = dy / L * k }
+      function gameOver() {
+        scr = 'over'; newBest = peak > bestNow(); const b = best('blobs', Math.round(peak)); fxs('lose'); AudioFX.sync(false);
+        byId('over-title').innerText = 'You were eaten'; byId('over-size').innerText = Math.round(peak); byId('over-best').innerText = newBest ? 'New best!' : 'Best ' + b;
+        byId('over-stats').innerText = `Blobs eaten: ${eaten}   Time: ${Math.floor(life / 60)}:${String(Math.floor(life % 60)).padStart(2, '0')}`;
+        syncMenu();
       }
-
       function isBlockedByVirus(x1, y1, x2, y2) {
         for (const v of viruses) {
           const vr = VR(v.m);
@@ -871,299 +855,130 @@
       }
 
       function think(p) {
-        const d = D(), big = p.cells.reduce((a, b) => b.m > a.m ? b : a), r = R(big.m);
-        const view = (r * 7 + 260) * d.sight; 
+        const d = D(), b = p.cells.reduce((a, q) => q.m > a.m ? q : a), view = (280 + R(b.m) * 5) * d.sight;
         let fx0 = 0, fy0 = 0, flee = false, prey = null, pd = 1e9;
-
         for (const q of P) {
-          if (q === p) continue;
+          if (q === p || friendly(p, q)) continue;
           for (const o of q.cells) {
-            const dist = Math.hypot(o.x - big.x, o.y - big.y); 
-            if (dist > view) continue;
-
-            const blocked = isBlockedByVirus(big.x, big.y, o.x, o.y);
-            const isChasing = p.targetPrey === o;
-
-            if (o.m > big.m * 1.08) { 
-              if (!blocked || dist < r * 3) {
-                const k = (view - dist) / view + .2; 
-                fx0 += (big.x - o.x) / dist * k * 2; 
-                fy0 += (big.y - o.y) / dist * k * 2; 
-                flee = true;
-              }
-            } else if (big.m > o.m * 1.12 && dist < pd && Math.random() < d.aggr + .3) {
-              if (!blocked || isChasing || Math.random() < 0.1) {
-                prey = o; 
-                pd = dist;
-                p.targetPrey = o;
-              }
-            }
+            const dist = Math.hypot(o.x - b.x, o.y - b.y); if (dist > view) continue;
+            const blocked = isBlockedByVirus(b.x, b.y, o.x, o.y);
+            if (o.m > b.m * 1.08) { if (!blocked || dist < R(b.m) * 3) { const k = (view - dist) / view + .2; fx0 += (b.x - o.x) / dist * k * 2; fy0 += (b.y - o.y) / dist * k * 2; flee = true } }
+            else if (b.m > o.m * 1.12 && dist < pd && Math.random() < d.aggr + .3 && (!blocked || p.targetPrey === o || Math.random() < .1)) { prey = o; pd = dist; p.targetPrey = o }
           }
         }
         if (!prey) p.targetPrey = null;
-
-        if (flee) { const L = Math.hypot(fx0, fy0) || 1; p.dir.x = fx0 / L; p.dir.y = fy0 / L; return }
-        if (prey) {
-          const L = pd || 1; p.dir.x = (prey.x - big.x) / L; p.dir.y = (prey.y - big.y) / L;
-          if (d.split && big.m > prey.m * 2.6 && big.m > 60 && pd < R(big.m) * 3.2 && p.cells.length < 3) split(p);
-          return;
+        if (flee) { const L = Math.hypot(fx0, fy0) || 1; p.tx = b.x + fx0 / L * 400; p.ty = b.y + fy0 / L * 400 }
+        else if (prey) { p.tx = prey.x; p.ty = prey.y; if (d.split && b.m > prey.m * 2.6 && b.m > 60 && pd < R(b.m) * 3.2 && p.cells.length < 3) split(p) }
+        else {
+          let bp = null, bd = (450 * d.sight) ** 2;
+          for (let i = 0; i < pel.length; i += 2) { const o = pel[i], q = (o.x - b.x) ** 2 + (o.y - b.y) ** 2; if (q < bd && !(isBlockedByVirus(b.x, b.y, o.x, o.y) && Math.random() < .9)) { bd = q; bp = o } }
+          if (bp) { p.tx = bp.x; p.ty = bp.y } else { if (!p.wander || Math.random() < .1) p.wander = [rnd(150, WORLD - 150), rnd(150, WORLD - 150)]; p.tx = p.wander[0]; p.ty = p.wander[1] }
         }
-
-        let bp = null, bd = (450 * d.sight) ** 2;
-        for (let i = 0; i < pel.length; i += 2) { 
-          const o = pel[(i + (Math.random() * 2 | 0)) % pel.length];
-          if (isBlockedByVirus(big.x, big.y, o.x, o.y) && Math.random() < 0.9) continue;
-          const q = (o.x - big.x) ** 2 + (o.y - big.y) ** 2; 
-          if (q < bd) { bd = q; bp = o; } 
-        }
-        if (bp) { const L = Math.sqrt(bd) || 1; p.dir.x = (bp.x - big.x) / L; p.dir.y = (bp.y - big.y) / L }
-        else { const a = Math.random() * 6.283; p.dir.x = Math.cos(a); p.dir.y = Math.sin(a) }
-
-        if (big.x < 150) p.dir.x = Math.abs(p.dir.x); if (big.x > WORLD - 150) p.dir.x = -Math.abs(p.dir.x);
-        if (big.y < 150) p.dir.y = Math.abs(p.dir.y); if (big.y > WORLD - 150) p.dir.y = -Math.abs(p.dir.y);
+        p.tx = Math.max(60, Math.min(WORLD - 60, p.tx)); p.ty = Math.max(60, Math.min(WORLD - 60, p.ty));
       }
-
-      function aimDir(p) {
-        const L = Math.hypot(p.dir.x, p.dir.y);
-        if (L > .05) return { x: p.dir.x / L, y: p.dir.y / L };
-        return { x: 1, y: 0 };
-      }
-
+      function aim(p) { const c0 = p.cells[0], dx = p.tx - c0.x, dy = p.ty - c0.y, L = Math.hypot(dx, dy); return L > .05 ? { x: dx / L, y: dy / L } : { x: 1, y: 0 } }
       function split(p) {
-        if (p.cells.length >= 12) return;
-        const dir = aimDir(p), add = [];
-        p.cells.forEach(cl => {
-          if (cl.m < 36 || p.cells.length + add.length >= 12) return;
-          cl.m /= 2; cl.merge = 30; cl.wobble = 1.0;
-          add.push({ x: cl.x, y: cl.y, m: cl.m, vx: dir.x * 620, vy: dir.y * 620, merge: 30, wobble: 1.0 });
-        });
+        if (!p.cells.length) return; const d = aim(p), add = [];
+        p.cells.forEach(q => { if (q.m >= 36 && p.cells.length + add.length < 12) { q.m /= 2; q.merge = 9 + q.m * .03; add.push({ x: q.x, y: q.y, m: q.m, vx: d.x * 600, vy: d.y * 600, merge: q.merge, wobble: .6 }) } });
         if (add.length) { p.cells.push(...add); if (!p.bot) fxs('swipe') }
       }
-
       function feed(p) {
-        const dir = aimDir(p);
-        p.cells.forEach(cl => {
-          if (cl.m < 35) return; 
-          cl.m -= 10;
-          const r = R(cl.m); 
-          const ejected = { x: cl.x + dir.x * (r + 8), y: cl.y + dir.y * (r + 8), m: 9, h: p.h, vx: dir.x * 520, vy: dir.y * 520, big: true };
-          pel.push(ejected);
-        });
+        if (!p.cells.length) return; const d = aim(p);
+        p.cells.forEach(q => { if (q.m >= 30) { q.m -= 10; pel.push({ x: q.x + d.x * R(q.m), y: q.y + d.y * R(q.m), m: 10, h: p.h, col: p.col, big: true, age: 0, vx: d.x * 640, vy: d.y * 640 }) } });
         if (!p.bot) fxs('feed');
       }
-
-      function explodeCell(p, clIdx) {
-        const cl = p.cells[clIdx];
-        const pieces = Math.min(10, 12 - p.cells.length);
-        if (pieces <= 1) return;
+      function popCell(p, q) {
+        const n = Math.min(6, 13 - p.cells.length); if (n < 2) return;
+        q.m /= n; q.merge = 10; q.wobble = 1;
+        for (let i = 1; i < n; i++) { const a = rnd(0, 6.28); p.cells.push({ x: q.x, y: q.y, m: q.m, vx: Math.cos(a) * 450, vy: Math.sin(a) * 450, merge: 10, wobble: 1 }) }
         if (!p.bot) fxs('pop');
-        const pieceMass = cl.m / pieces;
-        cl.m = pieceMass;
-        cl.merge = 30;
-        for (let i = 1; i < pieces; i++) {
-          const angle = (i / pieces) * Math.PI * 2 + Math.random() * 0.5;
-          p.cells.push({
-            x: cl.x + Math.cos(angle) * 10,
-            y: cl.y + Math.sin(angle) * 10,
-            m: pieceMass,
-            vx: Math.cos(angle) * 450,
-            vy: Math.sin(angle) * 450,
-            merge: 30
-          });
-        }
       }
-
+      const tcol = p => p ? (curMode == 'teams' ? TEAM[p.team] : (p === me ? '#3ddc6e' : '#ece6ff')) : '#ece6ff';
+      function logKill(v) {
+        const k = v.lastKiller; if (k) feedLog.push({ t: tm, k: k.name, v: v.name, kc: tcol(k), vc: tcol(v) });
+        if (feedLog.length > 20) feedLog.shift(); if (v === me && curMode == 'teams') fxs('lose');
+      }
+      function teamsOver(w) {
+        scr = 'over'; newBest = peak > bestNow(); const b = best('blobs', Math.round(peak)); AudioFX.sync(false); fxs(w === me.team ? 'coin' : 'lose');
+        byId('over-title').innerText = w === me.team ? 'Victory!' : 'Defeat';
+        byId('over-size').innerText = Math.round(peak); byId('over-best').innerText = (w == 'red' ? 'Red' : 'Blue') + ' team wins' + (newBest ? ' · New best!' : ' · Best ' + b);
+        byId('over-stats').innerText = `Blobs eaten: ${eaten}   Time: ${Math.floor(life / 60)}:${String(Math.floor(life % 60)).padStart(2, '0')}`;
+        syncMenu();
+      }
+      function specStep(d) {
+        if (curMode != 'teams' || !me || me.cells.length) return;
+        const l = P.filter(p => p.team === me.team && p !== me && p.cells.length); if (!l.length) { spec = null; return }
+        let i = l.indexOf(spec); i = i < 0 ? (d > 0 ? 0 : l.length - 1) : (i + d + l.length) % l.length; spec = l[i];
+      }
+      window.specStep = specStep;
+      function followCam(p, dt) {
+        const T = tot(p); let cx = 0, cy = 0; p.cells.forEach(q => { cx += q.x; cy += q.y }); cx /= p.cells.length; cy /= p.cells.length;
+        let sp = 60; p.cells.forEach(q => { sp = Math.max(sp, Math.hypot(q.x - cx, q.y - cy) + R(q.m)) });
+        const z = Math.min(Math.max(.28, 2.2 / (1 + Math.sqrt(T) * .08)), Math.min(W, H) * .42 / sp), k = Math.min(1, dt * 2.5);
+        cam.x += (cx - cam.x) * k; cam.y += (cy - cam.y) * k; cam.z += (z - cam.z) * k;
+      }
       function upd(dt) {
-        if (paused) return;
-        tm += dt; if (scr != 'play') { if (scr == 'over') overT += dt; return }
-        life += dt;
-        steer(me);
-        P.forEach(p => {
-          if (p.bot && p.cells.length) { p.think -= dt; if (p.think <= 0) { p.think = .25 + Math.random() * .2; think(p) } }
-          if (p.bot && !p.cells.length) { p.respawn -= dt; if (p.respawn <= 0) { const n = newPlayer(p.name, true, 10, 0); p.cells = n.cells; p.h = n.h } }
-        });
-
-        viruses.forEach(v => {
-          if (v.vx || v.vy) {
-            v.x += v.vx * dt; v.y += v.vy * dt;
-            const f = Math.pow(.01, dt); v.vx *= f; v.vy *= f;
-            if (Math.abs(v.vx) + Math.abs(v.vy) < 4) v.vx = v.vy = 0;
-            v.x = Math.max(50, Math.min(WORLD - 50, v.x)); v.y = Math.max(50, Math.min(WORLD - 50, v.y));
-          }
-        });
-
-        P.forEach(p => {
-          const worldPtrX = (ptr.x - W / 2) / cam.z + cam.x;
-          const worldPtrY = (ptr.y - H / 2) / cam.z + cam.y;
-
-          p.cells.forEach((cl, clIdx) => {
-            let sp = BLOB.speed(cl.m);
-            let dirX = p.dir.x;
-            let dirY = p.dir.y;
-
-            if (!p.bot && p.cells.length > 1) {
-              let totalM = 0, avgX = 0, avgY = 0;
-              p.cells.forEach(c => { totalM += c.m; avgX += c.x * c.m; avgY += c.y * c.m; });
-              avgX /= totalM; avgY /= totalM;
-
-              const distToCenter = Math.hypot(worldPtrX - avgX, worldPtrY - avgY);
-              const maxDist = Math.max(...p.cells.map(c => Math.hypot(c.x - avgX, c.y - avgY)));
-
-              if (distToCenter < maxDist * 1.2) {
-                const toCenterX = avgX - cl.x;
-                const toCenterY = avgY - cl.y;
-                const distC = Math.hypot(toCenterX, toCenterY);
-                if (distC > 1) {
-                  dirX = toCenterX / distC;
-                  dirY = toCenterY / distC;
-                  sp *= 0.8;
-                }
-              }
+        tm += dt; if (paused || scr != 'play') return; life += dt;
+        if (me.cells.length) { me.tx = cam.x + (ptr.x - W / 2) / cam.z; me.ty = cam.y + (ptr.y - H / 2) / cam.z }
+        for (const p of P) {
+          if (p.bot) { p.t -= dt; if (p.t <= 0 && p.cells.length) { p.t = .2; think(p) } }
+          for (const q of p.cells) {
+            const dx = p.tx - q.x, dy = p.ty - q.y, d = Math.hypot(dx, dy) || 1, s = SP(q.m) * (p.bot ? (d > 4 ? 1 : 0) : Math.min(1, d / R(q.m)));
+            q.x += (dx / d * s + q.vx) * dt; q.y += (dy / d * s + q.vy) * dt; const f = Math.pow(.02, dt); q.vx *= f; q.vy *= f;
+            q.merge = Math.max(0, q.merge - dt); q.wobble = Math.max(0, q.wobble - dt * 1.5);
+            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); if (q.m > 40) q.m -= q.m * .0012 * dt;
+            for (const v of viruses) if (q.m > 130 && Math.hypot(q.x - v.x, q.y - v.y) < R(q.m) + VR(v.m) * .3) { popCell(p, q); break }
+            const r = R(q.m);
+            for (let i = pel.length - 1; i >= 0; i--) {
+              const o = pel[i]; if (o.big && o.age < .3) continue;
+              if (Math.abs(o.x - q.x) < r && Math.abs(o.y - q.y) < r && Math.hypot(o.x - q.x, o.y - q.y) < r) { q.m += o.m; pel.splice(i, 1); if (p === me && Math.random() < .35) fxs('tick') }
             }
-
-            cl.x += (dirX * sp + cl.vx) * dt; cl.y += (dirY * sp + cl.vy) * dt;
-            const f = Math.pow(.02, dt); cl.vx *= f; cl.vy *= f;
-            if (cl.merge > 0) cl.merge -= dt; if (cl.wobble > 0) cl.wobble = Math.max(0, cl.wobble - dt * 2.0);
-            const r = R(cl.m); cl.x = Math.max(r * .5, Math.min(WORLD - r * .5, cl.x)); cl.y = Math.max(r * .5, Math.min(WORLD - r * .5, cl.y));
-            if (cl.m > 120) cl.m -= cl.m * .0015 * dt * (cl.m > 1000 ? 2 : 1);
-
-            viruses.forEach(v => {
-              const vr = VR(v.m);
-              const dist = Math.hypot(cl.x - v.x, cl.y - v.y);
-
-              // Pop instantly as soon as outer edge of blob touches outer spiked edge of virus
-              if (cl.m > 130 && dist < r + vr) {
-                explodeCell(p, clIdx);
-              }
-            });
-          });
-
+          }
           for (let i = 0; i < p.cells.length; i++) for (let j = i + 1; j < p.cells.length; j++) {
             const a = p.cells[i], b = p.cells[j]; if (a.dead || b.dead) continue;
             const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || .01, ra = R(a.m), rb = R(b.m);
-            if (a.merge > 0 || b.merge > 0) {
-              const over = ra + rb - d; if (over > 0) { const k = over / 2 / d * Math.min(1, dt * 12); a.x -= dx * k; a.y -= dy * k; b.x += dx * k; b.y += dy * k }
-            } else if (d < Math.max(ra, rb) * .75) { a.m += b.m; a.wobble = 0.8; b.dead = true; if (!p.bot) fxs('click') }
+            if (a.merge > 0 || b.merge > 0) { const o = ra + rb - d; if (o > 0) { const k = o / 2 / d * Math.min(1, dt * 12); a.x -= dx * k; a.y -= dy * k; b.x += dx * k; b.y += dy * k } }
+            else if (d < Math.max(ra, rb) * .75) { a.m += b.m; a.wobble = .8; b.dead = true; if (!p.bot) fxs('click') }
           }
-          p.cells = p.cells.filter(cl => !cl.dead);
-        });
-
-        pel.forEach((o, pi) => { 
-          if (o.vx || o.vy) { 
-            o.x += o.vx * dt; o.y += o.vy * dt; 
-            const f = Math.pow(.01, dt); o.vx *= f; o.vy *= f; 
-            if (Math.abs(o.vx) + Math.abs(o.vy) < 4) o.vx = o.vy = 0; 
-            o.x = Math.max(5, Math.min(WORLD - 5, o.x)); o.y = Math.max(5, Math.min(WORLD - 5, o.y));
-
-            if (o.big) {
-              viruses.forEach(v => {
-                const vr = VR(v.m);
-                if (Math.hypot(o.x - v.x, o.y - v.y) < vr) {
-                  v.m += o.m;
-                  o.dead = true;
-                  if (v.m >= 180) {
-                    const dirL = Math.hypot(o.vx, o.vy) || 1;
-                    v.m = 100;
-                    viruses.push(spawnVirus(v.x + (o.vx/dirL)*90, v.y + (o.vy/dirL)*90, 130));
-                    viruses[viruses.length - 1].vx = (o.vx/dirL) * 550;
-                    viruses[viruses.length - 1].vy = (o.vy/dirL) * 550;
-                  }
-                }
-              });
-            }
-          } 
-        });
-        pel = pel.filter(o => !o.dead);
-
-        let ate = 0;
-        P.forEach(p => p.cells.forEach(cl => {
-          const r = R(cl.m);
-          for (let i = pel.length - 1; i >= 0; i--) {
-            const o = pel[i]; if (Math.abs(o.x - cl.x) > r || Math.abs(o.y - cl.y) > r) continue;
-            if ((o.x - cl.x) ** 2 + (o.y - cl.y) ** 2 < r * r) { cl.m += o.m; pel.splice(i, 1); if (p === me) ate++ }
+          p.cells = p.cells.filter(q => !q.dead);
+        }
+        for (const a of P) for (const ca of a.cells) for (const b of P) { if (a === b || friendly(a, b)) continue; for (const cb of b.cells) {
+          if (!cb.dead && !ca.dead && ca.m > cb.m * EAT && Math.hypot(ca.x - cb.x, ca.y - cb.y) < R(ca.m) - R(cb.m) * .3) { ca.m += cb.m; ca.wobble = .8; cb.dead = true; b.lastKiller = a; if (a === me) { eaten++; fxs('coin') } }
+        } }
+        for (let i = 0; i < P.length; i++) P[i].cells = P[i].cells.filter(q => !q.dead);
+        for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
+          const A = P[i], B = P[j]; if (friendly(A, B)) continue;
+          for (const ca of A.cells) for (const cb of B.cells) {
+            if (ca.m > cb.m * EAT || cb.m > ca.m * EAT) continue;
+            const dx = cb.x - ca.x, dy = cb.y - ca.y, d = Math.hypot(dx, dy), o = R(ca.m) + R(cb.m) - d; if (o <= 0) continue;
+            let ux = dx / (d || 1), uy = dy / (d || 1); if (d < .02) { const a = rnd(0, 6.28); ux = Math.cos(a); uy = Math.sin(a) }
+            const push = o / 2 * Math.min(1, dt * 8); ca.x -= ux * push; ca.y -= uy * push; cb.x += ux * push; cb.y += uy * push;
           }
-        }));
-        if (ate && tm - lastTick > .06) { lastTick = tm; fxs('tick') }
-        while (pel.length < PEL) pel.push(spawnPel());
+        }
+        for (let i = 0; i < P.length; i++) { const p = P[i]; if (!p.cells.length && !p.out) { p.out = true; logKill(p) } if (p.bot && !p.cells.length && curMode == 'ffa') P[i] = mkBot() }
+        for (const o of pel) if (o.vx || o.vy) {
+          o.age += dt; o.x += o.vx * dt; o.y += o.vy * dt; const f = Math.pow(.01, dt); o.vx *= f; o.vy *= f; if (Math.abs(o.vx) + Math.abs(o.vy) < 4) o.vx = o.vy = 0;
+          o.x = Math.max(5, Math.min(WORLD - 5, o.x)); o.y = Math.max(5, Math.min(WORLD - 5, o.y));
+          if (o.big) for (const v of viruses) if (!o.dead && Math.hypot(o.x - v.x, o.y - v.y) < VR(v.m)) {
+            v.m += o.m; o.dead = true;
+            if (v.m >= 180) { const L = Math.hypot(o.vx, o.vy) || 1, ux = (o.vx || 1) / L, uy = o.vy / L; v.m = 100; const nv = spawnVirus(v.x + ux * 90, v.y + uy * 90, 130); nv.vx = ux * 550; nv.vy = uy * 550; viruses.push(nv) }
+          }
+        }
+        pel = pel.filter(o => !o.dead); while (pel.length < PEL) pel.push(spawnPel());
+        for (const v of viruses) { v.x = Math.max(60, Math.min(WORLD - 60, v.x + v.vx * dt)); v.y = Math.max(60, Math.min(WORLD - 60, v.y + v.vy * dt)); const f = Math.pow(.01, dt); v.vx *= f; v.vy *= f }
         while (viruses.length < VIRUS_COUNT) viruses.push(spawnVirus());
-
-        for (const a of P) for (const b of P) {
-          if (a === b) continue;
-          for (const ca of a.cells) {
-            if (ca.dead) continue;
-            for (const cb of b.cells) {
-              if (cb.dead || !BLOB.canEat(ca, cb)) continue;
-              ca.m += cb.m; cb.dead = true;
-              if (a === me) { eaten++; fxs('coin'); popups.push({ t: 0, x: cb.x, y: cb.y, s: '+' + Math.round(cb.m), c: '#3ddc6e' }); if (!b.cells.some(q => !q.dead)) popups.push({ t: 0, x: cb.x, y: cb.y - 26, s: 'ate ' + b.name, c: '#fff' }) }
-              if (b === me && !b.cells.some(q => !q.dead)) { popups.push({ t: 0, x: ca.x, y: ca.y, s: a.name + ' ate you', c: '#ff6b5b' }); fxs('lose'); }
-              if (!b.cells.some(q => !q.dead)) a.kills++;
-            }
-          }
+        const teamsOn = curMode == 'teams';
+        if (teamsOn) {
+          const alive = t => P.some(q => q.team === t && q.cells.length);
+          if (!alive('red') || !alive('blue')) { teamsOver(alive('red') ? 'red' : alive('blue') ? 'blue' : me.team); return }
         }
-        P.forEach(p => { const had = p.cells.length; p.cells = p.cells.filter(cl => !cl.dead); if (p.bot && had && !p.cells.length) p.respawn = 3 + Math.random() * 3 });
-        if (me.cells.length) {
-          const T = tot(me); peak = Math.max(peak, Math.round(T));
-          let cx = 0, cy = 0, mm = 0; me.cells.forEach(q => { cx += q.x * q.m; cy += q.y * q.m; mm += q.m }); cx /= mm; cy /= mm;
-          cam.x += (cx - cam.x) * Math.min(1, dt * 6); cam.y += (cy - cam.y) * Math.min(1, dt * 6);
-          const spread = Math.max(...me.cells.map(q => Math.hypot(q.x - cx, q.y - cy) + R(q.m)));
-          cam.z += (Math.min(BLOB.zoomFor(T), (Math.min(W, H) * .42) / Math.max(spread, 60)) - cam.z) * Math.min(1, dt * 2.5);
-          st(`Mass ${Math.round(T)}   Best ${Math.max(bestNow(), peak)}`);
-        } else {
-          deadT += dt;
-          if (deadT > 1.1) finish();
-        }
-        popups.forEach(q => q.t += dt); popups = popups.filter(q => q.t < 1.2);
+        let focus = me;
+        if (!me.cells.length) {
+          if (teamsOn) { if (!spec || !spec.cells.length) specStep(1); focus = spec && spec.cells.length ? spec : null }
+          else { deadT += dt; if (deadT > .9) { gameOver(); return } focus = null }
+        } else { const T = tot(me); peak = Math.max(peak, T); st(`Mass ${Math.round(T)}   Best ${Math.max(bestNow(), peak)}`) }
+        if (focus) followCam(focus, dt);
       }
-
-      function finish() {
-        scr = 'over'; overT = 0; newBest = peak > bestNow(); const b = best('blobs', peak);
-        AudioFX.sync(false);
-        const secs = Math.floor(life % 60);
-        byId('over-size').innerText = peak;
-        byId('over-best').innerText = newBest ? 'New best!' : 'Best ' + b;
-        byId('over-stats').innerText = `Blobs eaten ${eaten}  ·  Time ${Math.floor(life / 60)}:${String(secs).padStart(2, '0')}`;
-        st(`You were eaten. Biggest size ${peak}. Best ${b}.`);
-      }
-
-      const getBtnPos = () => ({ split: { x: W - 52, y: H - 52, r: 34 }, feed: { x: W - 52, y: H - 130, r: 26 } });
-      function pos(e) { const r = c.getBoundingClientRect(); return [(e.clientX - r.left) / r.width * W, (e.clientY - r.top) / r.height * H] }
-      const hit = (b, px, py) => Math.hypot(px - b.x, py - b.y) < b.r + 8;
-      on(c, 'pointerdown', e => {
-        e.preventDefault(); const [px, py] = pos(e);
-        if (scr == 'menu') return;
-        if (scr == 'over') return;
-        if (e.pointerType != 'mouse') touch = true;
-        const btn = getBtnPos();
-        if (me.cells.length) {
-          if (hit(btn.split, px, py)) { split(me); return }
-          if (hit(btn.feed, px, py)) { feed(me); return }
-        }
-        ptr.x = px; ptr.y = py;
-        try { c.setPointerCapture(e.pointerId) } catch(_) {}
-      });
-      on(c, 'pointermove', e => { const [px, py] = pos(e); ptr.x = px; ptr.y = py });
-      on(document, 'keydown', e => {
-        if (document.activeElement === nameInput) return;
-        const k = e.key.toLowerCase();
-        if (e.key == 'Escape' || k == 'p') {
-          if (scr == 'play' && me && me.cells.length) { paused ? resumeGame() : pauseGame() }
-          return;
-        }
-        if (paused) return;
-        if (e.key == ' ') {
-          e.preventDefault();
-          if (scr == 'play' && !e.repeat && me.cells.length) split(me);
-          else if (scr == 'menu') startGame();
-          else if (scr == 'over' && overT > .7 && !e.repeat && e.target.tagName != 'BUTTON') begin();
-        }
-        else if (k == 'w' && scr == 'play') { if (!e.repeat && me.cells.length) feed(me) }
-        else if (k.startsWith('arrow') || k == 'a' || k == 'd' || k == 's') { keys[k] = 1; if (k.startsWith('arrow')) e.preventDefault() }
-      });
-      on(document, 'keyup', e => { delete keys[e.key.toLowerCase()] });
-
-      const S = (wx, wy) => [(wx - cam.x) * cam.z + W / 2, (wy - cam.y) * cam.z + H / 2];
-
-      const VR = m => Math.sqrt(m) * 8.5;
       function drawVirus(v) {
         const [sx, sy] = S(v.x, v.y), r = VR(v.m) * cam.z;
         if (sx < -r || sx > W + r || sy < -r || sy > H + r) return;
@@ -1211,8 +1026,8 @@
         x.closePath();
         
         // Slightly darker stroke/outline
-        x.fillStyle = hue(p.h);
-        x.strokeStyle = darker(p.h);
+        x.fillStyle = fillOf(p);
+        x.strokeStyle = strokeOf(p);
         x.lineWidth = Math.max(3, Math.min(8, r * 0.08 * cam.z));
         x.fill();
         const skinImg = skinReady(p.skin);
@@ -1220,6 +1035,7 @@
           x.save(); x.clip();
           const sw = skinImg.naturalWidth, sh = skinImg.naturalHeight, sd = Math.min(sw, sh);
           x.drawImage(skinImg, (sw - sd) / 2, (sh - sd) / 2, sd, sd, sx - r, sy - r, r * 2, r * 2);
+          if (p.team) { x.globalAlpha = .42; x.fillStyle = TEAM[p.team]; x.fillRect(sx - r - 6, sy - r - 6, r * 2 + 12, r * 2 + 12); x.globalAlpha = 1 }
           x.restore();
         }
         x.stroke();
@@ -1252,88 +1068,84 @@
         viruses.forEach(v => { x.beginPath(); x.arc(mx + v.x * k, my + v.y * k, 2, 0, 7); x.fill() });
         P.forEach(p => {
           if (p === me) return;
-          x.fillStyle = hue(p.h);
+          x.fillStyle = fillOf(p);
           p.cells.forEach(cl => { x.beginPath(); x.arc(mx + cl.x * k, my + cl.y * k, Math.max(2, R(cl.m) * k), 0, 7); x.fill() });
         });
         x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 1;
         x.strokeRect(mx + (cam.x - W / 2 / cam.z) * k, my + (cam.y - H / 2 / cam.z) * k, W / cam.z * k, H / cam.z * k);
         me.cells.forEach(cl => {
           x.beginPath(); x.arc(mx + cl.x * k, my + cl.y * k, Math.max(2.5, R(cl.m) * k), 0, 7);
-          x.fillStyle = hue(me.h); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke();
+          x.fillStyle = fillOf(me); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke();
         });
         x.restore();
         x.strokeStyle = '#3a2a61'; x.lineWidth = 1.5; rr(x, mx, my, size, size, 10); x.stroke();
       }
 
+      const getBtnPos = () => ({ split: { x: W - 52, y: H - 52, r: 34 }, feed: { x: W - 52, y: H - 130, r: 26 } });
       function draw() {
-        syncMenu();
-        if (scr == 'menu') return;
-        
-        const theme = THEMES[selectedTheme] || THEMES.Light;
-        x.fillStyle = theme.bg; x.fillRect(0, 0, W, H);
-
-        const gs = 60 * cam.z; if (gs > 8) {
-          x.strokeStyle = theme.grid; x.lineWidth = 1; x.beginPath();
-          const ox = ((-cam.x * cam.z + W / 2) % gs + gs) % gs, oy = ((-cam.y * cam.z + H / 2) % gs + gs) % gs;
-          for (let gx = ox; gx < W; gx += gs) { x.moveTo(gx, 0); x.lineTo(gx, H) } for (let gy = oy; gy < H; gy += gs) { x.moveTo(0, gy); x.lineTo(W, gy) } x.stroke();
+        syncMenu(); if (scr == 'menu') return;
+        if (spec && curMode == 'teams' && !me.cells.length) byId('spec-name').innerText = spec.name;
+        const th = THEMES[selectedTheme] || THEMES.Light;
+        x.fillStyle = th.void; x.fillRect(0, 0, W, H);
+        const [ax, ay] = S(0, 0), [bx, by] = S(WORLD, WORLD), gs = 60 * cam.z;
+        x.fillStyle = th.bg; x.fillRect(ax, ay, bx - ax, by - ay);
+        if (gs > 8) {
+          x.save(); x.beginPath(); x.rect(ax, ay, bx - ax, by - ay); x.clip(); x.strokeStyle = th.grid; x.lineWidth = 1; x.beginPath();
+          for (let gx = ax + Math.max(0, Math.ceil(-ax / gs)) * gs; gx < W && gx < bx; gx += gs) { x.moveTo(gx, ay); x.lineTo(gx, by) }
+          for (let gy = ay + Math.max(0, Math.ceil(-ay / gs)) * gs; gy < H && gy < by; gy += gs) { x.moveTo(ax, gy); x.lineTo(bx, gy) }
+          x.stroke(); x.restore();
         }
-
-        const [ax, ay] = S(0, 0), [bx, by] = S(WORLD, WORLD);
-        x.fillStyle = theme.void; x.fillRect(0, 0, W, Math.max(0, ay)); x.fillRect(0, Math.min(H, by), W, H); x.fillRect(0, 0, Math.max(0, ax), H); x.fillRect(Math.min(W, bx), 0, W, H);
-        x.strokeStyle = theme.border; x.lineWidth = 3; x.strokeRect(ax, ay, bx - ax, by - ay);
-
-        pel.forEach(o => { const [sx, sy] = S(o.x, o.y); if (sx < -8 || sx > W + 8 || sy < -8 || sy > H + 8) return;
-          x.fillStyle = hue(o.h); x.beginPath(); x.arc(sx, sy, Math.max(2, (o.big ? 7 : 4) * cam.z + 1), 0, 7); x.fill() });
-
-        // Draw all player/bot cells first
-        P.forEach(p => p.cells.forEach(cl => drawCell(cl, p, p === me)));
-        // Draw viruses on top of blobs so hiding blobs are hidden underneath
+        x.strokeStyle = th.border; x.lineWidth = 3; x.strokeRect(ax, ay, bx - ax, by - ay);
+        for (const o of pel) { const [sx, sy] = S(o.x, o.y); if (sx < -8 || sx > W + 8 || sy < -8 || sy > H + 8) continue; x.fillStyle = o.col || hue(o.h); x.beginPath(); x.arc(sx, sy, Math.max(2, (o.big ? 7 : 4) * cam.z + 1), 0, 7); x.fill() }
+        const all = []; P.forEach(p => p.cells.forEach(q => all.push([q, p]))); all.sort((a, b) => a[0].m - b[0].m);
+        all.forEach(([q, p]) => drawCell(q, p, p === me));
         viruses.forEach(v => drawVirus(v));
-
-        popups.forEach(q => { const [sx, sy] = S(q.x, q.y); x.globalAlpha = Math.max(0, 1 - q.t / 1.2); x.textAlign = 'center'; x.font = '700 18px Fredoka, system-ui'; x.lineWidth = 4; x.strokeStyle = '#12062bcc'; x.lineJoin = 'round'; x.strokeText(q.s, sx, sy - q.t * 40); x.fillStyle = q.c; x.fillText(q.s, sx, sy - q.t * 40); x.globalAlpha = 1 });
-
+        const panel = (px, py, pw, ph) => { x.fillStyle = 'rgba(20,11,36,.78)'; rr(x, px, py, pw, ph, 8); x.fill(); x.strokeStyle = '#3a2a61'; x.lineWidth = 1.5; rr(x, px, py, pw, ph, 8); x.stroke() };
         const T = me.cells.length ? Math.round(tot(me)) : 0;
-        const panel = (px, py, pw, ph) => {
-          x.fillStyle = 'rgba(20,11,36,.78)'; rr(x, px, py, pw, ph, 8); x.fill();
-          x.strokeStyle = '#3a2a61'; x.lineWidth = 1.5; rr(x, px, py, pw, ph, 8); x.stroke();
-        };
         panel(10, 10, 160, 52);
         x.textAlign = 'left'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('SIZE', 22, 29);
         x.fillStyle = '#3ddc6e'; x.font = '26px "Titan One", Fredoka, system-ui'; x.fillText(String(T), 22, 53);
-        x.textAlign = 'right'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('BEST ' + Math.max(bestNow(), peak), 158, 29);
-
-        const all = P.filter(p => p.cells.length).map(p => ({ n: p.name, m: tot(p), me: p === me })).sort((a, b) => b.m - a.m);
-        const myRank = all.findIndex(q => q.me);
-        const lb = all.slice(0, 6).map((q, i) => ({ ...q, rank: i + 1 }));
-        if (myRank >= 6) lb.push({ ...all[myRank], rank: myRank + 1 });
+        x.textAlign = 'right'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('BEST ' + Math.max(bestNow(), Math.round(peak)), 158, 29);
+        const rank = P.filter(p => p.cells.length).map(p => ({ n: p.name, m: tot(p), me: p === me, team: p.team })).sort((a, b) => b.m - a.m);
+        const mi = rank.findIndex(q => q.me), lb = rank.slice(0, 6).map((q, i) => ({ ...q, rank: i + 1 }));
+        if (mi >= 6) lb.push({ ...rank[mi], rank: mi + 1 });
         panel(W - 182, 10, 172, 36 + lb.length * 21);
         x.textAlign = 'left'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('LEADERBOARD', W - 170, 29);
-        lb.forEach((q, i) => {
-          x.fillStyle = q.me ? '#3ddc6e' : '#ece6ff'; x.font = (q.me ? '700' : '500') + ' 14px Fredoka, system-ui';
-          x.textAlign = 'left'; x.fillText(`${q.rank}. ${q.n}`, W - 170, 52 + i * 21);
-          x.textAlign = 'right'; x.fillText(String(Math.round(q.m)), W - 22, 52 + i * 21);
-        });
-
-        if (OPT.minimap && scr == 'play') drawMinimap();
-
-        if (touch && me.cells.length) {
-          const btn = getBtnPos();
-          [[btn.split, 'SPLIT'], [btn.feed, 'FEED']].renderables = [[btn.split, 'SPLIT'], [btn.feed, 'FEED']].forEach(([b, t]) => { x.fillStyle = 'rgba(20,11,36,.8)'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#3ddc6e'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '700 12px Fredoka, system-ui'; x.fillText(t, b.x, b.y + 4) });
+        lb.forEach((q, i) => { x.fillStyle = q.me ? '#3ddc6e' : (curMode == 'teams' && TEAM[q.team]) || '#ece6ff'; x.font = (q.me ? '700' : '500') + ' 14px Fredoka, system-ui'; x.textAlign = 'left'; x.fillText(`${q.rank}. ${q.n}`, W - 170, 52 + i * 21); x.textAlign = 'right'; x.fillText(String(Math.round(q.m)), W - 22, 52 + i * 21) });
+        if (curMode == 'teams') {
+          const al = t => P.filter(p => p.team === t && p.cells.length).length;
+          panel(10, 70, 160, 40); x.textAlign = 'left'; x.font = '700 13px Fredoka, system-ui'; x.fillStyle = TEAM[me.team]; x.fillText((me.team == 'red' ? 'RED' : 'BLUE') + ' TEAM', 22, 88);
+          x.font = '500 12px Fredoka, system-ui'; x.fillStyle = '#8f82b3'; x.fillText(`Red ${al('red')} · Blue ${al('blue')} left`, 22, 103);
         }
-
+        if (OPT.killfeed) {
+          const live = feedLog.filter(e => tm - e.t < 7).slice(-5);
+          if (live.length) {
+            const fy = 10 + 36 + lb.length * 21 + 8, cut = t => t.length > 9 ? t.slice(0, 8) + '…' : t;
+            panel(W - 182, fy, 172, 14 + live.length * 20);
+            live.forEach((e, i) => {
+              const yy = fy + 24 + i * 20; let px = W - 172; x.globalAlpha = Math.max(.25, Math.min(1, 7 - (tm - e.t))); x.font = '600 12px Fredoka, system-ui'; x.textAlign = 'left';
+              [[cut(e.k), e.kc], [' ate ', '#8f82b3'], [cut(e.v), e.vc]].forEach(([t, col]) => { x.fillStyle = col; x.fillText(t, px, yy); px += x.measureText(t).width });
+            });
+            x.globalAlpha = 1;
+          }
+        }
+        if (OPT.minimap) drawMinimap();
+        if (touch && me.cells.length) { const bt = getBtnPos(); [[bt.split, 'SPLIT'], [bt.feed, 'FEED']].forEach(([b, t]) => { x.fillStyle = 'rgba(20,11,36,.8)'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#3ddc6e'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '700 12px Fredoka, system-ui'; x.fillText(t, b.x, b.y + 4) }) }
         if (!me.cells.length && scr == 'play') { x.fillStyle = '#0008'; x.fillRect(0, 0, W, H) }
         if (scr == 'over') { x.fillStyle = 'rgba(10,5,22,.65)'; x.fillRect(0, 0, W, H) }
       }
-
-      const byId = id => document.getElementById(id);
-      const syncMenu = () => {
-        const m = scr == 'menu';
-        c.style.display = m ? 'none' : 'block';
-        byId('menu-ui').style.display = m ? 'flex' : 'none';
-        byId('over-ui').style.display = scr == 'over' ? 'flex' : 'none';
-        byId('pause-ui').style.display = scr == 'play' && paused ? 'flex' : 'none';
-        byId('pause-btn').style.display = scr == 'play' && !paused && me && me.cells.length ? 'flex' : 'none';
-      };
+      c.addEventListener('pointermove', e => { ptr.x = e.clientX; ptr.y = e.clientY });
+      c.addEventListener('pointerdown', e => {
+        ptr.x = e.clientX; ptr.y = e.clientY; if (e.pointerType == 'touch') touch = true;
+        if (touch && scr == 'play' && !paused && me.cells.length) { const bt = getBtnPos(), hit = b => Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r + 8; if (hit(bt.split)) { split(me); return } if (hit(bt.feed)) { feed(me); return } }
+      });
+      window.addEventListener('keydown', e => {
+        const k = e.key.toLowerCase();
+        if (k == 'escape') { if (scr == 'play' && me && me.cells.length) paused ? resumeGame() : pauseGame(); return }
+        if (scr == 'play' && curMode == 'teams' && me && !me.cells.length) { if (k == 'arrowleft') specStep(-1); else if (k == 'arrowright') specStep(1); return }
+        if (scr != 'play' || paused || e.repeat || !me.cells.length) return;
+        if (k == ' ') { e.preventDefault(); split(me) } else if (k == 'w') feed(me);
+      });
 
       window.setDiff = function(d) {
         diff = d;
@@ -1348,7 +1160,7 @@
 
       const unfocus = () => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur() };
       const refreshOptUI = () => {
-        ['minimap', 'music', 'sfx'].forEach(n => {
+        ['minimap', 'music', 'sfx', 'killfeed'].forEach(n => {
           const b = byId('tog-' + n);
           b.classList.toggle('on', !!OPT[n]);
           b.innerText = OPT[n] ? 'On' : 'Off';
@@ -1377,10 +1189,10 @@
         window.toMenu();
       };
       const refreshSkinUI = () => {
-        const h = hexToHue(colorPicker.value), pv = byId('skin-preview');
-        pv.style.backgroundColor = hue(h);
-        pv.style.borderColor = darker(h);
-        pv.style.backgroundImage = selectedSkin ? `url(${SKIN_URL(selectedSkin)})` : 'none';
+        const pv = byId('skin-preview'), tm_ = gameMode == 'teams', url = selectedSkin ? `url(${SKIN_URL(selectedSkin)})` : '';
+        pv.style.backgroundColor = tm_ ? '#8b5cf6' : colorPicker.value;
+        pv.style.borderColor = tm_ ? '#3a2a61' : shade(colorPicker.value, -.2);
+        pv.style.backgroundImage = tm_ ? (selectedSkin ? `linear-gradient(135deg, rgba(239,68,68,.5) 50%, rgba(59,130,246,.5) 50%), ${url}` : 'linear-gradient(135deg, #ef4444 50%, #3b82f6 50%)') : (selectedSkin ? url : 'none');
         pv.classList.toggle('solid', !selectedSkin);
         byId('skin-name').innerText = selectedSkin ? selectedSkin[0].toUpperCase() + selectedSkin.slice(1) : 'Solid colour';
       };
@@ -1390,8 +1202,20 @@
         try { localStorage.setItem('blobs-skin', selectedSkin) } catch(e) {}
         refreshSkinUI(); unfocus(); fxs('click');
       };
+      const MODES = ['ffa', 'teams'], MODE_LABEL = { ffa: 'Free for all', teams: 'Red v Blue' }, MODE_DESC = { ffa: 'Everyone for themselves', teams: 'Two teams. Last team standing wins.' };
+      const refreshModeUI = () => {
+        const t = gameMode == 'teams', cg = byId('colour-group');
+        byId('mode-name').innerText = MODE_LABEL[gameMode]; byId('mode-name').classList.toggle('teams', t); byId('mode-desc').innerText = MODE_DESC[gameMode];
+        colorPicker.disabled = t; cg.style.opacity = t ? .4 : 1; cg.style.pointerEvents = t ? 'none' : 'auto';
+        refreshSkinUI();
+      };
+      window.cycleMode = function(d) {
+        gameMode = MODES[(MODES.indexOf(gameMode) + d + MODES.length) % MODES.length];
+        try { localStorage.setItem('blobs-mode', gameMode) } catch(e) {}
+        refreshModeUI(); unfocus(); fxs('click');
+      };
       refreshOptUI();
-      refreshSkinUI();
+      refreshModeUI();
 
       document.getElementById('best-score-text').innerText = 'Best size ' + bestNow();
       syncMenu();
