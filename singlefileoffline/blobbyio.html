@@ -4,7 +4,7 @@
   <meta charset="UTF-8">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Chewy&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Titan+One&display=swap" rel="stylesheet">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Blobby.io</title>
   <script src="https://cdn.tailwindcss.com"></script>
@@ -37,306 +37,404 @@
       width: 100vw;
       height: 100vh;
     }
-    /* Fullscreen Glassmorphism Overlay Menu */
+    /* ---------- Menu ---------- */
+    :root {
+      --bg: #140b24;
+      --grid: #1f1336;
+      --panel: #1c1133;
+      --line: #3a2a61;
+      --purple: #8b5cf6;
+      --purple-dark: #5b34c4;
+      --green: #3ddc6e;
+      --green-dark: #1f9d47;
+      --text: #ece6ff;
+      --muted: #8f82b3;
+    }
+
     .fullscreen-menu {
       position: absolute;
       inset: 0;
-      width: 100vw;
-      height: 100vh;
-      min-height: 100vh;
-      overflow-y: auto;
-      background:
-        radial-gradient(ellipse at 50% 0%, rgba(34, 197, 94, 0.20) 0%, transparent 42%),
-        radial-gradient(circle at 8% 85%, rgba(59, 130, 246, 0.16) 0%, transparent 30%),
-        radial-gradient(circle at 92% 80%, rgba(234, 179, 8, 0.13) 0%, transparent 28%),
-        linear-gradient(145deg, #0b1220 0%, #020617 72%);
-      backdrop-filter: blur(14px);
+      overflow: hidden;
+      font-family: 'Fredoka', system-ui, sans-serif;
+      background-color: var(--bg);
+      background-image:
+        linear-gradient(var(--grid) 1px, transparent 1px),
+        linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+      background-size: 48px 48px;
+      color: var(--text);
       display: flex;
-      flex-direction: column;
-      align-items: stretch;
+      align-items: center;
       justify-content: center;
       z-index: 100;
-      padding: clamp(14px, 3vh, 32px) clamp(14px, 4vw, 64px);
+      padding: 20px;
+    }
+
+    /* blobs drifting around in the background, drawn like the in-game cells */
+    .bg-blob {
+      position: absolute;
+      border-radius: 50%;
+      border-style: solid;
+      border-width: 5px;
+      pointer-events: none;
+      opacity: 0.9;
+      animation: wander 14s ease-in-out infinite alternate;
+    }
+    .bg-blob::after {
+      content: '';
+      position: absolute;
+      top: 14%;
+      left: 20%;
+      width: 30%;
+      height: 30%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.15);
+    }
+    .bg-blob.g { background: hsl(140, 70%, 48%); border-color: hsl(140, 70%, 30%); }
+    .bg-blob.p { background: hsl(265, 75%, 62%); border-color: hsl(265, 70%, 38%); }
+    .bg-blob.b1 { width: 260px; height: 260px; left: -50px;  top: 8%;     animation-duration: 16s; }
+    .bg-blob.b2 { width: 110px; height: 110px; left: 17%;    bottom: 10%;  animation-duration: 11s; animation-delay: -3s; }
+    .bg-blob.b3 { width: 70px;  height: 70px;  left: 27%;    top: 14%;     animation-duration: 9s;  animation-delay: -6s; }
+    .bg-blob.b4 { width: 180px; height: 180px; right: 9%;    top: 12%;     animation-duration: 13s; animation-delay: -2s; }
+    .bg-blob.b5 { width: 340px; height: 340px; right: -90px; bottom: -70px; animation-duration: 18s; animation-delay: -8s; }
+    .bg-blob.b6 { width: 54px;  height: 54px;  right: 26%;   bottom: 16%;  animation-duration: 8s;  animation-delay: -1s; }
+    .bg-blob.b7 { width: 90px;  height: 90px;  left: 8%;     bottom: 34%;  animation-duration: 12s; animation-delay: -5s; }
+    @keyframes wander {
+      0%   { transform: translate(0, 0); }
+      50%  { transform: translate(40px, -30px); }
+      100% { transform: translate(-25px, 35px); }
     }
 
     .menu-panel {
       position: relative;
-      isolation: isolate;
-      background: linear-gradient(145deg, rgba(30, 41, 59, 0.72), rgba(15, 23, 42, 0.62));
-      border: 1px solid rgba(255, 255, 255, 0.13);
-      border-radius: 30px;
-      padding: clamp(22px, 4vh, 42px) clamp(18px, 4vw, 64px);
+      z-index: 1;
       width: 100%;
-      max-width: 1500px;
-      min-height: min(88vh, 900px);
+      max-width: 400px;
       margin: auto;
-      box-shadow: 0 25px 80px rgba(0, 0, 0, 0.48), inset 0 1px 0 rgba(255, 255, 255, 0.12);
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .menu-panel > h1 {
-      width: 100%;
       text-align: center;
-      font-family: 'Chewy', cursive;
-      font-size: clamp(4.5rem, 12vw, 10rem);
-      line-height: 0.98;
+    }
+
+    .logo {
+      font-family: 'Titan One', 'Fredoka', sans-serif;
+      font-weight: 400;
+      font-size: clamp(3.6rem, 13vw, 5.6rem);
+      line-height: 1;
+      color: #9b6bff;
+      -webkit-text-stroke: 9px #12062b;
+      paint-order: stroke fill;
       letter-spacing: 1px;
-      color: #f8fafc;
-      margin: 0 0 8px;
-      padding: 0 8px;
-      background: linear-gradient(180deg, #fff9c2 0%, #fde047 42%, #f59e0b 100%);
-      -webkit-background-clip: text;
-      background-clip: text;
-      -webkit-text-fill-color: transparent;
-      filter: drop-shadow(0 7px 0 rgba(120, 53, 15, 0.42)) drop-shadow(0 12px 24px rgba(234, 179, 8, 0.22));
+      margin-bottom: 18px;
+      filter: drop-shadow(0 5px 0 #12062b);
     }
+    .logo span { color: var(--green); }
 
-    .menu-panel > .sub {
-      font-size: clamp(12px, 1.2vw, 15px);
-      max-width: 760px;
-      line-height: 1.6;
-      margin-bottom: clamp(16px, 3vh, 30px);
-    }
-
-    .tab-bar,
-    .tab-content {
-      width: min(100%, 720px);
-    }
-
-    @media (max-width: 600px) {
-      .fullscreen-menu { padding: 10px; }
-      .menu-panel { min-height: calc(100vh - 20px); border-radius: 22px; padding: 24px 16px; }
-      .menu-panel > h1 { font-size: clamp(4rem, 18vw, 6rem); }
-      .grid-selector { flex-wrap: wrap; }
-      .theme-btn, .diff-btn { min-width: 28%; }
-    }
-
-    @media (max-height: 720px) {
-      .menu-panel { min-height: 0; }
-      .menu-panel > h1 { font-size: clamp(3.8rem, 9vw, 7rem); }
-    }
-
-    /* Tab Switcher Styling */
-    .tab-bar {
-      display: flex;
-      background: rgba(15, 23, 42, 0.8);
-      padding: 5px;
-      border-radius: 14px;
-      width: 100%;
-      margin-bottom: 24px;
-      border: 1px solid rgba(255, 255, 255, 0.05);
-    }
-    .tab-btn {
-      flex: 1;
-      padding: 10px;
-      border: none;
-      background: transparent;
-      color: #94a3b8;
-      font-weight: 800;
-      font-size: 14px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: all 0.25s ease;
-    }
-    .tab-btn.active {
-      background: #22c55e;
-      color: #022c10;
-      box-shadow: 0 4px 12px rgba(34, 197, 94, 0.35);
-    }
-
-    .tab-content {
-      width: 100%;
-      display: none;
-    }
-    .tab-content.active {
-      display: block;
-    }
-
-    /* Balanced two-column setup keeps the logo clear and gives each option room. */
-    .menu-panel {
-      justify-content: flex-start;
-      padding-top: clamp(22px, 3.5vh, 38px);
-      padding-bottom: clamp(22px, 3.5vh, 38px);
-    }
-    .menu-panel > h1 {
-      flex: 0 0 auto;
-      font-size: clamp(4.5rem, 9vw, 8.5rem);
-      margin-bottom: 4px;
-    }
-    .menu-panel > .sub { margin-bottom: 20px; }
-    .tab-bar { max-width: 1040px; margin-bottom: 20px; }
-    .tab-content { max-width: 1040px; }
-    .setup-grid {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-      gap: clamp(18px, 3vw, 42px);
-      align-items: start;
-      width: 100%;
-    }
-    .setup-column { min-width: 0; }
-    .setup-column .form-group { margin-bottom: 20px; }
-    .play-btn { width: 100%; margin-top: 2px; }
-    .best-score, .status-msg { text-align: center; }
-    @media (max-width: 700px) {
-      .setup-grid { grid-template-columns: 1fr; gap: 0; }
-      .menu-panel > h1 { font-size: clamp(4rem, 17vw, 6rem); }
-      .tab-bar { margin-bottom: 16px; }
-    }
-
-    /* Controls & Options Form */
-    .form-group {
-      margin-bottom: 16px;
-      width: 100%;
-    }
-    .form-label {
-      display: block;
-      font-size: 11px;
-      font-weight: 800;
-      color: #94a3b8;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 6px;
+    .box {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 18px;
+      box-shadow: 0 10px 40px rgba(0, 0, 0, 0.45);
       text-align: left;
     }
+
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+
+    .name-input, .play-btn, .theme-btn, .diff-btn, .link-btn { font-family: inherit; }
     .name-input {
       width: 100%;
-      padding: 12px 16px;
-      border: 2px solid #334155;
-      border-radius: 12px;
-      background: #0f172a;
-      color: #fff;
-      font-weight: 700;
-      font-size: 16px;
+      padding: 12px 14px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: #120a21;
+      color: var(--text);
+      font-size: 17px;
       text-align: center;
       outline: none;
-      transition: border-color 0.2s, box-shadow 0.2s;
+      user-select: text;
     }
-    .name-input:focus {
-      border-color: #22c55e;
-      box-shadow: 0 0 10px rgba(34, 197, 94, 0.25);
-    }
-    .grid-selector {
-      display: flex;
-      justify-content: space-between;
-      gap: 8px;
-    }
-    .theme-btn, .diff-btn {
-      flex: 1;
-      padding: 9px 6px;
-      border: 2px solid #334155;
-      border-radius: 10px;
-      background: #0f172a;
-      color: #cbd5e1;
-      font-size: 12px;
-      font-weight: 800;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    .theme-btn.active, .diff-btn.active {
-      background: #22c55e;
-      color: #022c10;
-      border-color: #22c55e;
-    }
-    .color-picker-wrapper {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: #0f172a;
-      padding: 8px 14px;
-      border-radius: 12px;
-      border: 2px solid #334155;
-    }
-    .color-picker {
-      -webkit-appearance: none;
-      border: none;
-      width: 40px;
-      height: 32px;
-      border-radius: 8px;
-      cursor: pointer;
-      background: none;
-    }
-    .color-picker::-webkit-color-swatch-wrapper {
-      padding: 0;
-    }
-    .color-picker::-webkit-color-swatch {
-      border: 2px solid #fff;
-      border-radius: 6px;
-    }
-    .color-label {
-      font-size: 14px;
-      font-weight: 700;
-      color: #cbd5e1;
-    }
+    .name-input::placeholder { color: var(--muted); }
+    .name-input:focus { border-color: var(--purple); }
+
     .play-btn {
+      display: block;
       width: 100%;
-      padding: 14px;
+      margin-top: 10px;
+      padding: 12px;
       border: none;
-      border-radius: 14px;
-      background: linear-gradient(135deg, #fde047 0%, #eab308 100%);
-      color: #1c1300;
-      font-weight: 900;
-      font-size: 20px;
+      border-radius: 6px;
+      background: var(--green);
+      color: #052e16;
+      font-size: 22px;
+      font-weight: 700;
       letter-spacing: 0.5px;
       cursor: pointer;
-      margin-top: 8px;
-      box-shadow: 0 6px 20px rgba(234, 179, 8, 0.35);
-      transition: transform 0.15s, box-shadow 0.15s;
+      box-shadow: 0 4px 0 var(--green-dark);
+      transition: transform 0.06s, box-shadow 0.06s, filter 0.1s;
     }
-    .play-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 8px 25px rgba(234, 179, 8, 0.45);
+    .play-btn:hover { filter: brightness(1.08); }
+    .play-btn:active { transform: translateY(4px); box-shadow: 0 0 0 var(--green-dark); }
+
+    /* settings rows */
+    .settings {
+      margin-top: 18px;
+      padding-top: 14px;
+      border-top: 1px solid var(--line);
     }
-    .play-btn:active {
-      transform: translateY(1px);
+    .form-group {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 10px;
     }
-    .best-score {
-      color: #94a3b8;
+    .form-group:last-child { margin-bottom: 0; }
+    .form-label {
       font-size: 13px;
-      font-weight: 700;
-      margin-top: 14px;
+      color: var(--muted);
+      flex: 0 0 auto;
+      min-width: 60px;
     }
-    .status-msg {
-      margin-top: 6px;
+    .color-picker-wrapper { display: flex; align-items: center; gap: 8px; }
+    .color-picker {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 32px;
+      height: 24px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: none;
+      cursor: pointer;
+    }
+    .color-picker::-webkit-color-swatch-wrapper { padding: 0; }
+    .color-picker::-webkit-color-swatch { border: none; border-radius: 3px; }
+    .color-picker::-moz-color-swatch { border: none; border-radius: 3px; }
+    .color-label {
+      font-family: ui-monospace, Menlo, Consolas, monospace;
       font-size: 12px;
-      color: #64748b;
+      color: var(--muted);
     }
 
-    /* Credits Tab Specifics */
-    .credits-box {
-      text-align: center;
-      padding: 12px 6px;
-      color: #e2e8f0;
+    .grid-selector { display: flex; }
+    .theme-btn, .diff-btn {
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      margin-left: -1px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 13px;
+      cursor: pointer;
     }
-    .credits-box h2 {
-      font-size: 28px;
-      font-weight: 900;
-      color: #fde047;
-      margin-bottom: 12px;
-      letter-spacing: -0.5px;
+    .theme-btn:first-child, .diff-btn:first-child { margin-left: 0; border-radius: 4px 0 0 4px; }
+    .theme-btn:last-child, .diff-btn:last-child { border-radius: 0 4px 4px 0; }
+    .theme-btn:hover, .diff-btn:hover { color: var(--text); }
+    .theme-btn.active, .diff-btn.active {
+      background: var(--purple);
+      border-color: var(--purple);
+      color: #fff;
+      position: relative;
     }
-    .credits-box p {
-      font-size: 15px;
-      line-height: 1.8;
-      color: #cbd5e1;
-      font-weight: 600;
+
+    .menu-foot {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 14px;
+      font-size: 12px;
+      color: var(--muted);
     }
-    .credits-box a {
-      color: #fde047;
+    .link-btn {
+      border: none;
+      background: none;
+      padding: 0;
+      color: var(--muted);
+      font-size: 12px;
       text-decoration: underline;
-      font-weight: 800;
-      transition: color 0.2s;
+      cursor: pointer;
     }
-    .credits-box a:hover {
-      color: #fef08a;
+    .link-btn:hover { color: var(--text); }
+
+    .controls-hint {
+      margin-top: 14px;
+      font-size: 13px;
+      color: var(--muted);
     }
-    .algebra-logo {
-      height: 24px;
-      vertical-align: middle;
-      margin: 0 4px;
+    .controls-hint b {
       display: inline-block;
+      padding: 1px 7px;
+      margin: 0 2px;
+      border: 1px solid var(--line);
+      border-bottom-width: 3px;
+      border-radius: 4px;
+      background: var(--panel);
+      color: var(--text);
+      font-weight: 600;
+      font-size: 12px;
+    }
+
+    /* credits */
+    .credits-box { text-align: center; line-height: 1.8; font-size: 15px; padding: 6px 0 4px; }
+    .credits-box a { color: var(--green); text-decoration: none; font-weight: 600; }
+    .credits-box a:hover { text-decoration: underline; }
+    .credits-box .orig { margin-top: 10px; font-size: 13px; color: var(--muted); }
+    .credits-box .link-btn { margin-top: 14px; }
+    .algebra-logo { height: 22px; vertical-align: middle; margin: 0 4px; display: inline-block; }
+
+
+
+    /* ---------- Skin picker ---------- */
+    .skin-picker {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 22px;
+      margin: 16px 0 4px;
+    }
+    .skin-preview {
+      position: relative;
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: 4px solid #1b6b3a;
+      background-size: cover;
+      background-position: center;
+      background-repeat: no-repeat;
+      box-sizing: border-box;
+    }
+    .skin-preview.solid::after {
+      content: '';
+      position: absolute;
+      top: 14%;
+      left: 20%;
+      width: 30%;
+      height: 30%;
+      border-radius: 50%;
+      background: rgba(255, 255, 255, 0.22);
+    }
+    .skin-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 38px;
+      height: 38px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 50%;
+      background: transparent;
+      color: var(--text);
+      cursor: pointer;
+    }
+    .skin-arrow:hover { background: var(--purple); border-color: var(--purple); }
+    .skin-arrow:active { transform: scale(0.92); }
+    .skin-name { text-align: center; font-size: 13px; color: var(--muted); margin-bottom: 2px; }
+    @media (max-height: 640px) {
+      .skin-picker { margin: 10px 0 2px; }
+      .skin-preview { width: 52px; height: 52px; }
+    }
+
+    /* ---------- Pause / game over / pause button ---------- */
+    .overlay {
+      position: absolute;
+      inset: 0;
+      z-index: 90;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      background: rgba(10, 5, 22, 0.72);
+      font-family: 'Fredoka', system-ui, sans-serif;
+      color: var(--text);
+      padding: 20px;
+    }
+    .overlay .box { width: 100%; max-width: 340px; text-align: center; }
+    .overlay h2 {
+      font-family: 'Titan One', 'Fredoka', sans-serif;
+      font-weight: 400;
+      font-size: 34px;
+      color: #9b6bff;
+      -webkit-text-stroke: 5px #12062b;
+      paint-order: stroke fill;
+      margin-bottom: 12px;
+    }
+    .over-label { font-size: 12px; letter-spacing: 1px; color: var(--muted); }
+    .over-size {
+      font-family: 'Titan One', 'Fredoka', sans-serif;
+      font-size: 64px;
+      line-height: 1.1;
+      color: var(--green);
+    }
+    .over-sub { font-size: 14px; color: var(--muted); margin-top: 4px; }
+    .overlay .play-btn { margin-top: 18px; }
+    .ghost-btn {
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 10px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      background: transparent;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 16px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+    .ghost-btn:hover { background: #2a1a4a; border-color: var(--purple); }
+    .opt-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 9px 0;
+      border-bottom: 1px solid var(--line);
+      font-size: 16px;
+      text-align: left;
+    }
+    .tog {
+      min-width: 64px;
+      padding: 5px 10px;
+      border: 1px solid var(--line);
+      border-radius: 4px;
+      background: transparent;
+      color: var(--muted);
+      font-family: inherit;
+      font-size: 14px;
+      cursor: pointer;
+    }
+    .tog.on { background: var(--purple); border-color: var(--purple); color: #fff; }
+    .pause-hint { margin-top: 10px; font-size: 12px; color: var(--muted); }
+    #pause-btn {
+      position: absolute;
+      top: 12px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 80;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      gap: 5px;
+      width: 42px;
+      height: 42px;
+      padding: 0;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      background: rgba(20, 11, 36, 0.8);
+      cursor: pointer;
+    }
+    #pause-btn i { display: block; width: 5px; height: 16px; border-radius: 2px; background: var(--text); }
+    #pause-btn:hover { background: var(--purple-dark); }
+
+    @media (max-height: 640px) {
+      .logo { font-size: 3.4rem; margin-bottom: 12px; -webkit-text-stroke-width: 7px; }
+      .box { padding: 14px; }
+      .settings { margin-top: 12px; padding-top: 10px; }
+      .form-group { margin-bottom: 6px; }
+      .controls-hint { margin-top: 10px; }
+    }
+    @media (max-height: 520px) {
+      .menu-panel { transform: scale(0.8); transform-origin: center; }
+    }
+    @media (max-width: 700px) {
+      .bg-blob.b1, .bg-blob.b5 { opacity: 0.5; }
+      .fullscreen-menu { padding: 14px; }
     }
   </style>
 </head>
@@ -345,78 +443,101 @@
   <div id="game-container">
     <canvas id="canvas"></canvas>
     
-    <!-- Fullscreen Menu Container -->
+    <!-- Menu -->
     <div id="menu-ui" class="fullscreen-menu">
+      <div class="bg-blob g b1"></div>
+      <div class="bg-blob p b2"></div>
+      <div class="bg-blob g b3"></div>
+      <div class="bg-blob p b4"></div>
+      <div class="bg-blob g b5"></div>
+      <div class="bg-blob p b6"></div>
+      <div class="bg-blob g b7"></div>
+
       <div class="menu-panel">
-        <h1 class="text-4xl font-black text-white mb-2 tracking-tight">BLOBBY.IO</h1>
-        <p class="sub text-slate-400 text-xs mb-4 text-center">Eat pellets & smaller blobs. Hide behind green viruses! Space splits, W feeds.</p>
+        <h1 class="logo">Blobby<span>.io</span></h1>
 
-        <!-- Navigation Tabs -->
-        <div class="tab-bar">
-          <button class="tab-btn active" onclick="switchTab('play')">PLAY</button>
-          <button class="tab-btn" onclick="switchTab('credits')">CREDITS</button>
-        </div>
+        <div class="box">
+          <div id="tab-play" class="tab-content active">
+            <input type="text" id="player-name-input" class="name-input" placeholder="Nickname" maxlength="15">
+            <div class="skin-picker">
+              <button class="skin-arrow" onclick="cycleSkin(-1)" aria-label="Previous skin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+              <div class="skin-preview solid" id="skin-preview"></div>
+              <button class="skin-arrow" onclick="cycleSkin(1)" aria-label="Next skin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+            </div>
+            <div class="skin-name" id="skin-name">Solid colour</div>
+            <button class="play-btn" onclick="startGame()">Play</button>
 
-        <!-- Tab Content: Play Options -->
-        <div id="tab-play" class="tab-content active">
-          <div class="setup-grid">
-            <div class="setup-column">
-          <div class="form-group">
-            <label class="form-label">Player Name</label>
-            <input type="text" id="player-name-input" class="name-input" placeholder="Enter your name" maxlength="15">
-          </div>
+            <div class="settings">
+              <div class="form-group">
+                <span class="form-label">Colour</span>
+                <div class="color-picker-wrapper">
+                  <span class="color-label" id="color-hex-text">#3b82f6</span>
+                  <input type="color" id="player-color-picker" class="color-picker" value="#3b82f6">
+                </div>
+              </div>
+              <div class="form-group">
+                <span class="form-label">Map</span>
+                <div class="grid-selector" id="theme-selector">
+                  <button class="theme-btn active" onclick="setTheme('Light')">Light</button>
+                  <button class="theme-btn" onclick="setTheme('Dark')">Dark</button>
+                  <button class="theme-btn" onclick="setTheme('Neon')">Neon</button>
+                  <button class="theme-btn" onclick="setTheme('Retro')">Retro</button>
+                </div>
+              </div>
+              <div class="form-group">
+                <span class="form-label">Bots</span>
+                <div class="grid-selector">
+                  <button class="diff-btn" onclick="setDiff('Easy')">Easy</button>
+                  <button class="diff-btn active" id="btn-Normal" onclick="setDiff('Normal')">Normal</button>
+                  <button class="diff-btn" onclick="setDiff('Hard')">Hard</button>
+                </div>
+              </div>
+            </div>
 
-          <div class="form-group">
-            <label class="form-label">Blob Color</label>
-            <div class="color-picker-wrapper">
-              <input type="color" id="player-color-picker" class="color-picker" value="#3b82f6">
-              <span class="color-label" id="color-hex-text">#3b82f6</span>
+            <div class="menu-foot">
+              <span id="best-score-text">Best size 0</span>
+              <button class="link-btn" onclick="switchTab('credits')">Credits</button>
             </div>
           </div>
 
-            </div>
-            <div class="setup-column">
-          <div class="form-group">
-            <label class="form-label">Map Theme</label>
-            <div class="grid-selector" id="theme-selector">
-              <button class="theme-btn active" onclick="setTheme('Light')">Light</button>
-              <button class="theme-btn" onclick="setTheme('Dark')">Dark</button>
-              <button class="theme-btn" onclick="setTheme('Neon')">Neon</button>
-              <button class="theme-btn" onclick="setTheme('Retro')">Retro</button>
-            </div>
-          </div>
-
-          <div class="form-group">
-            <label class="form-label">Difficulty</label>
-            <div class="grid-selector">
-              <button class="diff-btn" onclick="setDiff('Easy')">Easy</button>
-              <button class="diff-btn active" id="btn-Normal" onclick="setDiff('Normal')">Normal</button>
-              <button class="diff-btn" onclick="setDiff('Hard')">Hard</button>
-            </div>
-          </div>
-
-            </div>
-          </div>
-
-          <button class="play-btn" onclick="startGame()">PLAY</button>
-          <div class="best-score" id="best-score-text">Best size 0</div>
-          <div class="status-msg" id="status-text">Pick your setup and press Play.</div>
-        </div>
-
-        <!-- Tab Content: Credits -->
-        <div id="tab-credits" class="tab-content">
-          <div class="credits-box">
-            <h2>Blobby.io</h2>
-            <p>Based off Blob Rush created by <a href="https://games.yakton.net/games/blobs" target="_blank">Yakton Games</a></p>
-            <p>Modified by Hazza</p>
-            <div class="mt-4 pt-3 border-t border-slate-700/60 text-sm">
-              <span>an </span>
-              <img src="https://i.ibb.co/krpP9zq/algebralogo.png" alt="algebra practise" class="algebra-logo">
-              <span> original</span>
+          <div id="tab-credits" class="tab-content">
+            <div class="credits-box">
+              <p>Based on Blob Rush by <a href="https://games.yakton.net" target="_blank">Yakton Games</a></p>
+              <p>Made by Hazza</p>
+              <div class="orig">an <img src="https://i.ibb.co/krpP9zq/algebralogo.png" alt="algebra practise" class="algebra-logo"> original</div>
+              <button class="link-btn" onclick="switchTab('play')">Back</button>
             </div>
           </div>
         </div>
 
+        <p class="controls-hint">Move with mouse &middot; <b>Space</b> split &middot; <b>W</b> feed &middot; hide behind green viruses</p>
+        <span id="status-text" style="display:none"></span>
+      </div>
+    </div>
+
+    <button id="pause-btn" title="Pause (Esc)" onclick="pauseGame()"><i></i><i></i></button>
+
+    <div id="pause-ui" class="overlay">
+      <div class="box">
+        <h2>Paused</h2>
+        <div class="opt-row"><span>Minimap</span><button class="tog on" id="tog-minimap" onclick="toggleOpt('minimap')">On</button></div>
+        <div class="opt-row"><span>Music</span><button class="tog on" id="tog-music" onclick="toggleOpt('music')">On</button></div>
+        <div class="opt-row"><span>Sound effects</span><button class="tog on" id="tog-sfx" onclick="toggleOpt('sfx')">On</button></div>
+        <button class="play-btn" onclick="resumeGame()">Resume</button>
+        <button class="ghost-btn" onclick="leaveGame()">Leave game</button>
+        <p class="pause-hint">Esc to resume</p>
+      </div>
+    </div>
+
+    <div id="over-ui" class="overlay">
+      <div class="box">
+        <h2>You were eaten</h2>
+        <div class="over-label">BIGGEST SIZE</div>
+        <div class="over-size" id="over-size">0</div>
+        <div class="over-sub" id="over-best"></div>
+        <div class="over-sub" id="over-stats"></div>
+        <button class="play-btn" onclick="retryGame()">Try again</button>
+        <button class="ghost-btn" onclick="toMenu()">Back to menu</button>
       </div>
     </div>
   </div>
@@ -462,7 +583,91 @@
       }
       return cur;
     }
-    function fx(n) {}
+    const OPT = (() => {
+      const d = { sfx: true, music: true, minimap: true };
+      try { Object.assign(d, JSON.parse(localStorage.getItem('blobs-opt') || '{}')) } catch (e) {}
+      return d;
+    })();
+    function saveOpt() { try { localStorage.setItem('blobs-opt', JSON.stringify(OPT)) } catch (e) {} }
+
+    // All sound is synthesised with WebAudio, so there are no audio files to load.
+    const AudioFX = (() => {
+      let ctx = null, sfx = null, mus = null, noiseBuf = null, timer = null, nextT = 0, step = 0;
+      function ensure() {
+        if (!ctx) {
+          try {
+            const AC = window.AudioContext || window.webkitAudioContext;
+            ctx = new AC();
+            sfx = ctx.createGain(); sfx.gain.value = 0.5; sfx.connect(ctx.destination);
+            mus = ctx.createGain(); mus.gain.value = 0.11; mus.connect(ctx.destination);
+            noiseBuf = ctx.createBuffer(1, Math.floor(ctx.sampleRate * 0.3), ctx.sampleRate);
+            const d = noiseBuf.getChannelData(0);
+            for (let i = 0; i < d.length; i++) d[i] = Math.random() * 2 - 1;
+          } catch (e) { ctx = null }
+        }
+        if (ctx && ctx.state === 'suspended') ctx.resume();
+        return ctx;
+      }
+      function tone(dest, t0, f0, f1, dur, type, vol) {
+        const o = ctx.createOscillator(), g = ctx.createGain();
+        o.type = type; o.frequency.setValueAtTime(f0, t0);
+        if (f1 !== f0) o.frequency.exponentialRampToValueAtTime(f1, t0 + dur);
+        g.gain.setValueAtTime(0.0001, t0);
+        g.gain.exponentialRampToValueAtTime(vol, t0 + 0.01);
+        g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        o.connect(g); g.connect(dest); o.start(t0); o.stop(t0 + dur + 0.03);
+      }
+      function burst(dest, t0, dur, vol, cutoff) {
+        const s = ctx.createBufferSource(), f = ctx.createBiquadFilter(), g = ctx.createGain();
+        s.buffer = noiseBuf; f.type = 'lowpass'; f.frequency.value = cutoff;
+        g.gain.setValueAtTime(vol, t0); g.gain.exponentialRampToValueAtTime(0.0001, t0 + dur);
+        s.connect(f); f.connect(g); g.connect(dest); s.start(t0); s.stop(t0 + dur + 0.03);
+      }
+      const SFX = {
+        tick:  t => tone(sfx, t, 520, 820, 0.06, 'sine', 0.25),
+        ui:    t => tone(sfx, t, 600, 900, 0.07, 'sine', 0.2),
+        click: t => tone(sfx, t, 380, 300, 0.05, 'square', 0.1),
+        feed:  t => tone(sfx, t, 260, 150, 0.09, 'square', 0.1),
+        swipe: t => { tone(sfx, t, 280, 720, 0.14, 'triangle', 0.3); burst(sfx, t, 0.1, 0.15, 3000) },
+        coin:  t => { tone(sfx, t, 520, 520, 0.09, 'square', 0.14); tone(sfx, t + 0.07, 780, 780, 0.16, 'square', 0.14) },
+        pop:   t => { burst(sfx, t, 0.25, 0.5, 1200); tone(sfx, t, 160, 50, 0.25, 'sine', 0.5) },
+        lose:  t => { tone(sfx, t, 420, 70, 0.7, 'sawtooth', 0.22); tone(sfx, t + 0.05, 210, 45, 0.7, 'sine', 0.35) }
+      };
+      function play(n) {
+        if (!OPT.sfx || !SFX[n] || !ensure()) return;
+        try { SFX[n](ctx.currentTime) } catch (e) {}
+      }
+
+      // Music: Am - F - C - G loop, bass + arpeggio + light percussion.
+      const ARP = [
+        [220, 261.63, 329.63, 440],
+        [174.61, 220, 261.63, 349.23],
+        [261.63, 329.63, 392, 523.25],
+        [196, 246.94, 293.66, 392]
+      ];
+      const BASS = [110, 87.31, 130.81, 98];
+      const PAT = [0, 1, 2, 3, 2, 1, 2, 1];
+      const STEP = 0.21;
+      function musicStep(t) {
+        const bar = Math.floor(step / 8) % 4, i = step % 8, n = ARP[bar][PAT[i]];
+        tone(mus, t, n, n, 0.2, 'triangle', 0.5);
+        if (i % 4 === 0) { tone(mus, t, BASS[bar], BASS[bar], 0.5, 'sine', 0.9); tone(mus, t, 110, 45, 0.12, 'sine', 0.9) }
+        if (i % 2 === 1) burst(mus, t, 0.04, 0.1, 6000);
+        step++;
+      }
+      function sync(inGame) {
+        if (inGame && OPT.music && ensure()) {
+          if (!timer) {
+            nextT = ctx.currentTime + 0.05;
+            timer = setInterval(() => {
+              while (nextT < ctx.currentTime + 0.3) { musicStep(nextT); nextT += STEP }
+            }, 80);
+          }
+        } else if (timer) { clearInterval(timer); timer = null }
+      }
+      return { play, sync, ensure };
+    })();
+    function fx(n) { AudioFX.play(n) }
     function rr(ctx, x, y, w, h, r) {
       ctx.beginPath();
       ctx.roundRect(x, y, w, h, r);
@@ -482,12 +687,13 @@
     const BLOB = (() => {
       const radius = m => Math.sqrt(m) * 4;
       const speed = m => 300 * Math.pow(m, -.22);
-      const canEat = (a, b) => a.m > b.m * 1.25 && Math.hypot(a.x - b.x, a.y - b.y) < radius(a.m) - radius(b.m) * .45;
+      const EAT_RATIO = 1.05; // any blob at least this much bigger eats the smaller one it overlaps
+      const canEat = (a, b) => a.m > b.m * EAT_RATIO && Math.hypot(a.x - b.x, a.y - b.y) < radius(a.m) - radius(b.m) * .3;
       const zoomFor = total => Math.max(.28, 2.2 / (1 + Math.sqrt(total) * 0.08));
       const DIFF = {
-        Easy: { bots: 14, sight: .7, aggr: .35, split: false, label: 'Easy' },
-        Normal: { bots: 18, sight: 1, aggr: .7, split: false, label: 'Normal' },
-        Hard: { bots: 24, sight: 1.35, aggr: 1, split: true, label: 'Hard' }
+        Easy: { bots: 20, sight: .7, aggr: .35, split: false, label: 'Easy' },
+        Normal: { bots: 30, sight: 1, aggr: .7, split: false, label: 'Normal' },
+        Hard: { bots: 40, sight: 1.35, aggr: 1, split: true, label: 'Hard' }
       };
       return { radius, speed, canEat, zoomFor, DIFF };
     })();
@@ -516,6 +722,13 @@
       return Math.round(h * 360);
     }
 
+    // Skins live in the GitHub repo and are served through jsDelivr.
+    const SKINS = ['duck', 'luigi', 'mario', 'penguin', 'rainbow', 'rick', 'speed', 'sponge'];
+    const SKIN_URL = n => `https://cdn.jsdelivr.net/gh/hazzatazza/blobby.io@main/skins/${n}.png`;
+    const SKIN_IMG = {};
+    SKINS.forEach(n => { const im = new Image(); im.src = SKIN_URL(n); SKIN_IMG[n] = im; });
+    const skinReady = n => { const im = n && SKIN_IMG[n]; return im && im.complete && im.naturalWidth > 0 ? im : null };
+
     function blobs(el) {
       const WORLD = 4000, PEL = 600, VIRUS_COUNT = 28;
       const [c, x] = hd(el, W, H, 1.1);
@@ -536,8 +749,11 @@
       colorPicker.addEventListener('input', () => {
         colorHexText.innerText = colorPicker.value;
         try { localStorage.setItem('blobs-player-color', colorPicker.value); } catch(e) {}
+        refreshSkinUI();
       });
 
+      let selectedSkin = '';
+      try { const sk = localStorage.getItem('blobs-skin'); if (SKINS.includes(sk)) selectedSkin = sk } catch(e) {}
       let selectedTheme = localStorage.getItem('blobs-theme') || 'Light';
 
       window.setTheme = function(t) {
@@ -559,13 +775,13 @@
 
       const NAMES = [
         'Algebro', 'Balake', 'Big Rock', 'Raymond', 'Neegy', 'Admin', 'Doo', 'Noodle', 'Jerry', 'Destroyer101', 'TheChamp', 'DragonGuy', 'Gamer203', 'IoKing', 'Bob', 'Jeff', 'Tungsahur', 'SharkLad',
-        'ApexPredator', 'BlobMaster', 'SwiftNova', 'TitanLord', 'CyberNinja', 'NeonGhost', 'ShadowCell', 'StormRider', 'VenomByte', 'CosmicPulse', 'Pip', 'Moss', 'Blu', 'Zed', 'Nova', 'Alvin', 'PayMe', 'GOAT'
+        'ApexPredator', 'BlobMaster', 'SwiftNova', 'TitanLord', 'CyberNinja', 'NeonGhost', 'ShadowCell', 'StormRider', 'VenomByte', 'CosmicPulse', 'Pip', 'Moss', 'Blu', 'Zed', 'Nova', 'Alvin', 'PayMe', 'GOAT', 'Gloop', 'Squish', 'Biscuit', 'Wobbles', 'Gus', 'Mochi', 'Pudding', 'Zorp'
       ];
       const hue = h => `hsl(${h},75%,58%)`, dark = h => `hsl(${h},70%,38%)`;
       const bestNow = () => { try { return +localStorage.getItem('best-blobs') || 0 } catch(e) { return 0 } };
       let diff = 'Normal'; try { const d = localStorage.getItem('blobs-diff'); if (BLOB.DIFF[d]) diff = d } catch(e) {}
       let scr = 'menu', P = [], me = null, pel = [], viruses = [], cam = { x: WORLD / 2, y: WORLD / 2, z: .9 }, ptr = { x: W / 2 + 1, y: H / 2 }, keys = {}, tm = 0, overT = 0, newBest = false,
-          peak = 0, eaten = 0, life = 0, popups = [], lastTick = 0, deadT = 0, touch = false;
+          peak = 0, eaten = 0, life = 0, popups = [], lastTick = 0, deadT = 0, touch = false, paused = false;
       const D = () => BLOB.DIFF[diff];
       const R = BLOB.radius, tot = p => p.cells.reduce((a, b) => a + b.m, 0);
 
@@ -607,11 +823,11 @@
           localStorage.setItem('blobs-player-color', colorPicker.value);
         } catch(e) {}
 
-        scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0;
+        paused = false; scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0;
         for (let i = 0; i < PEL; i++) pel.push(spawnPel());
         for (let i = 0; i < VIRUS_COUNT; i++) viruses.push(spawnVirus());
 
-        me = newPlayer(playerName, false, 10, playerHue); 
+        me = newPlayer(playerName, false, 10, playerHue); me.skin = selectedSkin; 
         me.cells[0].x = WORLD / 2 + (Math.random() - .5) * 600; 
         me.cells[0].y = WORLD / 2 + (Math.random() - .5) * 600; 
         P.push(me);
@@ -620,6 +836,7 @@
         for (let i = 0; i < D().bots; i++) P.push(newPlayer(names[i % names.length], true, 10 + Math.random() * 70, 0));
         cam.x = me.cells[0].x; cam.y = me.cells[0].y; cam.z = BLOB.zoomFor(10);
         st(`Eat pellets and smaller blobs. Space splits, W feeds. ${diff} bots.`);
+        AudioFX.ensure(); AudioFX.sync(true); fxs('ui');
       }
       const fxs = n => { try { fx(n) } catch(e) {} };
 
@@ -667,14 +884,14 @@
             const blocked = isBlockedByVirus(big.x, big.y, o.x, o.y);
             const isChasing = p.targetPrey === o;
 
-            if (o.m > big.m * 1.2) { 
+            if (o.m > big.m * 1.08) { 
               if (!blocked || dist < r * 3) {
                 const k = (view - dist) / view + .2; 
                 fx0 += (big.x - o.x) / dist * k * 2; 
                 fy0 += (big.y - o.y) / dist * k * 2; 
                 flee = true;
               }
-            } else if (big.m > o.m * 1.3 && dist < pd && Math.random() < d.aggr + .3) {
+            } else if (big.m > o.m * 1.12 && dist < pd && Math.random() < d.aggr + .3) {
               if (!blocked || isChasing || Math.random() < 0.1) {
                 prey = o; 
                 pd = dist;
@@ -732,13 +949,14 @@
           const ejected = { x: cl.x + dir.x * (r + 8), y: cl.y + dir.y * (r + 8), m: 9, h: p.h, vx: dir.x * 520, vy: dir.y * 520, big: true };
           pel.push(ejected);
         });
-        if (!p.bot) fxs('tick');
+        if (!p.bot) fxs('feed');
       }
 
       function explodeCell(p, clIdx) {
         const cl = p.cells[clIdx];
         const pieces = Math.min(10, 12 - p.cells.length);
         if (pieces <= 1) return;
+        if (!p.bot) fxs('pop');
         const pieceMass = cl.m / pieces;
         cl.m = pieceMass;
         cl.merge = 30;
@@ -756,6 +974,7 @@
       }
 
       function upd(dt) {
+        if (paused) return;
         tm += dt; if (scr != 'play') { if (scr == 'over') overT += dt; return }
         life += dt;
         steer(me);
@@ -875,8 +1094,8 @@
             for (const cb of b.cells) {
               if (cb.dead || !BLOB.canEat(ca, cb)) continue;
               ca.m += cb.m; cb.dead = true;
-              if (a === me) { eaten++; fxs('coin'); popups.push({ t: 0, x: cb.x, y: cb.y, s: '+' + Math.round(cb.m), c: '#fde047' }); if (!b.cells.some(q => !q.dead)) popups.push({ t: 0, x: cb.x, y: cb.y - 26, s: 'ate ' + b.name, c: '#fff' }) }
-              if (b === me && !b.cells.some(q => !q.dead)) popups.push({ t: 0, x: ca.x, y: ca.y, s: a.name + ' ate you', c: '#f87171' });
+              if (a === me) { eaten++; fxs('coin'); popups.push({ t: 0, x: cb.x, y: cb.y, s: '+' + Math.round(cb.m), c: '#3ddc6e' }); if (!b.cells.some(q => !q.dead)) popups.push({ t: 0, x: cb.x, y: cb.y - 26, s: 'ate ' + b.name, c: '#fff' }) }
+              if (b === me && !b.cells.some(q => !q.dead)) { popups.push({ t: 0, x: ca.x, y: ca.y, s: a.name + ' ate you', c: '#ff6b5b' }); fxs('lose'); }
               if (!b.cells.some(q => !q.dead)) a.kills++;
             }
           }
@@ -897,8 +1116,13 @@
       }
 
       function finish() {
-        scr = 'over'; overT = 0; newBest = peak > bestNow(); const b = best('blobs', peak); fxs('lose');
-        st(`You were eaten. Biggest size ${peak}. Best ${b}. Tap to play again.`);
+        scr = 'over'; overT = 0; newBest = peak > bestNow(); const b = best('blobs', peak);
+        AudioFX.sync(false);
+        const secs = Math.floor(life % 60);
+        byId('over-size').innerText = peak;
+        byId('over-best').innerText = newBest ? 'New best!' : 'Best ' + b;
+        byId('over-stats').innerText = `Blobs eaten ${eaten}  ·  Time ${Math.floor(life / 60)}:${String(secs).padStart(2, '0')}`;
+        st(`You were eaten. Biggest size ${peak}. Best ${b}.`);
       }
 
       const getBtnPos = () => ({ split: { x: W - 52, y: H - 52, r: 34 }, feed: { x: W - 52, y: H - 130, r: 26 } });
@@ -907,7 +1131,7 @@
       on(c, 'pointerdown', e => {
         e.preventDefault(); const [px, py] = pos(e);
         if (scr == 'menu') return;
-        if (scr == 'over') { if (overT > .7) { scr = 'menu'; syncMenu(); } return }
+        if (scr == 'over') return;
         if (e.pointerType != 'mouse') touch = true;
         const btn = getBtnPos();
         if (me.cells.length) {
@@ -921,7 +1145,17 @@
       on(document, 'keydown', e => {
         if (document.activeElement === nameInput) return;
         const k = e.key.toLowerCase();
-        if (e.key == ' ') { e.preventDefault(); if (scr == 'play' && !e.repeat && me.cells.length) split(me); else if (scr == 'menu') startGame() }
+        if (e.key == 'Escape' || k == 'p') {
+          if (scr == 'play' && me && me.cells.length) { paused ? resumeGame() : pauseGame() }
+          return;
+        }
+        if (paused) return;
+        if (e.key == ' ') {
+          e.preventDefault();
+          if (scr == 'play' && !e.repeat && me.cells.length) split(me);
+          else if (scr == 'menu') startGame();
+          else if (scr == 'over' && overT > .7 && !e.repeat && e.target.tagName != 'BUTTON') begin();
+        }
         else if (k == 'w' && scr == 'play') { if (!e.repeat && me.cells.length) feed(me) }
         else if (k.startsWith('arrow') || k == 'a' || k == 'd' || k == 's') { keys[k] = 1; if (k.startsWith('arrow')) e.preventDefault() }
       });
@@ -981,25 +1215,54 @@
         x.strokeStyle = darker(p.h);
         x.lineWidth = Math.max(3, Math.min(8, r * 0.08 * cam.z));
         x.fill();
+        const skinImg = skinReady(p.skin);
+        if (skinImg) {
+          x.save(); x.clip();
+          const sw = skinImg.naturalWidth, sh = skinImg.naturalHeight, sd = Math.min(sw, sh);
+          x.drawImage(skinImg, (sw - sd) / 2, (sh - sd) / 2, sd, sd, sx - r, sy - r, r * 2, r * 2);
+          x.restore();
+        }
         x.stroke();
         
         // Inner subtle sheen highlight
-        x.fillStyle = '#ffffff25'; 
+        x.fillStyle = skinImg ? '#ffffff00' : '#ffffff25'; 
         x.beginPath(); 
         x.arc(sx - r * .26, sy - r * .28, r * .32, 0, Math.PI * 2); 
         x.fill();
 
         if (r > 13) {
-          x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round'; x.strokeStyle = '#000a'; x.fillStyle = '#fff';
-          const fs = Math.max(11, Math.min(26, r * .42)); x.font = `900 ${fs}px system-ui`; x.lineWidth = fs * .18;
+          x.textAlign = 'center'; x.textBaseline = 'alphabetic'; x.lineJoin = 'round'; x.strokeStyle = '#12062bcc'; x.fillStyle = '#fff';
+          const fs = Math.max(11, Math.min(26, r * .42)); x.font = `700 ${fs}px Fredoka, system-ui`; x.lineWidth = fs * .18;
           
           x.strokeText(p.name, sx, sy + fs * .1); x.fillText(p.name, sx, sy + fs * .1);
           
           if (r > 26) {
-            x.font = `800 ${fs * .6}px system-ui`; x.lineWidth = 3; const t = String(Math.round(cl.m)); 
+            x.font = `600 ${fs * .6}px Fredoka, system-ui`; x.lineWidth = 3; const t = String(Math.round(cl.m)); 
             x.strokeText(t, sx, sy + fs * .9); x.fillText(t, sx, sy + fs * .9);
           }
         }
+      }
+
+      function drawMinimap() {
+        const size = Math.round(Math.max(110, Math.min(170, Math.min(W, H) * .26))), mx = 12, my = H - size - 12, k = size / WORLD;
+        x.save();
+        x.fillStyle = 'rgba(20,11,36,.78)'; rr(x, mx, my, size, size, 10); x.fill();
+        rr(x, mx, my, size, size, 10); x.clip();
+        x.fillStyle = '#3ddc6e';
+        viruses.forEach(v => { x.beginPath(); x.arc(mx + v.x * k, my + v.y * k, 2, 0, 7); x.fill() });
+        P.forEach(p => {
+          if (p === me) return;
+          x.fillStyle = hue(p.h);
+          p.cells.forEach(cl => { x.beginPath(); x.arc(mx + cl.x * k, my + cl.y * k, Math.max(2, R(cl.m) * k), 0, 7); x.fill() });
+        });
+        x.strokeStyle = 'rgba(255,255,255,.35)'; x.lineWidth = 1;
+        x.strokeRect(mx + (cam.x - W / 2 / cam.z) * k, my + (cam.y - H / 2 / cam.z) * k, W / cam.z * k, H / cam.z * k);
+        me.cells.forEach(cl => {
+          x.beginPath(); x.arc(mx + cl.x * k, my + cl.y * k, Math.max(2.5, R(cl.m) * k), 0, 7);
+          x.fillStyle = hue(me.h); x.fill(); x.strokeStyle = '#fff'; x.lineWidth = 1.5; x.stroke();
+        });
+        x.restore();
+        x.strokeStyle = '#3a2a61'; x.lineWidth = 1.5; rr(x, mx, my, size, size, 10); x.stroke();
       }
 
       function draw() {
@@ -1027,34 +1290,49 @@
         // Draw viruses on top of blobs so hiding blobs are hidden underneath
         viruses.forEach(v => drawVirus(v));
 
-        popups.forEach(q => { const [sx, sy] = S(q.x, q.y); x.globalAlpha = Math.max(0, 1 - q.t / 1.2); x.textAlign = 'center'; x.font = '900 18px system-ui'; x.lineWidth = 4; x.strokeStyle = '#000a'; x.lineJoin = 'round'; x.strokeText(q.s, sx, sy - q.t * 40); x.fillStyle = q.c; x.fillText(q.s, sx, sy - q.t * 40); x.globalAlpha = 1 });
+        popups.forEach(q => { const [sx, sy] = S(q.x, q.y); x.globalAlpha = Math.max(0, 1 - q.t / 1.2); x.textAlign = 'center'; x.font = '700 18px Fredoka, system-ui'; x.lineWidth = 4; x.strokeStyle = '#12062bcc'; x.lineJoin = 'round'; x.strokeText(q.s, sx, sy - q.t * 40); x.fillStyle = q.c; x.fillText(q.s, sx, sy - q.t * 40); x.globalAlpha = 1 });
 
         const T = me.cells.length ? Math.round(tot(me)) : 0;
-        x.fillStyle = '#0f172acc'; rr(x, 10, 10, 150, 46, 12); x.fill(); x.textAlign = 'left'; x.fillStyle = '#94a3b8'; x.font = '700 11px system-ui'; x.fillText('SIZE', 22, 28); x.fillStyle = '#fff'; x.font = '900 22px system-ui'; x.fillText(String(T), 22, 50);
-        const lb = P.filter(p => p.cells.length).map(p => ({ n: p.name, m: tot(p), me: p === me })).sort((a, b) => b.m - a.m).slice(0, 6);
-        x.fillStyle = '#0f172acc'; rr(x, W - 170, 10, 160, 20 + lb.length * 20, 12); x.fill(); x.fillStyle = '#94a3b8'; x.font = '700 11px system-ui'; x.fillText('TOP BLOBS', W - 158, 25);
-        lb.forEach((q, i) => { x.fillStyle = q.me ? '#fde047' : '#e2e8f0'; x.font = (q.me ? '900' : '600') + ' 13px system-ui'; x.textAlign = 'left'; x.fillText(`${i + 1}. ${q.n}`, W - 158, 44 + i * 20); x.textAlign = 'right'; x.fillText(String(Math.round(q.m)), W - 18, 44 + i * 20) });
+        const panel = (px, py, pw, ph) => {
+          x.fillStyle = 'rgba(20,11,36,.78)'; rr(x, px, py, pw, ph, 8); x.fill();
+          x.strokeStyle = '#3a2a61'; x.lineWidth = 1.5; rr(x, px, py, pw, ph, 8); x.stroke();
+        };
+        panel(10, 10, 160, 52);
+        x.textAlign = 'left'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('SIZE', 22, 29);
+        x.fillStyle = '#3ddc6e'; x.font = '26px "Titan One", Fredoka, system-ui'; x.fillText(String(T), 22, 53);
+        x.textAlign = 'right'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('BEST ' + Math.max(bestNow(), peak), 158, 29);
+
+        const all = P.filter(p => p.cells.length).map(p => ({ n: p.name, m: tot(p), me: p === me })).sort((a, b) => b.m - a.m);
+        const myRank = all.findIndex(q => q.me);
+        const lb = all.slice(0, 6).map((q, i) => ({ ...q, rank: i + 1 }));
+        if (myRank >= 6) lb.push({ ...all[myRank], rank: myRank + 1 });
+        panel(W - 182, 10, 172, 36 + lb.length * 21);
+        x.textAlign = 'left'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('LEADERBOARD', W - 170, 29);
+        lb.forEach((q, i) => {
+          x.fillStyle = q.me ? '#3ddc6e' : '#ece6ff'; x.font = (q.me ? '700' : '500') + ' 14px Fredoka, system-ui';
+          x.textAlign = 'left'; x.fillText(`${q.rank}. ${q.n}`, W - 170, 52 + i * 21);
+          x.textAlign = 'right'; x.fillText(String(Math.round(q.m)), W - 22, 52 + i * 21);
+        });
+
+        if (OPT.minimap && scr == 'play') drawMinimap();
 
         if (touch && me.cells.length) {
           const btn = getBtnPos();
-          [[btn.split, 'SPLIT'], [btn.feed, 'FEED']].renderables = [[btn.split, 'SPLIT'], [btn.feed, 'FEED']].forEach(([b, t]) => { x.fillStyle = '#0f172acc'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#fde047'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '900 12px system-ui'; x.fillText(t, b.x, b.y + 4) });
+          [[btn.split, 'SPLIT'], [btn.feed, 'FEED']].renderables = [[btn.split, 'SPLIT'], [btn.feed, 'FEED']].forEach(([b, t]) => { x.fillStyle = 'rgba(20,11,36,.8)'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#3ddc6e'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '700 12px Fredoka, system-ui'; x.fillText(t, b.x, b.y + 4) });
         }
 
         if (!me.cells.length && scr == 'play') { x.fillStyle = '#0008'; x.fillRect(0, 0, W, H) }
-        if (scr == 'over') {
-          x.fillStyle = '#000c'; x.fillRect(0, 0, W, H); x.textAlign = 'center';
-          x.fillStyle = '#fff'; x.font = '900 36px "Arial Black",system-ui'; x.fillText('YOU WERE EATEN', W / 2, H / 2 - 90);
-          x.fillStyle = '#fde047'; x.font = '900 64px "Arial Black",system-ui'; x.fillText(String(peak), W / 2, H / 2 - 15);
-          x.fillStyle = '#94a3b8'; x.font = '700 15px system-ui'; x.fillText('BIGGEST SIZE' + (newBest ? '   NEW BEST!' : '   Best ' + bestNow()), W / 2, H / 2 + 12);
-          x.fillStyle = '#e2e8f0'; x.font = '600 17px system-ui'; x.fillText(`Blobs eaten: ${eaten}   Time: ${Math.floor(life / 60)}:${String(Math.floor(life%60)).padStart(2, '0')}`, W / 2, H / 2 + 60);
-          if (overT > .7) { x.fillStyle = '#fff'; x.globalAlpha = .6 + .4 * Math.sin(tm * 5); x.font = '700 18px system-ui'; x.fillText('Tap to go back to the menu', W / 2, H / 2 + 120); x.globalAlpha = 1 }
-        }
+        if (scr == 'over') { x.fillStyle = 'rgba(10,5,22,.65)'; x.fillRect(0, 0, W, H) }
       }
 
+      const byId = id => document.getElementById(id);
       const syncMenu = () => {
         const m = scr == 'menu';
         c.style.display = m ? 'none' : 'block';
-        document.getElementById('menu-ui').style.display = m ? 'flex' : 'none';
+        byId('menu-ui').style.display = m ? 'flex' : 'none';
+        byId('over-ui').style.display = scr == 'over' ? 'flex' : 'none';
+        byId('pause-ui').style.display = scr == 'play' && paused ? 'flex' : 'none';
+        byId('pause-btn').style.display = scr == 'play' && !paused && me && me.cells.length ? 'flex' : 'none';
       };
 
       window.setDiff = function(d) {
@@ -1067,6 +1345,53 @@
       window.startGame = function() {
         begin();
       };
+
+      const unfocus = () => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur() };
+      const refreshOptUI = () => {
+        ['minimap', 'music', 'sfx'].forEach(n => {
+          const b = byId('tog-' + n);
+          b.classList.toggle('on', !!OPT[n]);
+          b.innerText = OPT[n] ? 'On' : 'Off';
+        });
+      };
+      window.toggleOpt = function(n) {
+        OPT[n] = !OPT[n]; saveOpt(); refreshOptUI(); unfocus();
+        if (n == 'music') AudioFX.sync(scr == 'play');
+        if (n == 'sfx' && OPT.sfx) fxs('ui');
+      };
+      window.pauseGame = function() {
+        if (scr != 'play' || !me || !me.cells.length) return;
+        paused = true; refreshOptUI(); unfocus(); syncMenu();
+      };
+      window.resumeGame = function() { paused = false; unfocus(); syncMenu() };
+      window.retryGame = function() { unfocus(); begin(); syncMenu() };
+      window.toMenu = function() {
+        scr = 'menu'; paused = false; unfocus();
+        AudioFX.sync(false);
+        byId('best-score-text').innerText = 'Best size ' + bestNow();
+        st('Pick your setup and press Play.');
+        syncMenu();
+      };
+      window.leaveGame = function() {
+        try { best('blobs', peak) } catch (e) {}
+        window.toMenu();
+      };
+      const refreshSkinUI = () => {
+        const h = hexToHue(colorPicker.value), pv = byId('skin-preview');
+        pv.style.backgroundColor = hue(h);
+        pv.style.borderColor = darker(h);
+        pv.style.backgroundImage = selectedSkin ? `url(${SKIN_URL(selectedSkin)})` : 'none';
+        pv.classList.toggle('solid', !selectedSkin);
+        byId('skin-name').innerText = selectedSkin ? selectedSkin[0].toUpperCase() + selectedSkin.slice(1) : 'Solid colour';
+      };
+      window.cycleSkin = function(d) {
+        const opts = [''].concat(SKINS), i = opts.indexOf(selectedSkin);
+        selectedSkin = opts[(i + d + opts.length) % opts.length];
+        try { localStorage.setItem('blobs-skin', selectedSkin) } catch(e) {}
+        refreshSkinUI(); unfocus(); fxs('click');
+      };
+      refreshOptUI();
+      refreshSkinUI();
 
       document.getElementById('best-score-text').innerText = 'Best size ' + bestNow();
       syncMenu();
