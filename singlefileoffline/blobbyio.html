@@ -497,7 +497,7 @@
                 <div class="grid-selector" id="theme-selector">
                   <button class="theme-btn active" onclick="setTheme('Light')">Light</button>
                   <button class="theme-btn" onclick="setTheme('Dark')">Dark</button>
-                  <button class="theme-btn" onclick="setTheme('Neon')">Neon</button>
+                  <button class="theme-btn" onclick="setTheme('Slime')">Slime</button>
                   <button class="theme-btn" onclick="setTheme('Retro')">Retro</button>
                 </div>
               </div>
@@ -573,7 +573,7 @@
     const THEMES = {
       Light: { bg: '#f4f6fb', grid: '#d9dfec', border: '#8791b4', void: '#c7cde0', text: '#fff' },
       Dark:  { bg: '#0b0f19', grid: '#1e293b', border: '#334155', void: '#020617', text: '#fff' },
-      Neon:  { bg: '#090014', grid: '#260042', border: '#a855f7', void: '#030008', text: '#fff' },
+      Slime: { bg: '#25114a', grid: '#2f5c45', border: '#3ddc6e', void: '#120726', text: '#fff' },
       Retro: { bg: '#2b1d0c', grid: '#443019', border: '#855b28', void: '#170f05', text: '#fff' }
     };
 
@@ -732,10 +732,21 @@
     }
 
     // Skins live in the GitHub repo and are served through jsDelivr.
-    const SKINS = ['duck', 'luigi', 'mario', 'penguin', 'rainbow', 'rick', 'speed', 'sponge'];
+    const IMG_SKINS = ['duck', 'luigi', 'mario', 'penguin', 'rainbow', 'rick', 'speed', 'sponge', 'kirby'];
+    const EMOJI = { crying: '😭', starstruck: '🤩', cool: '😎', goofy: '🤪', money: '🤑', laughing: '😂', hearteyes: '😍', party: '🥳', devil: '😈', clown: '🤡', ghost: '👻', skull: '💀', robot: '🤖', alien: '👽', frozen: '🥶', angry: '😡', star: '⭐', poo: '💩', moon: '🌕' };
+    const EMOJI_LABEL = { crying: 'Crying', starstruck: 'Star-struck', cool: 'Cool', goofy: 'Goofy', money: 'Money face', laughing: 'Laughing', hearteyes: 'Heart eyes', party: 'Party', devil: 'Devil', clown: 'Clown', ghost: 'Ghost', skull: 'Skull', robot: 'Robot', alien: 'Alien', frozen: 'Frozen', angry: 'Angry', star: 'Star', poo: 'Poop', moon: 'Moon' };
+    const SKINS = IMG_SKINS.concat(Object.keys(EMOJI));
+    const skinLabel = n => !n ? 'Solid colour' : (EMOJI_LABEL[n] || n[0].toUpperCase() + n.slice(1));
     const SKIN_URL = n => `https://cdn.jsdelivr.net/gh/hazzatazza/blobby.io@main/skins/${n}.png`;
     const SKIN_IMG = {};
-    SKINS.forEach(n => { const im = new Image(); im.src = SKIN_URL(n); SKIN_IMG[n] = im; });
+    IMG_SKINS.forEach(n => { const im = new Image(); im.src = SKIN_URL(n); SKIN_IMG[n] = im; });
+    Object.keys(EMOJI).forEach(n => {
+      try {
+        const cv2 = document.createElement('canvas'); cv2.width = cv2.height = 128; const g2 = cv2.getContext('2d');
+        g2.font = '104px "Apple Color Emoji","Segoe UI Emoji","Noto Color Emoji",sans-serif'; g2.textAlign = 'center'; g2.textBaseline = 'middle'; g2.fillText(EMOJI[n], 64, 70);
+        cv2.complete = true; cv2.naturalWidth = cv2.naturalHeight = 128; SKIN_IMG[n] = cv2;
+      } catch (e) {}
+    });
     const skinReady = n => { const im = n && SKIN_IMG[n]; return im && im.complete && im.naturalWidth > 0 ? im : null };
     function blobs(el) {
       const WORLD = 4000, PEL = 600, VIRUS_COUNT = 28;
@@ -761,7 +772,7 @@
 
       let selectedSkin = '';
       try { const sk = localStorage.getItem('blobs-skin'); if (SKINS.includes(sk)) selectedSkin = sk } catch(e) {}
-      let selectedTheme = localStorage.getItem('blobs-theme') || 'Light';
+      let selectedTheme = localStorage.getItem('blobs-theme') || 'Light'; if (!THEMES[selectedTheme]) selectedTheme = selectedTheme == 'Neon' ? 'Slime' : 'Light';
 
       window.setTheme = function(t) {
         selectedTheme = t;
@@ -786,7 +797,7 @@
       const hue = h => `hsl(${h},75%,58%)`;
       const fillOf = p => p.col || hue(p.h), strokeOf = p => p.col ? shade(p.col, -.2) : darker(p.h);
       const R = m => Math.sqrt(m) * 4, VR = m => Math.sqrt(m) * 8.5, SP = m => 310 * Math.pow(m, -.2), EAT = 1.05;
-      const DIFFS = { Easy: { bots: 20, sight: .7, aggr: .35, split: false }, Normal: { bots: 30, sight: 1, aggr: .7, split: false }, Hard: { bots: 40, sight: 1.35, aggr: 1, split: true } };
+      const DIFFS = { Easy: { bots: 20, sight: .7, aggr: .35, react: .55, chase: .6, giveUp: 2.5, cool: 6, split: false }, Normal: { bots: 30, sight: 1, aggr: .7, react: .35, chase: 1, giveUp: 5, cool: 4, split: false }, Hard: { bots: 40, sight: 1.35, aggr: 1, react: .18, chase: 1, giveUp: 1e9, cool: 0, split: true } };
       const bestNow = () => { try { return +localStorage.getItem('best-blobs') || 0 } catch (e) { return 0 } };
       let diff = 'Normal'; try { const d0 = localStorage.getItem('blobs-diff'); if (DIFFS[d0]) diff = d0 } catch (e) {}
       const D = () => DIFFS[diff];
@@ -795,7 +806,7 @@
       try { const gm = localStorage.getItem('blobs-mode'); if (gm == 'ffa' || gm == 'teams') gameMode = gm } catch (e) {}
       const friendly = (a, b) => curMode == 'teams' && !!a.team && a.team === b.team;
       let scr = 'menu', P = [], me = null, pel = [], viruses = [], cam = { x: WORLD / 2, y: WORLD / 2, z: .9 }, ptr = { x: W / 2 + 1, y: H / 2 };
-      let tm = 0, peak = 10, eaten = 0, life = 0, newBest = false, deadT = 0, touch = false, paused = false, popups = [];
+      let tm = 0, peak = 10, eaten = 0, life = 0, newBest = false, deadT = 0, touch = typeof matchMedia == 'function' && matchMedia('(pointer: coarse)').matches, paused = false, popups = [];
       const S = (wx, wy) => [(wx - cam.x) * cam.z + W / 2, (wy - cam.y) * cam.z + H / 2];
       const rnd = (a, b) => a + Math.random() * (b - a), tot = p => p.cells.reduce((s, q) => s + q.m, 0);
       const byId = id => document.getElementById(id), fxs = n => { try { fx(n) } catch (e) {} };
@@ -809,8 +820,8 @@
         byId('spec-ui').style.display = scr == 'play' && curMode == 'teams' && me && !me.cells.length ? 'flex' : 'none';
       };
       const pickName = () => { const used = new Set(P.map(q => q.name)), free = NAMES.filter(n => !used.has(n)); return free[Math.floor(Math.random() * free.length)] || NAMES[0] };
-      const mkBot = () => { const p = newP(pickName(), rnd(0, 360), true); if (Math.random() < .35) p.skin = SKINS[Math.floor(Math.random() * SKINS.length)]; return p };
-      function newP(name, h, bot) { return { name, h, bot, skin: '', tx: WORLD / 2, ty: WORLD / 2, t: 0, targetPrey: null, cells: [{ x: rnd(300, WORLD - 300), y: rnd(300, WORLD - 300), m: bot ? rnd(10, 35) : 10, vx: 0, vy: 0, merge: 0, wobble: 0 }] } }
+      const mkBot = () => { const p = newP(pickName(), rnd(0, 360), true); p.hunter = Math.random() < D().aggr * .6 + .15; if (Math.random() < .35) p.skin = SKINS[Math.floor(Math.random() * SKINS.length)]; return p };
+      function newP(name, h, bot) { return { name, h, bot, skin: '', tx: WORLD / 2, ty: WORLD / 2, t: 0, targetPrey: null, cells: [{ x: rnd(300, WORLD - 300), y: rnd(300, WORLD - 300), m: bot ? rnd(10, 50) : 10, vx: 0, vy: 0, merge: 0, wobble: 0 }] } }
       const spawnPel = () => ({ x: rnd(20, WORLD - 20), y: rnd(20, WORLD - 20), m: Math.random() < .08 ? 3 : 1, h: rnd(0, 360), vx: 0, vy: 0 });
       const spawnVirus = (x, y, m = 130) => {
         if (x == null) for (let a = 0; a < 30; a++) { x = rnd(150, WORLD - 150); y = rnd(150, WORLD - 150); if (!viruses.some(v => Math.hypot(x - v.x, y - v.y) < VR(m) + VR(v.m) + 120)) break }
@@ -819,7 +830,7 @@
       function begin() {
         AudioFX.ensure(); AudioFX.sync(true); fxs('ui');
         try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
-        paused = false; scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0; curMode = gameMode; feedLog = []; spec = null;
+        paused = false; scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0; curMode = gameMode; feedLog = []; spec = null; joy.id = null; joy.ax = joy.ay = joy.mag = joy.kx = joy.ky = 0; keyMode = false; for (const k in keys) keys[k] = false;
         me = newP((nameInput.value.trim() || 'You').slice(0, 15), hexToHue(colorPicker.value), false); me.skin = selectedSkin; if (curMode == 'teams') { me.team = Math.random() < .5 ? 'red' : 'blue'; me.col = TEAM[me.team] } else me.col = colorPicker.value; P.push(me);
         const cnt = { red: me.team == 'red' ? 1 : 0, blue: me.team == 'blue' ? 1 : 0 };
         for (let i = 0; i < D().bots; i++) { const b = mkBot(); if (curMode == 'teams') { b.team = cnt.red < cnt.blue ? 'red' : cnt.blue < cnt.red ? 'blue' : (Math.random() < .5 ? 'red' : 'blue'); cnt[b.team]++; b.col = TEAM[b.team] } P.push(b) }
@@ -855,28 +866,43 @@
       }
 
       function think(p) {
-        const d = D(), b = p.cells.reduce((a, q) => q.m > a.m ? q : a), view = (280 + R(b.m) * 5) * d.sight;
-        let fx0 = 0, fy0 = 0, flee = false, prey = null, pd = 1e9;
+        const d = D(), b = p.cells.reduce((a, q) => q.m > a.m ? q : a), rb = R(b.m), view = (280 + rb * 5) * d.sight;
+        let fx0 = 0, fy0 = 0, threat = false, prey = null, best = 0, far = null, farBest = 0, preyOwner = null, farOwner = null;
         for (const q of P) {
           if (q === p || friendly(p, q)) continue;
           for (const o of q.cells) {
-            const dist = Math.hypot(o.x - b.x, o.y - b.y); if (dist > view) continue;
+            const dist = Math.hypot(o.x - b.x, o.y - b.y) || 1; if (dist > view * 2.2) continue;
             const blocked = isBlockedByVirus(b.x, b.y, o.x, o.y);
-            if (o.m > b.m * 1.08) { if (!blocked || dist < R(b.m) * 3) { const k = (view - dist) / view + .2; fx0 += (b.x - o.x) / dist * k * 2; fy0 += (b.y - o.y) / dist * k * 2; flee = true } }
-            else if (b.m > o.m * 1.12 && dist < pd && Math.random() < d.aggr + .3 && (!blocked || p.targetPrey === o || Math.random() < .1)) { prey = o; pd = dist; p.targetPrey = o }
+            if (o.m > b.m * 1.08) {
+              if (dist < R(o.m) * 2.4 + rb + 140 && (!blocked || dist < rb * 3)) { const k = Math.max(.2, 1.2 - dist / view); fx0 += (b.x - o.x) / dist * k * 2; fy0 += (b.y - o.y) / dist * k * 2; threat = true }
+            } else if (b.m > o.m * 1.12 && (!blocked || p.targetPrey === o || Math.random() < .1) && !(q === p.ignoreOwner && tm < p.ignoreUntil)) {
+              const sc = o.m / (dist + 80) * (p.targetPrey === o ? 1.6 : 1);
+              if (dist <= view * 1.4 * (q === me ? d.chase : 1)) { if (sc > best) { best = sc; prey = o; preyOwner = q } } else if (dist > view * 1.4 && (q !== me || d.chase >= 1) && p.hunter && sc > farBest) { farBest = sc; far = o; farOwner = q }
+            }
           }
         }
-        if (!prey) p.targetPrey = null;
-        if (flee) { const L = Math.hypot(fx0, fy0) || 1; p.tx = b.x + fx0 / L * 400; p.ty = b.y + fy0 / L * 400 }
-        else if (prey) { p.tx = prey.x; p.ty = prey.y; if (d.split && b.m > prey.m * 2.6 && b.m > 60 && pd < R(b.m) * 3.2 && p.cells.length < 3) split(p) }
-        else {
+        if (threat) { if (!p.alarm) p.alarm = tm + .0001; if (tm - p.alarm < d.react) threat = false } else p.alarm = 0;
+        if (!prey) { prey = far; preyOwner = farOwner }
+        if (prey && preyOwner === me) { if (p.chaseOwner !== me) { p.chaseOwner = me; p.chaseStart = tm } else if (tm - p.chaseStart > d.giveUp) { p.ignoreOwner = me; p.ignoreUntil = tm + d.cool; p.chaseOwner = null; prey = null } } else p.chaseOwner = null;
+        p.targetPrey = prey;
+        if (threat) { const L = Math.hypot(fx0, fy0) || 1; p.tx = b.x + fx0 / L * 400; p.ty = b.y + fy0 / L * 400 }
+        else if (prey) {
+          const pd = Math.hypot(prey.x - b.x, prey.y - b.y), lead = Math.min(.8, pd / (SP(b.m) + 1));
+          p.tx = prey.x + (prey.dx || 0) * lead; p.ty = prey.y + (prey.dy || 0) * lead;
+          if (d.split && b.m > prey.m * 2.6 && b.m > 60 && pd < R(b.m) * 3.2 && p.cells.length < 3) split(p);
+        } else {
           let bp = null, bd = (450 * d.sight) ** 2;
           for (let i = 0; i < pel.length; i += 2) { const o = pel[i], q = (o.x - b.x) ** 2 + (o.y - b.y) ** 2; if (q < bd && !(isBlockedByVirus(b.x, b.y, o.x, o.y) && Math.random() < .9)) { bd = q; bp = o } }
           if (bp) { p.tx = bp.x; p.ty = bp.y } else { if (!p.wander || Math.random() < .1) p.wander = [rnd(150, WORLD - 150), rnd(150, WORLD - 150)]; p.tx = p.wander[0]; p.ty = p.wander[1] }
         }
         p.tx = Math.max(60, Math.min(WORLD - 60, p.tx)); p.ty = Math.max(60, Math.min(WORLD - 60, p.ty));
       }
-      function aim(p) { const c0 = p.cells[0], dx = p.tx - c0.x, dy = p.ty - c0.y, L = Math.hypot(dx, dy); return L > .05 ? { x: dx / L, y: dy / L } : { x: 1, y: 0 } }
+      function aim(p) {
+        if (p.idle && p.face) return p.face;
+        const c0 = p.cells[0], dx = p.tx - c0.x, dy = p.ty - c0.y, L = Math.hypot(dx, dy);
+        if (L > 8) { p.face = { x: dx / L, y: dy / L }; return p.face }
+        return p.face || { x: 1, y: 0 };
+      }
       function split(p) {
         if (!p.cells.length) return; const d = aim(p), add = [];
         p.cells.forEach(q => { if (q.m >= 36 && p.cells.length + add.length < 12) { q.m /= 2; q.merge = 9 + q.m * .03; add.push({ x: q.x, y: q.y, m: q.m, vx: d.x * 600, vy: d.y * 600, merge: q.merge, wobble: .6 }) } });
@@ -917,16 +943,27 @@
         const z = Math.min(Math.max(.28, 2.2 / (1 + Math.sqrt(T) * .08)), Math.min(W, H) * .42 / sp), k = Math.min(1, dt * 2.5);
         cam.x += (cx - cam.x) * k; cam.y += (cy - cam.y) * k; cam.z += (z - cam.z) * k;
       }
+      const keys = { up: false, down: false, left: false, right: false }, joy = { id: null, ax: 0, ay: 0, mag: 0, kx: 0, ky: 0 }; let keyMode = false;
+      const joyBase = () => ({ x: 92, y: H - 98, r: 58 });
+      function steer() {
+        let cx = 0, cy = 0; me.cells.forEach(q => { cx += q.x; cy += q.y }); cx /= me.cells.length; cy /= me.cells.length;
+        const kx = (keys.right ? 1 : 0) - (keys.left ? 1 : 0), ky = (keys.down ? 1 : 0) - (keys.up ? 1 : 0);
+        me.idle = false;
+        if (joy.id !== null && joy.mag > 0) { me.tx = cx + joy.ax * 500; me.ty = cy + joy.ay * 500; me.face = { x: joy.ax / joy.mag, y: joy.ay / joy.mag } }
+        else if (kx || ky) { const L = Math.hypot(kx, ky); me.tx = cx + kx / L * 500; me.ty = cy + ky / L * 500; me.face = { x: kx / L, y: ky / L } }
+        else if (touch || keyMode) { me.tx = cx; me.ty = cy; me.idle = true }
+        else { me.tx = cam.x + (ptr.x - W / 2) / cam.z; me.ty = cam.y + (ptr.y - H / 2) / cam.z }
+      }
       function upd(dt) {
         tm += dt; if (paused || scr != 'play') return; life += dt;
-        if (me.cells.length) { me.tx = cam.x + (ptr.x - W / 2) / cam.z; me.ty = cam.y + (ptr.y - H / 2) / cam.z }
+        if (me.cells.length) steer();
         for (const p of P) {
           if (p.bot) { p.t -= dt; if (p.t <= 0 && p.cells.length) { p.t = .2; think(p) } }
           for (const q of p.cells) {
-            const dx = p.tx - q.x, dy = p.ty - q.y, d = Math.hypot(dx, dy) || 1, s = SP(q.m) * (p.bot ? (d > 4 ? 1 : 0) : Math.min(1, d / R(q.m)));
+            const ox = q.x, oy = q.y, dx = p.tx - q.x, dy = p.ty - q.y, d = Math.hypot(dx, dy) || 1, s = SP(q.m) * (p.bot ? (d > 4 ? 1 : 0) : Math.min(1, d / R(q.m)));
             q.x += (dx / d * s + q.vx) * dt; q.y += (dy / d * s + q.vy) * dt; const f = Math.pow(.02, dt); q.vx *= f; q.vy *= f;
             q.merge = Math.max(0, q.merge - dt); q.wobble = Math.max(0, q.wobble - dt * 1.5);
-            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); if (q.m > 40) q.m -= q.m * .0012 * dt;
+            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); q.dx = (q.x - ox) / Math.max(dt, .001); q.dy = (q.y - oy) / Math.max(dt, .001); if (q.m > 40) q.m -= q.m * .0012 * dt;
             for (const v of viruses) if (q.m > 130 && Math.hypot(q.x - v.x, q.y - v.y) < R(q.m) + VR(v.m) * .3) { popCell(p, q); break }
             const r = R(q.m);
             for (let i = pel.length - 1; i >= 0; i--) {
@@ -1060,7 +1097,7 @@
       }
 
       function drawMinimap() {
-        const size = Math.round(Math.max(110, Math.min(170, Math.min(W, H) * .26))), mx = 12, my = H - size - 12, k = size / WORLD;
+        const size = Math.round(Math.max(110, Math.min(170, Math.min(W, H) * .26))), mx = touch ? 168 : 12, my = H - size - 12, k = size / WORLD;
         x.save();
         x.fillStyle = 'rgba(20,11,36,.78)'; rr(x, mx, my, size, size, 10); x.fill();
         rr(x, mx, my, size, size, 10); x.clip();
@@ -1131,18 +1168,43 @@
         }
         if (OPT.minimap) drawMinimap();
         if (touch && me.cells.length) { const bt = getBtnPos(); [[bt.split, 'SPLIT'], [bt.feed, 'FEED']].forEach(([b, t]) => { x.fillStyle = 'rgba(20,11,36,.8)'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#3ddc6e'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '700 12px Fredoka, system-ui'; x.fillText(t, b.x, b.y + 4) }) }
+        if (touch && me.cells.length) {
+          const jb = joyBase(); x.fillStyle = 'rgba(20,11,36,.45)'; x.beginPath(); x.arc(jb.x, jb.y, jb.r, 0, 7); x.fill(); x.strokeStyle = 'rgba(61,220,110,.65)'; x.lineWidth = 3; x.stroke();
+          x.fillStyle = 'rgba(61,220,110,.6)'; x.beginPath(); x.arc(jb.x + joy.kx, jb.y + joy.ky, 26, 0, 7); x.fill(); x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 2; x.stroke();
+        }
         if (!me.cells.length && scr == 'play') { x.fillStyle = '#0008'; x.fillRect(0, 0, W, H) }
         if (scr == 'over') { x.fillStyle = 'rgba(10,5,22,.65)'; x.fillRect(0, 0, W, H) }
       }
-      c.addEventListener('pointermove', e => { ptr.x = e.clientX; ptr.y = e.clientY });
-      c.addEventListener('pointerdown', e => {
-        ptr.x = e.clientX; ptr.y = e.clientY; if (e.pointerType == 'touch') touch = true;
-        if (touch && scr == 'play' && !paused && me.cells.length) { const bt = getBtnPos(), hit = b => Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r + 8; if (hit(bt.split)) { split(me); return } if (hit(bt.feed)) { feed(me); return } }
+      const AK = { arrowup: 'up', arrowdown: 'down', arrowleft: 'left', arrowright: 'right' };
+      const joyMove = e => {
+        const jb = joyBase(), dx = e.clientX - jb.x, dy = e.clientY - jb.y, L = Math.hypot(dx, dy) || 1, mag = Math.min(1, L / jb.r);
+        joy.mag = mag < .12 ? 0 : mag; joy.ax = dx / L * joy.mag; joy.ay = dy / L * joy.mag; joy.kx = dx / L * Math.min(L, jb.r); joy.ky = dy / L * Math.min(L, jb.r);
+      };
+      const joyEnd = e => { if (e.pointerId === joy.id) { joy.id = null; joy.ax = joy.ay = joy.mag = joy.kx = joy.ky = 0 } };
+      c.addEventListener('pointermove', e => {
+        if (e.pointerType == 'touch') { if (e.pointerId === joy.id) joyMove(e); return }
+        ptr.x = e.clientX; ptr.y = e.clientY; keyMode = false; touch = false;
       });
+      c.addEventListener('pointerdown', e => {
+        if (e.pointerType == 'touch') {
+          touch = true;
+          if (scr == 'play' && !paused && me.cells.length) {
+            const bt = getBtnPos(), hit = b => Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r + 8;
+            if (hit(bt.split)) { split(me); return } if (hit(bt.feed)) { feed(me); return }
+            const jb = joyBase(); if (joy.id === null && Math.hypot(e.clientX - jb.x, e.clientY - jb.y) < jb.r * 1.8) { joy.id = e.pointerId; try { c.setPointerCapture(e.pointerId) } catch (err) {} joyMove(e) }
+          }
+          return;
+        }
+        ptr.x = e.clientX; ptr.y = e.clientY; keyMode = false; touch = false;
+      });
+      window.addEventListener('pointerup', joyEnd); window.addEventListener('pointercancel', joyEnd);
+      window.addEventListener('keyup', e => { const a = AK[e.key.toLowerCase()]; if (a) keys[a] = false });
+      window.addEventListener('blur', () => { for (const k in keys) keys[k] = false });
       window.addEventListener('keydown', e => {
         const k = e.key.toLowerCase();
         if (k == 'escape') { if (scr == 'play' && me && me.cells.length) paused ? resumeGame() : pauseGame(); return }
         if (scr == 'play' && curMode == 'teams' && me && !me.cells.length) { if (k == 'arrowleft') specStep(-1); else if (k == 'arrowright') specStep(1); return }
+        if (scr == 'play' && !paused && me && me.cells.length && AK[k]) { e.preventDefault(); keys[AK[k]] = true; keyMode = true; return }
         if (scr != 'play' || paused || e.repeat || !me.cells.length) return;
         if (k == ' ') { e.preventDefault(); split(me) } else if (k == 'w') feed(me);
       });
@@ -1189,12 +1251,13 @@
         window.toMenu();
       };
       const refreshSkinUI = () => {
-        const pv = byId('skin-preview'), tm_ = gameMode == 'teams', url = selectedSkin ? `url(${SKIN_URL(selectedSkin)})` : '';
+        const pv = byId('skin-preview'), tm_ = gameMode == 'teams', emo = EMOJI[selectedSkin], img = selectedSkin && !emo, url = img ? `url(${SKIN_URL(selectedSkin)})` : '';
         pv.style.backgroundColor = tm_ ? '#8b5cf6' : colorPicker.value;
         pv.style.borderColor = tm_ ? '#3a2a61' : shade(colorPicker.value, -.2);
-        pv.style.backgroundImage = tm_ ? (selectedSkin ? `linear-gradient(135deg, rgba(239,68,68,.5) 50%, rgba(59,130,246,.5) 50%), ${url}` : 'linear-gradient(135deg, #ef4444 50%, #3b82f6 50%)') : (selectedSkin ? url : 'none');
+        pv.style.backgroundImage = tm_ ? (img ? `linear-gradient(135deg, rgba(239,68,68,.5) 50%, rgba(59,130,246,.5) 50%), ${url}` : 'linear-gradient(135deg, #ef4444 50%, #3b82f6 50%)') : (img ? url : 'none');
         pv.classList.toggle('solid', !selectedSkin);
-        byId('skin-name').innerText = selectedSkin ? selectedSkin[0].toUpperCase() + selectedSkin.slice(1) : 'Solid colour';
+        pv.textContent = emo || ''; pv.style.display = emo ? 'flex' : ''; pv.style.alignItems = 'center'; pv.style.justifyContent = 'center'; pv.style.fontSize = emo ? '36px' : '';
+        byId('skin-name').innerText = skinLabel(selectedSkin);
       };
       window.cycleSkin = function(d) {
         const opts = [''].concat(SKINS), i = opts.indexOf(selectedSkin);
