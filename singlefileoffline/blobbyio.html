@@ -436,6 +436,10 @@
       .bg-blob.b1, .bg-blob.b5 { opacity: 0.5; }
       .fullscreen-menu { padding: 14px; }
     }
+    #timer-ui { position: absolute; top: 12px; left: calc(50% + 32px); height: 42px; display: none; align-items: center; gap: 8px; padding: 0 14px; border-radius: 8px; background: rgba(20,11,36,.8); border: 1px solid var(--line); z-index: 80; font-family: 'Fredoka', system-ui, sans-serif; color: var(--text); }
+    #timer-ui .t-label { font-size: 10px; letter-spacing: .1em; color: var(--muted); }
+    #timer-text { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
+    #timer-ui.low #timer-text { color: #ff6b8b; }
     .mode-picker { margin: 12px 0 2px; gap: 14px; }
     .mode-name { min-width: 150px; text-align: center; font-family: 'Titan One', 'Fredoka', system-ui, sans-serif; font-size: 19px; color: var(--text); }
     .mode-name.teams { background: linear-gradient(90deg, #ef4444, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -539,6 +543,8 @@
       <button class="sp-btn wide ghost" onclick="leaveGame()">Leave</button>
     </div>
     <button id="pause-btn" title="Pause (Esc)" onclick="pauseGame()"><i></i><i></i></button>
+    <div id="timer-ui"><span class="t-label">TIME</span><span id="timer-text">5:00</span></div>
+    <div id="respawn-ui" class="overlay"><div class="box"><h2 style="color:#ff6b8b">You died!</h2><div class="over-label">RESPAWNING IN</div><div class="over-size" id="respawn-count">5</div></div></div>
 
     <div id="pause-ui" class="overlay">
       <div class="box">
@@ -803,10 +809,10 @@
       const D = () => DIFFS[diff];
       const TEAM = { red: '#ef4444', blue: '#3b82f6' };
       let gameMode = 'ffa', curMode = 'ffa', feedLog = [], spec = null;
-      try { const gm = localStorage.getItem('blobs-mode'); if (gm == 'ffa' || gm == 'teams') gameMode = gm } catch (e) {}
+      try { const gm = localStorage.getItem('blobs-mode'); if (gm == 'ffa' || gm == 'teams' || gm == 'time') gameMode = gm } catch (e) {}
       const friendly = (a, b) => curMode == 'teams' && !!a.team && a.team === b.team;
       let scr = 'menu', P = [], me = null, pel = [], viruses = [], cam = { x: WORLD / 2, y: WORLD / 2, z: .9 }, ptr = { x: W / 2 + 1, y: H / 2 };
-      let tm = 0, peak = 10, eaten = 0, life = 0, newBest = false, deadT = 0, touch = typeof matchMedia == 'function' && matchMedia('(pointer: coarse)').matches, paused = false, popups = [];
+      let tm = 0, peak = 10, eaten = 0, life = 0, newBest = false, deadT = 0, touch = typeof matchMedia == 'function' && matchMedia('(pointer: coarse)').matches, paused = false, popups = [], powerups = [];
       const S = (wx, wy) => [(wx - cam.x) * cam.z + W / 2, (wy - cam.y) * cam.z + H / 2];
       const rnd = (a, b) => a + Math.random() * (b - a), tot = p => p.cells.reduce((s, q) => s + q.m, 0);
       const byId = id => document.getElementById(id), fxs = n => { try { fx(n) } catch (e) {} };
@@ -818,11 +824,14 @@
         byId('pause-ui').style.display = scr == 'play' && paused ? 'flex' : 'none';
         byId('pause-btn').style.display = scr == 'play' && !paused && me && me.cells.length ? 'flex' : 'none';
         byId('spec-ui').style.display = scr == 'play' && curMode == 'teams' && me && !me.cells.length ? 'flex' : 'none';
+        byId('respawn-ui').style.display = scr == 'play' && curMode == 'time' && me && !me.cells.length ? 'flex' : 'none';
+        byId('timer-ui').style.display = scr == 'play' && curMode == 'time' ? 'flex' : 'none';
       };
       const pickName = () => { const used = new Set(P.map(q => q.name)), free = NAMES.filter(n => !used.has(n)); return free[Math.floor(Math.random() * free.length)] || NAMES[0] };
       const mkBot = () => { const p = newP(pickName(), rnd(0, 360), true); p.hunter = Math.random() < D().aggr * .6 + .15; if (Math.random() < .35) p.skin = SKINS[Math.floor(Math.random() * SKINS.length)]; return p };
       function newP(name, h, bot) { return { name, h, bot, skin: '', tx: WORLD / 2, ty: WORLD / 2, t: 0, targetPrey: null, cells: [{ x: rnd(300, WORLD - 300), y: rnd(300, WORLD - 300), m: bot ? rnd(10, 50) : 10, vx: 0, vy: 0, merge: 0, wobble: 0 }] } }
-      const spawnPel = () => ({ x: rnd(20, WORLD - 20), y: rnd(20, WORLD - 20), m: Math.random() < .08 ? 3 : 1, h: rnd(0, 360), vx: 0, vy: 0 });
+      const spawnPel = () => { const r = Math.random(); return { x: rnd(20, WORLD - 20), y: rnd(20, WORLD - 20), m: r < .004 ? 100 : r < .018 ? 25 : r < .058 ? 10 : r < .14 ? 3 : 1, h: rnd(0, 360), vx: 0, vy: 0 } };
+      const spawnPower = () => ({ x: rnd(150, WORLD - 150), y: rnd(150, WORLD - 150), until: 0 });
       const spawnVirus = (x, y, m = 130) => {
         if (x == null) for (let a = 0; a < 30; a++) { x = rnd(150, WORLD - 150); y = rnd(150, WORLD - 150); if (!viruses.some(v => Math.hypot(x - v.x, y - v.y) < VR(m) + VR(v.m) + 120)) break }
         return { x, y, m, vx: 0, vy: 0 };
@@ -836,6 +845,7 @@
         for (let i = 0; i < D().bots; i++) { const b = mkBot(); if (curMode == 'teams') { b.team = cnt.red < cnt.blue ? 'red' : cnt.blue < cnt.red ? 'blue' : (Math.random() < .5 ? 'red' : 'blue'); cnt[b.team]++; b.col = TEAM[b.team] } P.push(b) }
         for (let i = 0; i < PEL; i++) pel.push(spawnPel());
         for (let i = 0; i < VIRUS_COUNT; i++) viruses.push(spawnVirus());
+        powerups = Array.from({ length: 12 }, spawnPower); if (curMode == 'time') P.forEach(q => q.cells.forEach(c => c.m = 10));
         cam.x = me.cells[0].x; cam.y = me.cells[0].y; cam.z = .9;
         st(curMode == 'teams' ? `You are on the ${me.team} team. Last team standing wins.` : `Eat pellets and smaller blobs. Space splits, W feeds. ${diff} bots.`); syncMenu();
       }
@@ -891,10 +901,12 @@
           p.tx = prey.x + (prey.dx || 0) * lead; p.ty = prey.y + (prey.dy || 0) * lead;
           if (d.split && b.m > prey.m * 2.6 && b.m > 60 && pd < R(b.m) * 3.2 && p.cells.length < 3) split(p);
         } else {
-          let bp = null, bd = (450 * d.sight) ** 2;
-          for (let i = 0; i < pel.length; i += 2) { const o = pel[i], q = (o.x - b.x) ** 2 + (o.y - b.y) ** 2; if (q < bd && !(isBlockedByVirus(b.x, b.y, o.x, o.y) && Math.random() < .9)) { bd = q; bp = o } }
+          let bp = null, bs = 0, rg = (450 * d.sight) ** 2;
+          if (!(p.boostUntil > life)) for (const o of powerups) { if (life < o.until) continue; if ((o.x - b.x) ** 2 + (o.y - b.y) ** 2 < (380 * d.sight) ** 2 && Math.random() < .8) { bp = o; bs = 1e9; break } }
+          if (!bp) for (let i = 0; i < pel.length; i++) { const o = pel[i], q = (o.x - b.x) ** 2 + (o.y - b.y) ** 2; if (q < rg) { const sc = o.m / (Math.sqrt(q) + 60); if (sc > bs && !(isBlockedByVirus(b.x, b.y, o.x, o.y) && Math.random() < .9)) { bs = sc; bp = o } } }
           if (bp) { p.tx = bp.x; p.ty = bp.y } else { if (!p.wander || Math.random() < .1) p.wander = [rnd(150, WORLD - 150), rnd(150, WORLD - 150)]; p.tx = p.wander[0]; p.ty = p.wander[1] }
         }
+        if (b.m > 125) for (const v of viruses) { const vd = Math.hypot(b.x - v.x, b.y - v.y); if (vd < R(b.m) + VR(v.m) * 1.05 + 70) { p.tx += (b.x - v.x) / (vd || 1) * 350; p.ty += (b.y - v.y) / (vd || 1) * 350 } }
         p.tx = Math.max(60, Math.min(WORLD - 60, p.tx)); p.ty = Math.max(60, Math.min(WORLD - 60, p.ty));
       }
       function aim(p) {
@@ -954,17 +966,30 @@
         else if (touch || keyMode) { me.tx = cx; me.ty = cy; me.idle = true }
         else { me.tx = cam.x + (ptr.x - W / 2) / cam.z; me.ty = cam.y + (ptr.y - H / 2) / cam.z }
       }
+      function safeSpot() { let bst = null, bd = -1; for (let i = 0; i < 8; i++) { const x0 = rnd(300, WORLD - 300), y0 = rnd(300, WORLD - 300); let md = 1e9; for (const p of P) for (const c of p.cells) md = Math.min(md, Math.hypot(c.x - x0, c.y - y0) - R(c.m)); if (md > bd) { bd = md; bst = [x0, y0] } } return bst }
+      function respawn(p) {
+        const [sx0, sy0] = safeSpot(); p.cells = [{ x: sx0, y: sy0, m: 10, vx: 0, vy: 0, merge: 0, wobble: 0 }];
+        p.out = false; p.respawnAt = null; p.targetPrey = p.chaseOwner = null; p.alarm = 0; p.lastKiller = null; p.boostUntil = 0; p.t = 0;
+        if (p === me) { cam.x = sx0; cam.y = sy0; cam.z = .9; fxs('click') }
+      }
+      function timeOver() {
+        scr = 'over'; const res = P.map(q => ({ q, m: tot(q) })).sort((a, b) => b.m - a.m), w = res[0], rank = res.findIndex(r => r.q === me) + 1;
+        newBest = peak > bestNow(); best('blobs', Math.round(peak)); AudioFX.sync(false); fxs(w.q === me ? 'coin' : 'lose');
+        byId('over-title').innerText = w.q === me ? 'You win!' : `${w.q.name} wins!`; byId('over-size').innerText = Math.round(peak);
+        byId('over-best').innerText = `Winner: ${w.q.name} · ${Math.round(w.m)} mass`; byId('over-stats').innerText = `You finished #${rank} of ${P.length} · Blobs eaten: ${eaten}`; syncMenu();
+      }
       function upd(dt) {
         tm += dt; if (paused || scr != 'play') return; life += dt;
         if (me.cells.length) steer();
         for (const p of P) {
           if (p.bot) { p.t -= dt; if (p.t <= 0 && p.cells.length) { p.t = .2; think(p) } }
           for (const q of p.cells) {
-            const ox = q.x, oy = q.y, dx = p.tx - q.x, dy = p.ty - q.y, d = Math.hypot(dx, dy) || 1, s = SP(q.m) * (p.bot ? (d > 4 ? 1 : 0) : Math.min(1, d / R(q.m)));
+            const ox = q.x, oy = q.y, dx = p.tx - q.x, dy = p.ty - q.y, d = Math.hypot(dx, dy) || 1, bm = p.boostUntil > life ? 1.9 : 1, s = SP(q.m) * bm * (p.bot ? (d > 4 ? 1 : 0) : Math.min(1, d / R(q.m)));
             q.x += (dx / d * s + q.vx) * dt; q.y += (dy / d * s + q.vy) * dt; const f = Math.pow(.02, dt); q.vx *= f; q.vy *= f;
             q.merge = Math.max(0, q.merge - dt); q.wobble = Math.max(0, q.wobble - dt * 1.5);
-            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); q.dx = (q.x - ox) / Math.max(dt, .001); q.dy = (q.y - oy) / Math.max(dt, .001); if (q.m > 40) q.m -= q.m * .0012 * dt;
-            for (const v of viruses) if (q.m > 130 && Math.hypot(q.x - v.x, q.y - v.y) < R(q.m) + VR(v.m) * .3) { popCell(p, q); break }
+            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); q.dx = (q.x - ox) / Math.max(dt, .001); q.dy = (q.y - oy) / Math.max(dt, .001);
+            for (const v of viruses) if (q.m > 130 && Math.hypot(q.x - v.x, q.y - v.y) < R(q.m) + VR(v.m) * 1.05) { popCell(p, q); break }
+            for (const o of powerups) if (life >= o.until && Math.hypot(q.x - o.x, q.y - o.y) < R(q.m) + 16) { p.boostUntil = life + 3; o.until = life + 20; o.x = rnd(150, WORLD - 150); o.y = rnd(150, WORLD - 150); if (p === me) fxs('swipe') }
             const r = R(q.m);
             for (let i = pel.length - 1; i >= 0; i--) {
               const o = pel[i]; if (o.big && o.age < .3) continue;
@@ -992,7 +1017,8 @@
             const push = o / 2 * Math.min(1, dt * 8); ca.x -= ux * push; ca.y -= uy * push; cb.x += ux * push; cb.y += uy * push;
           }
         }
-        for (let i = 0; i < P.length; i++) { const p = P[i]; if (!p.cells.length && !p.out) { p.out = true; logKill(p) } if (p.bot && !p.cells.length && curMode == 'ffa') P[i] = mkBot() }
+        for (let i = 0; i < P.length; i++) { const p = P[i]; if (!p.cells.length && !p.out) { p.out = true; logKill(p); if (curMode != 'teams' && (p.bot || curMode == 'time')) p.respawnAt = life + (curMode == 'time' ? 5 : rnd(2, 10)) }
+          if (p.respawnAt != null && life >= p.respawnAt && !p.cells.length) respawn(p) }
         for (const o of pel) if (o.vx || o.vy) {
           o.age += dt; o.x += o.vx * dt; o.y += o.vy * dt; const f = Math.pow(.01, dt); o.vx *= f; o.vy *= f; if (Math.abs(o.vx) + Math.abs(o.vy) < 4) o.vx = o.vy = 0;
           o.x = Math.max(5, Math.min(WORLD - 5, o.x)); o.y = Math.max(5, Math.min(WORLD - 5, o.y));
@@ -1004,6 +1030,7 @@
         pel = pel.filter(o => !o.dead); while (pel.length < PEL) pel.push(spawnPel());
         for (const v of viruses) { v.x = Math.max(60, Math.min(WORLD - 60, v.x + v.vx * dt)); v.y = Math.max(60, Math.min(WORLD - 60, v.y + v.vy * dt)); const f = Math.pow(.01, dt); v.vx *= f; v.vy *= f }
         while (viruses.length < VIRUS_COUNT) viruses.push(spawnVirus());
+        if (curMode == 'time' && life >= 300) { timeOver(); return }
         const teamsOn = curMode == 'teams';
         if (teamsOn) {
           const alive = t => P.some(q => q.team === t && q.cells.length);
@@ -1012,6 +1039,7 @@
         let focus = me;
         if (!me.cells.length) {
           if (teamsOn) { if (!spec || !spec.cells.length) specStep(1); focus = spec && spec.cells.length ? spec : null }
+          else if (curMode == 'time') focus = null;
           else { deadT += dt; if (deadT > .9) { gameOver(); return } focus = null }
         } else { const T = tot(me); peak = Math.max(peak, T); st(`Mass ${Math.round(T)}   Best ${Math.max(bestNow(), peak)}`) }
         if (focus) followCam(focus, dt);
@@ -1122,6 +1150,11 @@
       function draw() {
         syncMenu(); if (scr == 'menu') return;
         if (spec && curMode == 'teams' && !me.cells.length) byId('spec-name').innerText = spec.name;
+        if (curMode == 'time') {
+          const tl = Math.max(0, 300 - life), tt = Math.floor(tl / 60) + ':' + String(Math.floor(tl % 60)).padStart(2, '0'), te = byId('timer-text');
+          if (te.innerText !== tt) te.innerText = tt; byId('timer-ui').classList.toggle('low', tl < 30);
+          if (me.respawnAt != null && !me.cells.length) byId('respawn-count').innerText = Math.max(1, Math.ceil(me.respawnAt - life));
+        }
         const th = THEMES[selectedTheme] || THEMES.Light;
         x.fillStyle = th.void; x.fillRect(0, 0, W, H);
         const [ax, ay] = S(0, 0), [bx, by] = S(WORLD, WORLD), gs = 60 * cam.z;
@@ -1133,9 +1166,25 @@
           x.stroke(); x.restore();
         }
         x.strokeStyle = th.border; x.lineWidth = 3; x.strokeRect(ax, ay, bx - ax, by - ay);
-        for (const o of pel) { const [sx, sy] = S(o.x, o.y); if (sx < -8 || sx > W + 8 || sy < -8 || sy > H + 8) continue; x.fillStyle = o.col || hue(o.h); x.beginPath(); x.arc(sx, sy, Math.max(2, (o.big ? 7 : 4) * cam.z + 1), 0, 7); x.fill() }
+        const TC = m => m >= 100 ? '#facc15' : m >= 25 ? '#e879f9' : '#38bdf8';
+        for (const o of pel) {
+          const [sx, sy] = S(o.x, o.y); if (sx < -20 || sx > W + 20 || sy < -20 || sy > H + 20) continue;
+          const big = o.m >= 10 && !o.big, pr = Math.max(2, (o.big ? 7 : o.m >= 100 ? 17 : o.m >= 25 ? 12 : o.m >= 10 ? 9 : 4) * cam.z + 1);
+          if (big) { x.fillStyle = TC(o.m) + '55'; x.beginPath(); x.arc(sx, sy, pr * 1.5, 0, 7); x.fill() }
+          x.fillStyle = big ? TC(o.m) : (o.col || hue(o.h)); x.beginPath(); x.arc(sx, sy, pr, 0, 7); x.fill();
+          if (big && o.m >= 25 && pr > 9) { x.fillStyle = '#12062b'; x.font = '700 ' + Math.round(pr * .95) + 'px Fredoka, system-ui'; x.textAlign = 'center'; x.fillText(o.m, sx, sy + pr * .34) }
+        }
+        for (const o of powerups) {
+          if (life < o.until) continue; const [sx, sy] = S(o.x, o.y); if (sx < -30 || sx > W + 30 || sy < -30 || sy > H + 30) continue;
+          const pr = (16 + Math.sin(tm * 5) * 2) * cam.z + 2; x.fillStyle = 'rgba(253,224,71,.28)'; x.beginPath(); x.arc(sx, sy, pr * 1.45, 0, 7); x.fill();
+          x.fillStyle = '#fde047'; x.beginPath(); x.arc(sx, sy, pr, 0, 7); x.fill(); x.strokeStyle = '#a16207'; x.lineWidth = 2; x.stroke();
+          x.fillStyle = '#713f12'; x.font = '700 ' + Math.round(pr * 1.15) + 'px system-ui'; x.textAlign = 'center'; x.fillText('⚡', sx, sy + pr * .4);
+        }
         const all = []; P.forEach(p => p.cells.forEach(q => all.push([q, p]))); all.sort((a, b) => a[0].m - b[0].m);
-        all.forEach(([q, p]) => drawCell(q, p, p === me));
+        all.forEach(([q, p]) => {
+          if (p.boostUntil > life) { const sp = Math.hypot(q.dx || 0, q.dy || 0) || 1; for (let k = 3; k >= 1; k--) { const [gx, gy] = S(q.x - (q.dx || 0) / sp * R(q.m) * .6 * k, q.y - (q.dy || 0) / sp * R(q.m) * .6 * k); x.globalAlpha = .16; x.fillStyle = '#fde047'; x.beginPath(); x.arc(gx, gy, R(q.m) * cam.z * (1 - k * .12), 0, 7); x.fill() } x.globalAlpha = 1 }
+          drawCell(q, p, p === me);
+        });
         viruses.forEach(v => drawVirus(v));
         const panel = (px, py, pw, ph) => { x.fillStyle = 'rgba(20,11,36,.78)'; rr(x, px, py, pw, ph, 8); x.fill(); x.strokeStyle = '#3a2a61'; x.lineWidth = 1.5; rr(x, px, py, pw, ph, 8); x.stroke() };
         const T = me.cells.length ? Math.round(tot(me)) : 0;
@@ -1166,6 +1215,7 @@
             x.globalAlpha = 1;
           }
         }
+        if (me.boostUntil > life) { const by = curMode == 'teams' ? 116 : 70; panel(10, by, 160, 28); x.textAlign = 'left'; x.font = '700 13px Fredoka, system-ui'; x.fillStyle = '#fde047'; x.fillText('⚡ BOOST ' + (me.boostUntil - life).toFixed(1) + 's', 22, by + 19) }
         if (OPT.minimap) drawMinimap();
         if (touch && me.cells.length) { const bt = getBtnPos(); [[bt.split, 'SPLIT'], [bt.feed, 'FEED']].forEach(([b, t]) => { x.fillStyle = 'rgba(20,11,36,.8)'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#3ddc6e'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '700 12px Fredoka, system-ui'; x.fillText(t, b.x, b.y + 4) }) }
         if (touch && me.cells.length) {
@@ -1265,7 +1315,7 @@
         try { localStorage.setItem('blobs-skin', selectedSkin) } catch(e) {}
         refreshSkinUI(); unfocus(); fxs('click');
       };
-      const MODES = ['ffa', 'teams'], MODE_LABEL = { ffa: 'Free for all', teams: 'Red v Blue' }, MODE_DESC = { ffa: 'Everyone for themselves', teams: 'Two teams. Last team standing wins.' };
+      const MODES = ['ffa', 'teams', 'time'], MODE_LABEL = { ffa: 'Free for all', teams: 'Red v Blue', time: 'Time Attack' }, MODE_DESC = { ffa: 'Everyone for themselves', teams: 'Two teams. Last team standing wins.', time: '5 minutes. Biggest blob wins. Respawn when eaten.' };
       const refreshModeUI = () => {
         const t = gameMode == 'teams', cg = byId('colour-group');
         byId('mode-name').innerText = MODE_LABEL[gameMode]; byId('mode-name').classList.toggle('teams', t); byId('mode-desc').innerText = MODE_DESC[gameMode];
