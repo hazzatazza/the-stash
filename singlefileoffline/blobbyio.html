@@ -440,6 +440,12 @@
     #timer-ui .t-label { font-size: 10px; letter-spacing: .1em; color: var(--muted); }
     #timer-text { font-size: 20px; font-weight: 700; font-variant-numeric: tabular-nums; }
     #timer-ui.low #timer-text { color: #ff6b8b; }
+    #steal-ui .box { max-width: 380px; }
+    #steal-list { max-height: 55vh; overflow-y: auto; text-align: left; margin: 10px 0; }
+    .steal-row { display: flex; align-items: center; gap: 12px; padding: 8px 10px; border: 1px solid var(--line); border-radius: 8px; margin-bottom: 6px; cursor: pointer; background: rgba(20,11,36,.6); }
+    .steal-row:hover { background: var(--purple); }
+    .steal-av { width: 38px; height: 38px; border-radius: 50%; flex: none; background-size: cover; background-position: center; display: flex; align-items: center; justify-content: center; font-size: 22px; border: 2px solid rgba(255,255,255,.25); }
+    .steal-tx { display: flex; flex-direction: column; } .steal-tx b { font-size: 15px; } .steal-tx small { color: var(--muted); font-size: 12px; }
     .mode-picker { margin: 12px 0 2px; gap: 14px; }
     .mode-name { min-width: 150px; text-align: center; font-family: 'Titan One', 'Fredoka', system-ui, sans-serif; font-size: 19px; color: var(--text); }
     .mode-name.teams { background: linear-gradient(90deg, #ef4444, #3b82f6); -webkit-background-clip: text; background-clip: text; color: transparent; }
@@ -511,6 +517,7 @@
                   <button class="diff-btn" onclick="setDiff('Easy')">Easy</button>
                   <button class="diff-btn active" id="btn-Normal" onclick="setDiff('Normal')">Normal</button>
                   <button class="diff-btn" onclick="setDiff('Hard')">Hard</button>
+                  <button class="diff-btn" onclick="setDiff('Extreme')">Extreme</button>
                 </div>
               </div>
             </div>
@@ -544,6 +551,7 @@
     </div>
     <button id="pause-btn" title="Pause (Esc)" onclick="pauseGame()"><i></i><i></i></button>
     <div id="timer-ui"><span class="t-label">TIME</span><span id="timer-text">5:00</span></div>
+    <div id="steal-ui" class="overlay"><div class="box"><h2>Steal 25% mass</h2><div class="over-label">PICK A PLAYER</div><div id="steal-list"></div><button class="ghost-btn" onclick="closeSteal()">Skip</button></div></div>
     <div id="respawn-ui" class="overlay"><div class="box"><h2 style="color:#ff6b8b">You died!</h2><div class="over-label">RESPAWNING IN</div><div class="over-size" id="respawn-count">5</div></div></div>
 
     <div id="pause-ui" class="overlay">
@@ -755,7 +763,7 @@
     });
     const skinReady = n => { const im = n && SKIN_IMG[n]; return im && im.complete && im.naturalWidth > 0 ? im : null };
     function blobs(el) {
-      const WORLD = 4000, PEL = 600, VIRUS_COUNT = 28;
+      const WORLD = 12000, PEL = 5400, VIRUS_COUNT = 110;
       const [c, x] = hd(el, W, H, 1.1);
       const nameInput = document.getElementById('player-name-input');
       const colorPicker = document.getElementById('player-color-picker');
@@ -803,16 +811,16 @@
       const hue = h => `hsl(${h},75%,58%)`;
       const fillOf = p => p.col || hue(p.h), strokeOf = p => p.col ? shade(p.col, -.2) : darker(p.h);
       const R = m => Math.sqrt(m) * 4, VR = m => Math.sqrt(m) * 8.5, SP = m => 310 * Math.pow(m, -.2), EAT = 1.05;
-      const DIFFS = { Easy: { bots: 20, sight: .7, aggr: .35, react: .55, chase: .6, giveUp: 2.5, cool: 6, split: false }, Normal: { bots: 30, sight: 1, aggr: .7, react: .35, chase: 1, giveUp: 5, cool: 4, split: false }, Hard: { bots: 40, sight: 1.35, aggr: 1, react: .18, chase: 1, giveUp: 1e9, cool: 0, split: true } };
+      const DIFFS = { Easy: { bots: 20, sight: .7, aggr: .35, react: .55, chase: .6, giveUp: 2.5, cool: 6, split: false }, Normal: { bots: 30, sight: 1, aggr: .7, react: .35, chase: 1, giveUp: 5, cool: 4, split: false }, Hard: { bots: 40, sight: 1.35, aggr: 1, react: .18, chase: 1, giveUp: 1e9, cool: 0, split: true }, Extreme: { bots: 50, sight: 1.7, aggr: 1.4, react: 0, chase: 1, giveUp: 1e9, cool: 0, split: true, smart: true } };
       const bestNow = () => { try { return +localStorage.getItem('best-blobs') || 0 } catch (e) { return 0 } };
       let diff = 'Normal'; try { const d0 = localStorage.getItem('blobs-diff'); if (DIFFS[d0]) diff = d0 } catch (e) {}
       const D = () => DIFFS[diff];
-      const TEAM = { red: '#ef4444', blue: '#3b82f6' };
+      const TEAM = { red: '#ef4444', blue: '#3b82f6', human: '#3ddc6e', infected: '#a855f7' }, STORM = { name: 'Storm' }, LIMIT = { time: 300, infected: 240 };
       let gameMode = 'ffa', curMode = 'ffa', feedLog = [], spec = null;
-      try { const gm = localStorage.getItem('blobs-mode'); if (gm == 'ffa' || gm == 'teams' || gm == 'time') gameMode = gm } catch (e) {}
-      const friendly = (a, b) => curMode == 'teams' && !!a.team && a.team === b.team;
+      try { const gm = localStorage.getItem('blobs-mode'); if (gm == 'ffa' || gm == 'teams' || gm == 'time' || gm == 'infected' || gm == 'royale') gameMode = gm } catch (e) {}
+      const friendly = (a, b) => (curMode == 'teams' || curMode == 'infected') && !!a.team && a.team === b.team;
       let scr = 'menu', P = [], me = null, pel = [], viruses = [], cam = { x: WORLD / 2, y: WORLD / 2, z: .9 }, ptr = { x: W / 2 + 1, y: H / 2 };
-      let tm = 0, peak = 10, eaten = 0, life = 0, newBest = false, deadT = 0, touch = typeof matchMedia == 'function' && matchMedia('(pointer: coarse)').matches, paused = false, popups = [], powerups = [];
+      let tm = 0, peak = 10, eaten = 0, life = 0, newBest = false, deadT = 0, touch = typeof matchMedia == 'function' && matchMedia('(pointer: coarse)').matches, paused = false, popups = [], powerups = [], nextBolt = 0, bolts = [], flashT = -9, stealOpen = false, banner = null, nextFrenzy = 0, steals = [];
       const S = (wx, wy) => [(wx - cam.x) * cam.z + W / 2, (wy - cam.y) * cam.z + H / 2];
       const rnd = (a, b) => a + Math.random() * (b - a), tot = p => p.cells.reduce((s, q) => s + q.m, 0);
       const byId = id => document.getElementById(id), fxs = n => { try { fx(n) } catch (e) {} };
@@ -825,13 +833,15 @@
         byId('pause-btn').style.display = scr == 'play' && !paused && me && me.cells.length ? 'flex' : 'none';
         byId('spec-ui').style.display = scr == 'play' && curMode == 'teams' && me && !me.cells.length ? 'flex' : 'none';
         byId('respawn-ui').style.display = scr == 'play' && curMode == 'time' && me && !me.cells.length ? 'flex' : 'none';
-        byId('timer-ui').style.display = scr == 'play' && curMode == 'time' ? 'flex' : 'none';
+        byId('timer-ui').style.display = scr == 'play' && LIMIT[curMode] ? 'flex' : 'none';
+        byId('steal-ui').style.display = scr == 'play' && stealOpen ? 'flex' : 'none';
       };
       const pickName = () => { const used = new Set(P.map(q => q.name)), free = NAMES.filter(n => !used.has(n)); return free[Math.floor(Math.random() * free.length)] || NAMES[0] };
       const mkBot = () => { const p = newP(pickName(), rnd(0, 360), true); p.hunter = Math.random() < D().aggr * .6 + .15; if (Math.random() < .35) p.skin = SKINS[Math.floor(Math.random() * SKINS.length)]; return p };
       function newP(name, h, bot) { return { name, h, bot, skin: '', tx: WORLD / 2, ty: WORLD / 2, t: 0, targetPrey: null, cells: [{ x: rnd(300, WORLD - 300), y: rnd(300, WORLD - 300), m: bot ? rnd(10, 50) : 10, vx: 0, vy: 0, merge: 0, wobble: 0 }] } }
       const spawnPel = () => { const r = Math.random(); return { x: rnd(20, WORLD - 20), y: rnd(20, WORLD - 20), m: r < .004 ? 100 : r < .018 ? 25 : r < .058 ? 10 : r < .14 ? 3 : 1, h: rnd(0, 360), vx: 0, vy: 0 } };
-      const spawnPower = () => ({ x: rnd(150, WORLD - 150), y: rnd(150, WORLD - 150), until: 0 });
+      const PT = ['speed', 'shield', 'ghost', 'magnet'];
+      const spawnPower = () => ({ x: rnd(150, WORLD - 150), y: rnd(150, WORLD - 150), type: PT[Math.floor(Math.random() * 4)], until: 0 });
       const spawnVirus = (x, y, m = 130) => {
         if (x == null) for (let a = 0; a < 30; a++) { x = rnd(150, WORLD - 150); y = rnd(150, WORLD - 150); if (!viruses.some(v => Math.hypot(x - v.x, y - v.y) < VR(m) + VR(v.m) + 120)) break }
         return { x, y, m, vx: 0, vy: 0 };
@@ -839,13 +849,14 @@
       function begin() {
         AudioFX.ensure(); AudioFX.sync(true); fxs('ui');
         try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
-        paused = false; scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0; curMode = gameMode; feedLog = []; spec = null; joy.id = null; joy.ax = joy.ay = joy.mag = joy.kx = joy.ky = 0; keyMode = false; for (const k in keys) keys[k] = false;
+        paused = false; scr = 'play'; P = []; pel = []; viruses = []; popups = []; peak = 10; eaten = 0; life = 0; newBest = false; deadT = 0; curMode = gameMode; feedLog = []; spec = null; nextBolt = 0; bolts = []; flashT = -9; stealOpen = false; banner = null; nextFrenzy = 0; steals = Array.from({ length: 4 }, spawnPower); joy.id = null; joy.ax = joy.ay = joy.mag = joy.kx = joy.ky = 0; keyMode = false; for (const k in keys) keys[k] = false;
         me = newP((nameInput.value.trim() || 'You').slice(0, 15), hexToHue(colorPicker.value), false); me.skin = selectedSkin; if (curMode == 'teams') { me.team = Math.random() < .5 ? 'red' : 'blue'; me.col = TEAM[me.team] } else me.col = colorPicker.value; P.push(me);
         const cnt = { red: me.team == 'red' ? 1 : 0, blue: me.team == 'blue' ? 1 : 0 };
         for (let i = 0; i < D().bots; i++) { const b = mkBot(); if (curMode == 'teams') { b.team = cnt.red < cnt.blue ? 'red' : cnt.blue < cnt.red ? 'blue' : (Math.random() < .5 ? 'red' : 'blue'); cnt[b.team]++; b.col = TEAM[b.team] } P.push(b) }
+        if (curMode == 'infected') { me.team = 'human'; me.col = TEAM.human; P.forEach(q => { if (q !== me) { q.team = 'human'; q.col = TEAM.human } }); P.filter(q => q.bot).slice(0, Math.ceil(D().bots / 15)).forEach(q => { q.team = 'infected'; q.col = TEAM.infected; q.cells[0].m = 60 }) }
         for (let i = 0; i < PEL; i++) pel.push(spawnPel());
         for (let i = 0; i < VIRUS_COUNT; i++) viruses.push(spawnVirus());
-        powerups = Array.from({ length: 12 }, spawnPower); if (curMode == 'time') P.forEach(q => q.cells.forEach(c => c.m = 10));
+        powerups = Array.from({ length: 40 }, spawnPower); if (curMode == 'time') P.forEach(q => q.cells.forEach(c => c.m = 10));
         cam.x = me.cells[0].x; cam.y = me.cells[0].y; cam.z = .9;
         st(curMode == 'teams' ? `You are on the ${me.team} team. Last team standing wins.` : `Eat pellets and smaller blobs. Space splits, W feeds. ${diff} bots.`); syncMenu();
       }
@@ -877,6 +888,7 @@
 
       function think(p) {
         const d = D(), b = p.cells.reduce((a, q) => q.m > a.m ? q : a), rb = R(b.m), view = (280 + rb * 5) * d.sight;
+        if (curMode == 'royale' && Math.hypot(b.x - WORLD / 2, b.y - WORLD / 2) > zoneR() - 250) { p.tx = WORLD / 2 + rnd(-300, 300); p.ty = WORLD / 2 + rnd(-300, 300); return }
         let fx0 = 0, fy0 = 0, threat = false, prey = null, best = 0, far = null, farBest = 0, preyOwner = null, farOwner = null;
         for (const q of P) {
           if (q === p || friendly(p, q)) continue;
@@ -895,11 +907,12 @@
         if (!prey) { prey = far; preyOwner = farOwner }
         if (prey && preyOwner === me) { if (p.chaseOwner !== me) { p.chaseOwner = me; p.chaseStart = tm } else if (tm - p.chaseStart > d.giveUp) { p.ignoreOwner = me; p.ignoreUntil = tm + d.cool; p.chaseOwner = null; prey = null } } else p.chaseOwner = null;
         p.targetPrey = prey;
+        if (threat && d.smart) { const e = 1500; if (b.x < e) fx0 += 1; if (b.x > WORLD - e) fx0 -= 1; if (b.y < e) fy0 += 1; if (b.y > WORLD - e) fy0 -= 1 }
         if (threat) { const L = Math.hypot(fx0, fy0) || 1; p.tx = b.x + fx0 / L * 400; p.ty = b.y + fy0 / L * 400 }
         else if (prey) {
           const pd = Math.hypot(prey.x - b.x, prey.y - b.y), lead = Math.min(.8, pd / (SP(b.m) + 1));
           p.tx = prey.x + (prey.dx || 0) * lead; p.ty = prey.y + (prey.dy || 0) * lead;
-          if (d.split && b.m > prey.m * 2.6 && b.m > 60 && pd < R(b.m) * 3.2 && p.cells.length < 3) split(p);
+          if (d.split && b.m > prey.m * (d.smart ? 2.2 : 2.6) && b.m > 60 && pd < R(b.m) * (d.smart ? 4 : 3.2) && p.cells.length < (d.smart ? 4 : 3)) split(p);
         } else {
           let bp = null, bs = 0, rg = (450 * d.sight) ** 2;
           if (!(p.boostUntil > life)) for (const o of powerups) { if (life < o.until) continue; if ((o.x - b.x) ** 2 + (o.y - b.y) ** 2 < (380 * d.sight) ** 2 && Math.random() < .8) { bp = o; bs = 1e9; break } }
@@ -931,7 +944,7 @@
         for (let i = 1; i < n; i++) { const a = rnd(0, 6.28); p.cells.push({ x: q.x, y: q.y, m: q.m, vx: Math.cos(a) * 450, vy: Math.sin(a) * 450, merge: 10, wobble: 1 }) }
         if (!p.bot) fxs('pop');
       }
-      const tcol = p => p ? (curMode == 'teams' ? TEAM[p.team] : (p === me ? '#3ddc6e' : '#ece6ff')) : '#ece6ff';
+      const tcol = p => p ? (p.team ? TEAM[p.team] : (p === me ? '#3ddc6e' : '#ece6ff')) : '#ece6ff';
       function logKill(v) {
         const k = v.lastKiller; if (k) feedLog.push({ t: tm, k: k.name, v: v.name, kc: tcol(k), vc: tcol(v) });
         if (feedLog.length > 20) feedLog.shift(); if (v === me && curMode == 'teams') fxs('lose');
@@ -969,7 +982,7 @@
       function safeSpot() { let bst = null, bd = -1; for (let i = 0; i < 8; i++) { const x0 = rnd(300, WORLD - 300), y0 = rnd(300, WORLD - 300); let md = 1e9; for (const p of P) for (const c of p.cells) md = Math.min(md, Math.hypot(c.x - x0, c.y - y0) - R(c.m)); if (md > bd) { bd = md; bst = [x0, y0] } } return bst }
       function respawn(p) {
         const [sx0, sy0] = safeSpot(); p.cells = [{ x: sx0, y: sy0, m: 10, vx: 0, vy: 0, merge: 0, wobble: 0 }];
-        p.out = false; p.respawnAt = null; p.targetPrey = p.chaseOwner = null; p.alarm = 0; p.lastKiller = null; p.boostUntil = 0; p.t = 0;
+        p.out = false; p.respawnAt = null; p.targetPrey = p.chaseOwner = null; p.alarm = 0; p.lastKiller = null; p.boostUntil = 0; p.t = 0; p.bolt = null; p.shield = p.ghostUntil = p.magnetUntil = 0;
         if (p === me) { cam.x = sx0; cam.y = sy0; cam.z = .9; fxs('click') }
       }
       function timeOver() {
@@ -978,18 +991,64 @@
         byId('over-title').innerText = w.q === me ? 'You win!' : `${w.q.name} wins!`; byId('over-size').innerText = Math.round(peak);
         byId('over-best').innerText = `Winner: ${w.q.name} · ${Math.round(w.m)} mass`; byId('over-stats').innerText = `You finished #${rank} of ${P.length} · Blobs eaten: ${eaten}`; syncMenu();
       }
+      const zoneR = () => 9000 + (500 - 9000) * Math.min(1, life / 300);
+      const say = (text, sub, sec = 5) => { banner = { text, sub, until: life + sec } };
+      function endScreen(title, sub, win) {
+        scr = 'over'; newBest = peak > bestNow(); best('blobs', Math.round(peak)); AudioFX.sync(false); fxs(win ? 'coin' : 'lose');
+        byId('over-title').innerText = title; byId('over-size').innerText = Math.round(peak); byId('over-best').innerText = sub;
+        byId('over-stats').innerText = `Blobs eaten: ${eaten}   Time: ${Math.floor(life / 60)}:${String(Math.floor(life % 60)).padStart(2, '0')}`; syncMenu();
+      }
+      function steal(a, v) {
+        const amt = tot(v) * .25; v.cells.forEach(c => { c.m *= .75; c.wobble = 1 }); const q = a.cells.reduce((m, c) => c.m > m.m ? c : m); q.m += amt; q.wobble = 1;
+        feedLog.push({ t: tm, k: a.name, w: ' stole ' + Math.round(amt) + ' from ', v: v.name, kc: tcol(a), vc: tcol(v) });
+        if (a === me) { say('You stole ' + Math.round(amt) + ' mass!', 'from ' + v.name); fxs('coin') } else if (v === me) { say(a.name + ' stole ' + Math.round(amt) + ' mass from you!', '', 4); fxs('pop') }
+      }
+      function pickVictim(a) {
+        const al = P.filter(q => q !== a && q.cells.length && !q.giant); if (!al.length) return null;
+        const top = al.slice().sort((x1, y1) => tot(y1) - tot(x1)).slice(0, 3), rest = al.filter(q => !top.includes(q) && q !== me);
+        if (me.cells.length && !top.includes(me) && Math.random() < .02) return me;
+        if (Math.random() < .75 || !rest.length) return top[Math.floor(Math.random() * top.length)];
+        return rest[Math.floor(Math.random() * rest.length)];
+      }
+      function openSteal() {
+        stealOpen = true; const list = byId('steal-list'); list.innerHTML = '';
+        P.filter(q => q !== me && q.cells.length && !q.giant).sort((a, b) => tot(b) - tot(a)).forEach(q => {
+          const row = document.createElement('div'), av = document.createElement('span'), tx = document.createElement('span'), n1 = document.createElement('b'), n2 = document.createElement('small'), em = EMOJI[q.skin];
+          row.className = 'steal-row'; av.className = 'steal-av'; tx.className = 'steal-tx'; av.style.backgroundColor = q.col || hue(q.h);
+          if (q.skin && !em) av.style.backgroundImage = `url(${SKIN_URL(q.skin)})`; if (em) av.textContent = em;
+          n1.textContent = q.name; n2.textContent = Math.round(tot(q)) + ' mass'; tx.append(n1, n2); row.append(av, tx);
+          row.onclick = () => { steal(me, q); closeSteal() }; list.appendChild(row);
+        }); syncMenu();
+      }
+      const closeSteal = () => { stealOpen = false; syncMenu() }; window.closeSteal = closeSteal;
+      function frenzy() {
+        for (let i = 0; i < 6; i++) { const g = newP('Giant', 20, true); g.giant = true; g.hunter = true; g.col = '#f97316'; g.expires = life + 45; const [gx, gy] = safeSpot(); g.cells = [{ x: gx, y: gy, m: 1000, vx: 0, vy: 0, merge: 0, wobble: 1 }]; P.push(g) }
+        say('FRENZY!', '6 giant blobs dropped in. Run, or eat one with 1050+ mass.', 6); feedLog.push({ t: tm, k: 'Frenzy', w: ' dropped ', v: '6 giants', kc: '#f97316', vc: '#ece6ff' });
+      }
+      function strike(p) {
+        const T = tot(p); let cx = 0, cy = 0; p.cells.forEach(q => { cx += q.x; cy += q.y }); cx /= p.cells.length; cy /= p.cells.length;
+        p.cells = [{ x: cx, y: cy, m: 10, vx: 0, vy: 0, merge: 0, wobble: 1 }]; p.bolt = { until: life + 10, total: T }; bolts.push({ x: cx, y: cy, t: life });
+        feedLog.push({ t: tm, k: 'Lightning', w: ' struck ', v: p.name, kc: '#fde047', vc: tcol(p) }); if (p === me) { flashT = life; fxs('pop') }
+      }
       function upd(dt) {
-        tm += dt; if (paused || scr != 'play') return; life += dt;
+        tm += dt; if (paused || stealOpen || scr != 'play') return; life += dt;
+        if (!nextBolt) nextBolt = life + rnd(40, 70);
+        if (life >= nextBolt) { nextBolt = life + rnd(45, 80); const al = P.filter(q => q.cells.length && !q.bolt); if (al.length) strike(al[Math.floor(Math.random() * al.length)]) }
+        for (const p of P) if (p.bolt && life >= p.bolt.until) { if (p.cells.length) { const q = p.cells.reduce((a, c) => c.m > a.m ? c : a); q.m += Math.max(0, p.bolt.total - 10); q.wobble = 1 } p.bolt = null }
+        if (!nextFrenzy) nextFrenzy = life + rnd(100, 140); if (life >= nextFrenzy) { nextFrenzy = life + rnd(110, 160); if (curMode != 'teams' && curMode != 'infected') frenzy() }
+        for (const p of P) if (p.giant && life >= p.expires) p.cells = [];
         if (me.cells.length) steer();
         for (const p of P) {
-          if (p.bot) { p.t -= dt; if (p.t <= 0 && p.cells.length) { p.t = .2; think(p) } }
+          if (p.bot) { p.t -= dt; if (p.t <= 0 && p.cells.length) { p.t = D().smart ? .1 : .2; think(p) } }
           for (const q of p.cells) {
-            const ox = q.x, oy = q.y, dx = p.tx - q.x, dy = p.ty - q.y, d = Math.hypot(dx, dy) || 1, bm = p.boostUntil > life ? 1.9 : 1, s = SP(q.m) * bm * (p.bot ? (d > 4 ? 1 : 0) : Math.min(1, d / R(q.m)));
+            const ox = q.x, oy = q.y, dx = p.tx - q.x, dy = p.ty - q.y, d = Math.hypot(dx, dy) || 1, bm = (p.boostUntil > life ? 1.9 : 1) * (curMode == 'infected' && p.team == 'infected' ? 1.12 : 1), s = SP(q.m) * bm * (p.bot ? (d > 4 ? 1 : 0) : Math.min(1, d / R(q.m)));
             q.x += (dx / d * s + q.vx) * dt; q.y += (dy / d * s + q.vy) * dt; const f = Math.pow(.02, dt); q.vx *= f; q.vy *= f;
             q.merge = Math.max(0, q.merge - dt); q.wobble = Math.max(0, q.wobble - dt * 1.5);
-            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); q.dx = (q.x - ox) / Math.max(dt, .001); q.dy = (q.y - oy) / Math.max(dt, .001);
-            for (const v of viruses) if (q.m > 130 && Math.hypot(q.x - v.x, q.y - v.y) < R(q.m) + VR(v.m) * 1.05) { popCell(p, q); break }
-            for (const o of powerups) if (life >= o.until && Math.hypot(q.x - o.x, q.y - o.y) < R(q.m) + 16) { p.boostUntil = life + 3; o.until = life + 20; o.x = rnd(150, WORLD - 150); o.y = rnd(150, WORLD - 150); if (p === me) fxs('swipe') }
+            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); q.dx = (q.x - ox) / Math.max(dt, .001); q.dy = (q.y - oy) / Math.max(dt, .001); if (q.m > 25000) q.m -= 50 / 60 * dt; if (curMode == 'royale' && Math.hypot(q.x - WORLD / 2, q.y - WORLD / 2) > zoneR()) { q.m -= (q.m * .08 + 1.5) * dt; if (q.m <= 2) { q.dead = true; p.lastKiller = STORM } }
+            for (const v of viruses) if (q.m > 130 && !(p.ghostUntil > life) && !p.giant && Math.hypot(q.x - v.x, q.y - v.y) < R(q.m) + VR(v.m) * 1.05) { popCell(p, q); break }
+            if (p.magnetUntil > life) for (const o of pel) { const dd = Math.hypot(q.x - o.x, q.y - o.y); if (dd < 320 && dd > 1) { const k = Math.min(1, dt * 6); o.x += (q.x - o.x) * k; o.y += (q.y - o.y) * k } }
+            for (const o of powerups) if (life >= o.until && Math.hypot(q.x - o.x, q.y - o.y) < R(q.m) + 16) { if (o.type == 'speed') p.boostUntil = life + 3; else if (o.type == 'shield') p.shield = life + 20; else if (o.type == 'ghost') p.ghostUntil = life + 8; else p.magnetUntil = life + 5; o.type = PT[Math.floor(Math.random() * 4)]; o.until = life + 20; o.x = rnd(150, WORLD - 150); o.y = rnd(150, WORLD - 150); if (p === me) fxs('swipe') }
+            for (const o of steals) if (life >= o.until && Math.hypot(q.x - o.x, q.y - o.y) < R(q.m) + 18) { o.until = life + 45; o.x = rnd(150, WORLD - 150); o.y = rnd(150, WORLD - 150); if (p === me) openSteal(); else { const v = pickVictim(p); if (v) steal(p, v) } }
             const r = R(q.m);
             for (let i = pel.length - 1; i >= 0; i--) {
               const o = pel[i]; if (o.big && o.age < .3) continue;
@@ -1005,7 +1064,7 @@
           p.cells = p.cells.filter(q => !q.dead);
         }
         for (const a of P) for (const ca of a.cells) for (const b of P) { if (a === b || friendly(a, b)) continue; for (const cb of b.cells) {
-          if (!cb.dead && !ca.dead && ca.m > cb.m * EAT && Math.hypot(ca.x - cb.x, ca.y - cb.y) < R(ca.m) - R(cb.m) * .3) { ca.m += cb.m; ca.wobble = .8; cb.dead = true; b.lastKiller = a; if (a === me) { eaten++; fxs('coin') } }
+          if (!cb.dead && !ca.dead && !friendly(a, b) && ca.m > cb.m * EAT && Math.hypot(ca.x - cb.x, ca.y - cb.y) < R(ca.m) - R(cb.m) * .3) { if (curMode == 'infected' && a.team == 'infected' && b.team == 'human') { b.team = 'infected'; b.col = TEAM.infected; ca.m += cb.m * .1; b.cells.forEach(c => c.wobble = 1); feedLog.push({ t: tm, k: a.name, w: ' infected ', v: b.name, kc: TEAM.infected, vc: TEAM.infected }); if (b === me) { say('YOU ARE INFECTED!', 'Convert the humans before time runs out.', 6); fxs('pop') } continue } if (b.shield > life || b.grace > life) { if (b.shield > life) { b.shield = 0; b.grace = life + 1.5 } const kx = ca.x - cb.x, ky = ca.y - cb.y, kl = Math.hypot(kx, ky) || 1; ca.vx += kx / kl * 500; ca.vy += ky / kl * 500; if (b === me) fxs('pop'); continue } ca.m += cb.m; ca.wobble = .8; cb.dead = true; b.lastKiller = a; if (a === me) { eaten++; fxs('coin') } }
         } }
         for (let i = 0; i < P.length; i++) P[i].cells = P[i].cells.filter(q => !q.dead);
         for (let i = 0; i < P.length; i++) for (let j = i + 1; j < P.length; j++) {
@@ -1017,8 +1076,9 @@
             const push = o / 2 * Math.min(1, dt * 8); ca.x -= ux * push; ca.y -= uy * push; cb.x += ux * push; cb.y += uy * push;
           }
         }
-        for (let i = 0; i < P.length; i++) { const p = P[i]; if (!p.cells.length && !p.out) { p.out = true; logKill(p); if (curMode != 'teams' && (p.bot || curMode == 'time')) p.respawnAt = life + (curMode == 'time' ? 5 : rnd(2, 10)) }
+        for (let i = 0; i < P.length; i++) { const p = P[i]; if (!p.cells.length && !p.out) { p.out = true; logKill(p); if ((curMode == 'ffa' && p.bot) || curMode == 'time') p.respawnAt = life + (curMode == 'time' ? 5 : rnd(2, 10)) }
           if (p.respawnAt != null && life >= p.respawnAt && !p.cells.length) respawn(p) }
+        P = P.filter(q => !(q.giant && !q.cells.length));
         for (const o of pel) if (o.vx || o.vy) {
           o.age += dt; o.x += o.vx * dt; o.y += o.vy * dt; const f = Math.pow(.01, dt); o.vx *= f; o.vy *= f; if (Math.abs(o.vx) + Math.abs(o.vy) < 4) o.vx = o.vy = 0;
           o.x = Math.max(5, Math.min(WORLD - 5, o.x)); o.y = Math.max(5, Math.min(WORLD - 5, o.y));
@@ -1031,6 +1091,8 @@
         for (const v of viruses) { v.x = Math.max(60, Math.min(WORLD - 60, v.x + v.vx * dt)); v.y = Math.max(60, Math.min(WORLD - 60, v.y + v.vy * dt)); const f = Math.pow(.01, dt); v.vx *= f; v.vy *= f }
         while (viruses.length < VIRUS_COUNT) viruses.push(spawnVirus());
         if (curMode == 'time' && life >= 300) { timeOver(); return }
+        if (curMode == 'infected') { const hum = P.filter(q => q.team == 'human' && q.cells.length).length; if (!hum) { endScreen(me.team == 'infected' ? 'Everyone infected!' : 'You were infected', 'The infection wins', me.team == 'infected'); return } if (life >= 240) { endScreen(me.team == 'human' ? 'You survived!' : 'Humans survived', hum + ' humans left', me.team == 'human'); return } }
+        if (curMode == 'royale' && me.cells.length && !P.some(q => q !== me && q.cells.length)) { endScreen('Last blob standing!', 'You win the arena', true); return }
         const teamsOn = curMode == 'teams';
         if (teamsOn) {
           const alive = t => P.some(q => q.team === t && q.cells.length);
@@ -1150,8 +1212,8 @@
       function draw() {
         syncMenu(); if (scr == 'menu') return;
         if (spec && curMode == 'teams' && !me.cells.length) byId('spec-name').innerText = spec.name;
-        if (curMode == 'time') {
-          const tl = Math.max(0, 300 - life), tt = Math.floor(tl / 60) + ':' + String(Math.floor(tl % 60)).padStart(2, '0'), te = byId('timer-text');
+        if (LIMIT[curMode]) {
+          const tl = Math.max(0, LIMIT[curMode] - life), tt = Math.floor(tl / 60) + ':' + String(Math.floor(tl % 60)).padStart(2, '0'), te = byId('timer-text');
           if (te.innerText !== tt) te.innerText = tt; byId('timer-ui').classList.toggle('low', tl < 30);
           if (me.respawnAt != null && !me.cells.length) byId('respawn-count').innerText = Math.max(1, Math.ceil(me.respawnAt - life));
         }
@@ -1166,6 +1228,7 @@
           x.stroke(); x.restore();
         }
         x.strokeStyle = th.border; x.lineWidth = 3; x.strokeRect(ax, ay, bx - ax, by - ay);
+        const PC = { speed: '#fde047', shield: '#38bdf8', ghost: '#cbd5e1', magnet: '#f87171' }, PI = { speed: '⚡', shield: '🛡', ghost: '👻', magnet: '🧲' };
         const TC = m => m >= 100 ? '#facc15' : m >= 25 ? '#e879f9' : '#38bdf8';
         for (const o of pel) {
           const [sx, sy] = S(o.x, o.y); if (sx < -20 || sx > W + 20 || sy < -20 || sy > H + 20) continue;
@@ -1177,13 +1240,17 @@
         for (const o of powerups) {
           if (life < o.until) continue; const [sx, sy] = S(o.x, o.y); if (sx < -30 || sx > W + 30 || sy < -30 || sy > H + 30) continue;
           const pr = (16 + Math.sin(tm * 5) * 2) * cam.z + 2; x.fillStyle = 'rgba(253,224,71,.28)'; x.beginPath(); x.arc(sx, sy, pr * 1.45, 0, 7); x.fill();
-          x.fillStyle = '#fde047'; x.beginPath(); x.arc(sx, sy, pr, 0, 7); x.fill(); x.strokeStyle = '#a16207'; x.lineWidth = 2; x.stroke();
-          x.fillStyle = '#713f12'; x.font = '700 ' + Math.round(pr * 1.15) + 'px system-ui'; x.textAlign = 'center'; x.fillText('⚡', sx, sy + pr * .4);
+          x.fillStyle = PC[o.type]; x.beginPath(); x.arc(sx, sy, pr, 0, 7); x.fill(); x.strokeStyle = '#a16207'; x.lineWidth = 2; x.stroke();
+          x.fillStyle = '#713f12'; x.font = '700 ' + Math.round(pr * 1.15) + 'px system-ui'; x.textAlign = 'center'; x.fillText(PI[o.type], sx, sy + pr * .4);
         }
+        if (curMode == 'royale') { const [zx, zy] = S(WORLD / 2, WORLD / 2), zr = zoneR() * cam.z; x.save(); x.beginPath(); x.rect(0, 0, W, H); x.arc(zx, zy, zr, 0, 7, true); x.fillStyle = 'rgba(220,38,38,.3)'; x.fill('evenodd'); x.restore(); x.strokeStyle = '#ef4444'; x.lineWidth = 4; x.beginPath(); x.arc(zx, zy, zr, 0, 7); x.stroke() }
+        for (const o of steals) { if (life < o.until) continue; const [sx, sy] = S(o.x, o.y); if (sx < -40 || sx > W + 40 || sy < -40 || sy > H + 40) continue; const pr = (20 + Math.sin(tm * 4) * 2) * cam.z + 3; x.fillStyle = 'rgba(250,204,21,.3)'; x.beginPath(); x.arc(sx, sy, pr * 1.5, 0, 7); x.fill(); x.fillStyle = '#7c3aed'; x.beginPath(); x.arc(sx, sy, pr, 0, 7); x.fill(); x.strokeStyle = '#facc15'; x.lineWidth = 3; x.stroke(); x.font = '700 ' + Math.round(pr * 1.1) + 'px system-ui'; x.textAlign = 'center'; x.fillText('💰', sx, sy + pr * .38) }
         const all = []; P.forEach(p => p.cells.forEach(q => all.push([q, p]))); all.sort((a, b) => a[0].m - b[0].m);
         all.forEach(([q, p]) => {
           if (p.boostUntil > life) { const sp = Math.hypot(q.dx || 0, q.dy || 0) || 1; for (let k = 3; k >= 1; k--) { const [gx, gy] = S(q.x - (q.dx || 0) / sp * R(q.m) * .6 * k, q.y - (q.dy || 0) / sp * R(q.m) * .6 * k); x.globalAlpha = .16; x.fillStyle = '#fde047'; x.beginPath(); x.arc(gx, gy, R(q.m) * cam.z * (1 - k * .12), 0, 7); x.fill() } x.globalAlpha = 1 }
-          drawCell(q, p, p === me);
+          if (p.shield > life) { const [rx, ry] = S(q.x, q.y); x.strokeStyle = 'rgba(56,189,248,.9)'; x.lineWidth = 4; x.beginPath(); x.arc(rx, ry, R(q.m) * cam.z + 6, 0, 7); x.stroke() }
+          if (p.ghostUntil > life) x.globalAlpha = .5;
+          drawCell(q, p, p === me); x.globalAlpha = 1;
         });
         viruses.forEach(v => drawVirus(v));
         const panel = (px, py, pw, ph) => { x.fillStyle = 'rgba(20,11,36,.78)'; rr(x, px, py, pw, ph, 8); x.fill(); x.strokeStyle = '#3a2a61'; x.lineWidth = 1.5; rr(x, px, py, pw, ph, 8); x.stroke() };
@@ -1192,12 +1259,13 @@
         x.textAlign = 'left'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('SIZE', 22, 29);
         x.fillStyle = '#3ddc6e'; x.font = '26px "Titan One", Fredoka, system-ui'; x.fillText(String(T), 22, 53);
         x.textAlign = 'right'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('BEST ' + Math.max(bestNow(), Math.round(peak)), 158, 29);
+        const mg = me.cells.reduce((a, q) => Math.max(a, q.merge || 0), 0); if (mg > 0) { x.fillStyle = '#38bdf8'; x.font = '700 12px Fredoka, system-ui'; x.fillText('MERGE ' + mg.toFixed(1) + 's', 158, 53) }
         const rank = P.filter(p => p.cells.length).map(p => ({ n: p.name, m: tot(p), me: p === me, team: p.team })).sort((a, b) => b.m - a.m);
         const mi = rank.findIndex(q => q.me), lb = rank.slice(0, 6).map((q, i) => ({ ...q, rank: i + 1 }));
         if (mi >= 6) lb.push({ ...rank[mi], rank: mi + 1 });
         panel(W - 182, 10, 172, 36 + lb.length * 21);
         x.textAlign = 'left'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('LEADERBOARD', W - 170, 29);
-        lb.forEach((q, i) => { x.fillStyle = q.me ? '#3ddc6e' : (curMode == 'teams' && TEAM[q.team]) || '#ece6ff'; x.font = (q.me ? '700' : '500') + ' 14px Fredoka, system-ui'; x.textAlign = 'left'; x.fillText(`${q.rank}. ${q.n}`, W - 170, 52 + i * 21); x.textAlign = 'right'; x.fillText(String(Math.round(q.m)), W - 22, 52 + i * 21) });
+        lb.forEach((q, i) => { x.fillStyle = q.me ? '#3ddc6e' : (q.team && TEAM[q.team]) || '#ece6ff'; x.font = (q.me ? '700' : '500') + ' 14px Fredoka, system-ui'; x.textAlign = 'left'; x.fillText(`${q.rank}. ${q.n}`, W - 170, 52 + i * 21); x.textAlign = 'right'; x.fillText(String(Math.round(q.m)), W - 22, 52 + i * 21) });
         if (curMode == 'teams') {
           const al = t => P.filter(p => p.team === t && p.cells.length).length;
           panel(10, 70, 160, 40); x.textAlign = 'left'; x.font = '700 13px Fredoka, system-ui'; x.fillStyle = TEAM[me.team]; x.fillText((me.team == 'red' ? 'RED' : 'BLUE') + ' TEAM', 22, 88);
@@ -1207,16 +1275,25 @@
           const live = feedLog.filter(e => tm - e.t < 7).slice(-5);
           if (live.length) {
             const fy = 10 + 36 + lb.length * 21 + 8, cut = t => t.length > 9 ? t.slice(0, 8) + '…' : t;
-            panel(W - 182, fy, 172, 14 + live.length * 20);
+            panel(W - 242, fy, 232, 14 + live.length * 20);
             live.forEach((e, i) => {
-              const yy = fy + 24 + i * 20; let px = W - 172; x.globalAlpha = Math.max(.25, Math.min(1, 7 - (tm - e.t))); x.font = '600 12px Fredoka, system-ui'; x.textAlign = 'left';
-              [[cut(e.k), e.kc], [' ate ', '#8f82b3'], [cut(e.v), e.vc]].forEach(([t, col]) => { x.fillStyle = col; x.fillText(t, px, yy); px += x.measureText(t).width });
+              const yy = fy + 24 + i * 20; let px = W - 232; x.globalAlpha = Math.max(.25, Math.min(1, 7 - (tm - e.t))); x.font = '600 12px Fredoka, system-ui'; x.textAlign = 'left';
+              [[cut(e.k), e.kc], [e.w || ' ate ', '#8f82b3'], [cut(e.v), e.vc]].forEach(([t, col]) => { x.fillStyle = col; x.fillText(t, px, yy); px += x.measureText(t).width });
             });
             x.globalAlpha = 1;
           }
         }
-        if (me.boostUntil > life) { const by = curMode == 'teams' ? 116 : 70; panel(10, by, 160, 28); x.textAlign = 'left'; x.font = '700 13px Fredoka, system-ui'; x.fillStyle = '#fde047'; x.fillText('⚡ BOOST ' + (me.boostUntil - life).toFixed(1) + 's', 22, by + 19) }
+        const fxl = []; if (me.boostUntil > life) fxl.push('⚡ ' + (me.boostUntil - life).toFixed(1) + 's'); if (me.shield > life) fxl.push('🛡 ' + Math.ceil(me.shield - life) + 's'); if (me.ghostUntil > life) fxl.push('👻 ' + (me.ghostUntil - life).toFixed(1) + 's'); if (me.magnetUntil > life) fxl.push('🧲 ' + (me.magnetUntil - life).toFixed(1) + 's');
+        if (fxl.length) { const by = curMode == 'teams' || curMode == 'infected' ? 116 : 70; panel(10, by, 190, 28); x.textAlign = 'left'; x.font = '700 13px Fredoka, system-ui'; x.fillStyle = '#fde047'; x.fillText(fxl.join('  '), 22, by + 19) }
+        if (me.bolt && me.cells.length) { const lt = Math.max(0, me.bolt.until - life); x.textAlign = 'center'; x.fillStyle = 'rgba(20,11,36,.85)'; rr(x, W / 2 - 170, 70, 340, 62, 10); x.fill(); x.fillStyle = '#fde047'; x.font = '700 18px Fredoka, system-ui'; x.fillText('⚡ STRUCK BY LIGHTNING!', W / 2, 94); x.fillStyle = '#ece6ff'; x.font = '600 14px Fredoka, system-ui'; x.fillText('You are tiny for ' + lt.toFixed(1) + 's, then back to normal', W / 2, 118) }
+        for (const bo of bolts) if (life - bo.t < .4) { const [bx, by2] = S(bo.x, bo.y); x.strokeStyle = '#fde047'; x.lineWidth = 4; x.beginPath(); x.moveTo(bx + 30, 0); let yy = 0; while (yy < by2) { yy += 40; x.lineTo(bx + (Math.random() - .5) * 60, Math.min(yy, by2)) } x.stroke() }
+        if (life - flashT < .5) { x.fillStyle = 'rgba(255,255,255,' + (0.7 - (life - flashT) * 1.4).toFixed(2) + ')'; x.fillRect(0, 0, W, H) }
+        if (curMode == 'infected') { const hu = P.filter(q => q.team == 'human' && q.cells.length).length, inf = P.filter(q => q.team == 'infected' && q.cells.length).length; panel(10, 70, 160, 40); x.textAlign = 'left'; x.font = '700 13px Fredoka, system-ui'; x.fillStyle = TEAM[me.team]; x.fillText(me.team == 'human' ? 'HUMAN' : 'INFECTED', 22, 88); x.font = '500 12px Fredoka, system-ui'; x.fillStyle = '#8f82b3'; x.fillText(`Humans ${hu} · Infected ${inf}`, 22, 103) }
+        if (banner && life < banner.until) { x.textAlign = 'center'; x.fillStyle = 'rgba(20,11,36,.85)'; rr(x, W / 2 - 210, 150, 420, banner.sub ? 62 : 40, 10); x.fill(); x.fillStyle = '#fde047'; x.font = '700 18px Fredoka, system-ui'; x.fillText(banner.text, W / 2, banner.sub ? 174 : 176); if (banner.sub) { x.fillStyle = '#ece6ff'; x.font = '500 13px Fredoka, system-ui'; x.fillText(banner.sub, W / 2, 196) } }
+        if (curMode == 'royale' && me.cells.length && Math.hypot(me.cells[0].x - WORLD / 2, me.cells[0].y - WORLD / 2) > zoneR()) { x.textAlign = 'center'; x.fillStyle = '#ef4444'; x.font = '700 18px Fredoka, system-ui'; x.fillText('⚠ OUTSIDE THE ZONE: head to the centre!', W / 2, 150) }
         if (OPT.minimap) drawMinimap();
+        if (OPT.minimap && curMode == 'royale') { const ms = Math.round(Math.max(110, Math.min(170, Math.min(W, H) * .26))), mx0 = touch ? 168 : 12, my0 = H - ms - 12; x.save(); x.beginPath(); x.rect(mx0, my0, ms, ms); x.clip(); x.strokeStyle = '#ef4444'; x.lineWidth = 2; x.beginPath(); x.arc(mx0 + ms / 2, my0 + ms / 2, zoneR() / WORLD * ms, 0, 7); x.stroke(); x.restore() }
+        if (OPT.minimap) { const kb = P.filter(q => q.cells.length).sort((a, b) => tot(b) - tot(a))[0]; if (kb) { const c0 = kb.cells[0], ms = Math.round(Math.max(110, Math.min(170, Math.min(W, H) * .26))), mx0 = touch ? 168 : 12, my0 = H - ms - 12; x.textAlign = 'center'; x.font = '14px system-ui'; x.fillText('👑', mx0 + c0.x / WORLD * ms, my0 + c0.y / WORLD * ms - 5) } }
         if (touch && me.cells.length) { const bt = getBtnPos(); [[bt.split, 'SPLIT'], [bt.feed, 'FEED']].forEach(([b, t]) => { x.fillStyle = 'rgba(20,11,36,.8)'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#3ddc6e'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '700 12px Fredoka, system-ui'; x.fillText(t, b.x, b.y + 4) }) }
         if (touch && me.cells.length) {
           const jb = joyBase(); x.fillStyle = 'rgba(20,11,36,.45)'; x.beginPath(); x.arc(jb.x, jb.y, jb.r, 0, 7); x.fill(); x.strokeStyle = 'rgba(61,220,110,.65)'; x.lineWidth = 3; x.stroke();
@@ -1262,7 +1339,7 @@
       window.setDiff = function(d) {
         diff = d;
         document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.remove('active'));
-        event.target.classList.add('active');
+        document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.toggle('active', btn.textContent == d));
         try { localStorage.setItem('blobs-diff', diff) } catch(_) {}
       };
 
@@ -1315,10 +1392,10 @@
         try { localStorage.setItem('blobs-skin', selectedSkin) } catch(e) {}
         refreshSkinUI(); unfocus(); fxs('click');
       };
-      const MODES = ['ffa', 'teams', 'time'], MODE_LABEL = { ffa: 'Free for all', teams: 'Red v Blue', time: 'Time Attack' }, MODE_DESC = { ffa: 'Everyone for themselves', teams: 'Two teams. Last team standing wins.', time: '5 minutes. Biggest blob wins. Respawn when eaten.' };
+      const MODES = ['ffa', 'teams', 'time', 'infected', 'royale'], MODE_LABEL = { ffa: 'Free for all', teams: 'Red v Blue', time: 'Time Attack', infected: 'Infected', royale: 'Shrinking Arena' }, MODE_DESC = { ffa: 'Everyone for themselves', teams: 'Two teams. Last team standing wins.', time: '5 minutes. Biggest blob wins. Respawn when eaten.', infected: 'Humans survive 4:00. Infected blobs convert you.', royale: 'The storm closes in. Last blob standing wins.' };
       const refreshModeUI = () => {
-        const t = gameMode == 'teams', cg = byId('colour-group');
-        byId('mode-name').innerText = MODE_LABEL[gameMode]; byId('mode-name').classList.toggle('teams', t); byId('mode-desc').innerText = MODE_DESC[gameMode];
+        const t = gameMode == 'teams' || gameMode == 'infected', cg = byId('colour-group');
+        byId('mode-name').innerText = MODE_LABEL[gameMode]; byId('mode-name').classList.toggle('teams', gameMode == 'teams'); byId('mode-desc').innerText = MODE_DESC[gameMode];
         colorPicker.disabled = t; cg.style.opacity = t ? .4 : 1; cg.style.pointerEvents = t ? 'none' : 'auto';
         refreshSkinUI();
       };
@@ -1329,6 +1406,7 @@
       };
       refreshOptUI();
       refreshModeUI();
+      document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.toggle('active', btn.textContent == diff));
 
       document.getElementById('best-score-text').innerText = 'Best size ' + bestNow();
       syncMenu();
