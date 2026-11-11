@@ -1347,11 +1347,11 @@
           if (gl > 0) pill('GIANTS ' + Math.floor(gl / 60) + ':' + String(Math.floor(gl % 60)).padStart(2, '0'), '#f97316');
           if (mg > 0) pill('MERGE ' + mg.toFixed(1) + 's', '#38bdf8') }
         const rank = roster.filter(p => p.cells.length).map(p => ({ n: p.name, m: curMode == 'koth' ? (p.pts || 0) : sumMass(p), hero: p === hero, team: p.team })).sort((a, b) => b.m - a.m);
-        const mi = rank.findIndex(q => q.me), lb = rank.slice(0, 6).map((q, i) => ({ ...q, rank: i + 1 }));
+        const mi = rank.findIndex(q => q.hero), lb = rank.slice(0, 6).map((q, i) => ({ ...q, rank: i + 1 }));
         if (mi >= 6) lb.push({ ...rank[mi], rank: mi + 1 });
         panel(W - 182, 10, 172, 36 + lb.length * 21);
         x.textAlign = 'left'; x.fillStyle = '#8f82b3'; x.font = '600 11px Fredoka, system-ui'; x.fillText('LEADERBOARD', W - 170, 29);
-        lb.forEach((q, i) => { x.fillStyle = q.me ? '#3ddc6e' : (q.team && TEAM[q.team]) || '#ece6ff'; x.font = (q.me ? '700' : '500') + ' 14px Fredoka, system-ui'; x.textAlign = 'left'; x.fillText(`${q.rank}. ${q.n}`, W - 170, 52 + i * 21); x.textAlign = 'right'; x.fillText(fmt(q.m), W - 22, 52 + i * 21) });
+        lb.forEach((q, i) => { x.fillStyle = q.hero ? '#3ddc6e' : (q.team && TEAM[q.team]) || '#ece6ff'; x.font = (q.hero ? '700' : '500') + ' 14px Fredoka, system-ui'; x.textAlign = 'left'; x.fillText(`${q.rank}. ${q.n}`, W - 170, 52 + i * 21); x.textAlign = 'right'; x.fillText(fmt(q.m), W - 22, 52 + i * 21) });
         if (curMode == 'teams' || curMode == 'renegades') {
           const al = t => roster.filter(p => p.team === t && p.cells.length).length;
           panel(10, 70, 160, 40); x.textAlign = 'left'; x.font = '700 13px Fredoka, system-ui'; x.fillStyle = TEAM[hero.team]; x.fillText((hero.team == 'red' ? 'RED' : 'BLUE') + ' TEAM', 22, 88);
