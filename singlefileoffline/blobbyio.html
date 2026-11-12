@@ -9,6 +9,10 @@
     APP_VERSION constant at the top of the main script. Do this for every request that changes the file,
     however small, without being asked, and mention the new version number in your reply.
   -->
+  <!--
+    An Algebra practise original game - made by hazza. Feel free to copy or use this, as the code is straight AI,
+    but if you do, feel free to let me know so I can check it out!
+  -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Titan+One&display=swap" rel="stylesheet">
@@ -650,7 +654,8 @@
 
 <script>
     // NOTE FOR ANY AI MODEL: every change the user asks for in this file = bump APP_VERSION by 0.01 (1.03 -> 1.04 ...).
-    const APP_VERSION = '1.09';
+    // An Algebro original game - made by hazza. Feel free to copy or use this, the code is straight AI, but if you do, let me know so I can check it out!
+    const APP_VERSION = '1.10';
     // Cloudflare Worker that runs online rooms (one WebSocket per player). Put your worker URL here, e.g. 'wss://blobby-rooms.yourname.workers.dev/'
     const ONLINE_URL = 'wss://blobbybackend.gdharry123.workers.dev/';
     let W = window.innerWidth;
