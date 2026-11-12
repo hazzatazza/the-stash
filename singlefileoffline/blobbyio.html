@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!--
+  <!-- An Algebra Original Game - Made By Hazza - Feel free to use any parts of this game
     NOTE FOR ANY AI MODEL (Claude, ChatGPT, Gemini, anything else) EDITING THIS FILE:
     Every time the user asks you to make a change to this file, bump the version number shown in the
     bottom corner of the menu by 0.01 (v1.03 -> v1.04 -> v1.05 ...). The one place to change it is the
@@ -573,7 +573,7 @@
                 </div>
               </div>
               <div class="form-group">
-                <span class="form-label">Bots</span>
+                <span class="form-label">Difficulty</span>
                 <div class="grid-selector">
                   <button class="diff-btn" onclick="setDiff('Easy')">Easy</button>
                   <button class="diff-btn active" id="btn-Normal" onclick="setDiff('Normal')">Normal</button>
@@ -652,7 +652,7 @@
 
 <script>
     // NOTE FOR ANY AI MODEL: every change the user asks for in this file = bump APP_VERSION by 0.01 (1.03 -> 1.04 ...).
-    const APP_VERSION = '1.05';
+    const APP_VERSION = '1.06';
     // Cloudflare Worker that runs online rooms (one WebSocket per player). Put your worker URL here, e.g. 'wss://blobby-rooms.yourname.workers.dev/'
     const ONLINE_URL = 'wss://blobbybackend.gdharry123.workers.dev/';
     let W = window.innerWidth;
@@ -903,7 +903,7 @@
         const cnt = { red: roster.filter(q => q.team == 'red').length, blue: roster.filter(q => q.team == 'blue').length };
         for (let i = 0; i < D().bots; i++) { const b = makeBot(); if (curMode == 'teams' || curMode == 'renegades') { b.team = cnt.red < cnt.blue ? 'red' : cnt.blue < cnt.red ? 'blue' : (Math.random() < .5 ? 'red' : 'blue'); cnt[b.team]++; b.col = TEAM[b.team] } roster.push(b) }
         poles = curMode == 'speed' ? genPoles(Math.min(1500, Math.round(150 * WORLD * WORLD / 64e6))) : [];
-        if (curMode == 'colour') { buildHex(); cb = { round: 1, phase: 'run', t: 10, target: Math.floor(Math.random() * 11) }; roster.forEach(q => { q.cells[0].m = 10; q.cbRound = 0 }) }
+        if (curMode == 'colour') { const tg0 = Math.floor(Math.random() * 11); buildHex(tg0, hexWeight()); cb = { round: 1, phase: 'run', t: 10, target: tg0 }; roster.forEach(q => { q.cells[0].m = 10; q.cbRound = 0 }) }
         if (curMode == 'koth') { zone = { x: WORLD / 2, y: WORLD / 2, a: randBetween(0, 6.28), da: 0, t: 0 }; roster.forEach(q => { q.pts = 0; q.cells[0].m = 10; q.cells[0].x = WORLD / 2 + randBetween(-150, 150); q.cells[0].y = WORLD / 2 + randBetween(-150, 150) }) }
         if (curMode == 'duos' || curMode == 'squads') {
           const sz = curMode == 'duos' ? 2 : 4; while (roster.length % sz) roster.push(makeBot());
@@ -1110,13 +1110,17 @@
         return best;
       }
       const hexColour = (px, py) => hex.col[hexIdx(px, py)];
-      function buildHex() {
-        hex.cols = Math.ceil(WORLD / HW) + 1; hex.rows = Math.ceil(WORLD / HV) + 1; hex.col = new Uint8Array(hex.cols * hex.rows); const cnt = new Array(11).fill(0);
+      // share of tiles in the called colour: Easy = an even share, then fewer and fewer on the harder difficulties
+      const hexWeight = () => ({ Easy: 1, Normal: .7, Hard: .35, Extreme: .15 })[diff] || 1;
+      function buildHex(target, wt) {
+        hexVer++; hex.cols = Math.ceil(WORLD / HW) + 1; hex.rows = Math.ceil(WORLD / HV) + 1; hex.col = new Uint8Array(hex.cols * hex.rows); const cnt = new Array(11).fill(0);
         for (let rr = 0; rr < hex.rows; rr++) for (let cc = 0; cc < hex.cols; cc++) {
           const bad = new Set(); if (cc) bad.add(hex.col[rr * hex.cols + cc - 1]);
           if (rr) { const up = (rr - 1) * hex.cols, o = rr % 2 ? 0 : -1; [cc + o, cc + o + 1].forEach(k => { if (k >= 0 && k < hex.cols) bad.add(hex.col[up + k]) }) }
-          const mn = Math.min(...cnt), c = []; for (let k = 0; k < 11; k++) if (!bad.has(k) && cnt[k] <= mn + 20) c.push(k);
-          const pick = c.length ? c[Math.floor(Math.random() * c.length)] : Math.floor(Math.random() * 11); hex.col[rr * hex.cols + cc] = pick; cnt[pick]++;
+          let mn = 1e9; for (let k = 0; k < 11; k++) if (k !== target) mn = Math.min(mn, cnt[k]);
+          const c = []; for (let k = 0; k < 11; k++) if (!bad.has(k) && (k === target || cnt[k] <= mn + 20)) c.push(k);
+          let pick; if (c.length) { let tot = 0; for (const k of c) tot += k === target ? wt : 1; let r = Math.random() * tot; pick = c[c.length - 1]; for (const k of c) { r -= k === target ? wt : 1; if (r <= 0) { pick = k; break } } } else pick = Math.floor(Math.random() * 11);
+          hex.col[rr * hex.cols + cc] = pick; cnt[pick]++;
         }
       }
       function genPoles(n) { const arr = []; let tries = 0; while (arr.length < n && tries++ < n * 40) { const x0 = randBetween(200, WORLD - 200), y0 = randBetween(200, WORLD - 200); if (!arr.some(o => Math.hypot(o.x - x0, o.y - y0) < 220)) arr.push({ x: x0, y: y0 }) } return arr }
@@ -1138,8 +1142,8 @@
         cb.t -= dt;
         if (cb.phase == 'run') { if (cb.t <= 0) { cb.phase = 'drop'; cb.t = 3; for (const p of roster) for (const q of p.cells) q.fall = hexColour(q.x, q.y) !== cb.target; playSound('pop') } }
         else {
-          for (const p of roster) for (const q of p.cells) if (q.fall) { q.m -= (q.m * 2 + 3) * dt; q.wobble = 1; if (q.m <= 1.5) q.dead = true }
-          if (cb.t <= 0) { cb.round++; let nt; do { nt = Math.floor(Math.random() * 11) } while (nt === cb.target); cb.target = nt; cb.phase = 'run'; cb.t = roundTime(cb.round); roster.forEach(q => q.cells.forEach(c => { c.fall = false })); playSound('click') }
+          for (const p of roster) for (const q of p.cells) { q.fall = hexColour(q.x, q.y) !== cb.target; if (q.fall) { q.m -= (q.m * 2 + 3) * dt; q.wobble = 1; if (q.m <= 1.5) q.dead = true } }
+          if (cb.t <= 0) { cb.round++; let nt; do { nt = Math.floor(Math.random() * 11) } while (nt === cb.target); cb.target = nt; buildHex(nt, hexWeight()); cb.phase = 'run'; cb.t = roundTime(cb.round); roster.forEach(q => q.cells.forEach(c => { c.fall = false })); playSound('click') }
         }
       }
       function strike(p) {
@@ -1523,7 +1527,7 @@
       const OLRESP = { ffa: 1, speed: 1, time: 1, koth: 1, infected: 1, renegades: 1 };
       const online = { on: false, host: false, ws: null, open: false, joining: false, room: -1, myId: null, settings: null, saved: null, ready: false, over: null, peers: new Map(), seq: 0, snapT: 0, inT: 0, rem: [], addQ: [], fullTo: [], fullAll: false, evq: [], feedOut: [], last: {}, pingT: null, joinT: null, waitT: null, prevT: 0, tickT: 0 };
       const gm = { byId: new Map(), dots: new Map() };
-      let bursts = [], bgWorker = null;
+      let bursts = [], bgWorker = null, hexVer = 0;
       // Browsers pause requestAnimationFrame in hidden tabs. A Web Worker's timer is not paused, so while the host's tab is hidden
       // the worker ticks ~30 times a second and drives the game, which keeps the room running for everyone.
       function startBgTicker() {
@@ -1571,7 +1575,7 @@
       const roomLine = s0 => {
         s0 = cleanSettings(s0); const fixed = s0.mode == 'koth' || s0.mode == 'colour', keys = Object.keys(POW), on = keys.filter(k => s0.pow[k]);
         const pw = CALM[s0.mode] ? 'set by gamemode' : on.length == keys.length ? 'all' : on.length ? on.map(k => POW_ICON[k]).join(' ') : 'off';
-        return 'Gamemode: ' + MODE_LABEL[s0.mode] + ' · Power-ups: ' + pw + ' · Bots: ' + s0.diff + (fixed ? '' : ' · Map ' + s0.map + 'x');
+        return 'Gamemode: ' + MODE_LABEL[s0.mode] + ' · Power-ups: ' + pw + ' · Difficulty: ' + s0.diff + (fixed ? '' : ' · Map ' + s0.map + 'x');
       };
       function renderRooms(list) {
         const box = getEl('room-list'); box.innerHTML = '';
@@ -1734,7 +1738,8 @@
       }
       function sendSnap(full, to) {
         const commit = !to, m = { t: 's', el: Math.round(elapsed * 100) / 100 }; if (to) m.to = to;
-        if (full) { m.full = 1; m.W = WORLD; m.mode = curMode; if (curMode == 'colour' && hex.col) m.hx = { c: hex.cols, r: hex.rows, d: b64e(hex.col) } }
+        if (full) { m.full = 1; m.W = WORLD; m.mode = curMode }
+        if (curMode == 'colour' && hex.col && (full || online.last.hx !== hexVer)) { m.hx = { c: hex.cols, r: hex.rows, d: b64e(hex.col) }; if (commit) online.last.hx = hexVer }
         m.p = packPlayers(full, commit); assignDotIds();
         if (!full) { const dm = movedDots(); if (online.addQ.length) m.da = online.addQ.map(packDot); if (online.rem.length) m.dr = online.rem; if (dm.length) m.dm = dm }
         const chg = (key, arr) => { const t = JSON.stringify(arr); if (full || t !== online.last[key]) { m[key] = arr; if (commit) online.last[key] = t } };
@@ -1766,7 +1771,6 @@
         if (m.full) {
           clearTimeout(online.waitT); gm.byId.clear(); gm.dots.clear(); roster = []; dots = []; viruses = []; powerups = []; steals = []; feedLog = []; floaters = []; banner = null; bigAlert = null; spec = null; bolts = []; stealOpen = false;
           WORLD = m.W; curMode = m.mode; poles = []; bursts = []; zone = { x: WORLD / 2, y: WORLD / 2, a: 0, da: 0, t: 0 }; cb = { round: 1, phase: 'run', t: 10, target: 0 };
-          if (m.hx) { hex.cols = m.hx.c; hex.rows = m.hx.r; hex.col = b64d(m.hx.d) }
           topSize = 10; eatCount = 0; elapsed = m.el || 0; online.ready = true; online.over = null; online.prevT = 0; ovKey = ''; hero = null;
           if (scr != 'play') { scr = 'play'; paused = false; AudioFX.ensure(); AudioFX.sync(true); lens.z = .9; lens.fresh = true }
         }
@@ -1797,6 +1801,7 @@
           dots = Array.from(gm.dots.values());
         }
         if (m.dm) for (const d of m.dm) { const o = gm.dots.get(d[0]); if (o) { o.x = d[1]; o.y = d[2]; if (d[3] >= 0) { o.eater = true; o.suck = d[3] } else o.eater = false } }
+        if (m.hx) { hex.cols = m.hx.c; hex.rows = m.hx.r; hex.col = b64d(m.hx.d) }
         if (m.po) { const np = m.po.map(o => ({ x: o[0], y: o[1] })); if (!m.full) for (let i = 0; i < np.length && i < poles.length; i++) if (poles[i].x !== np[i].x || poles[i].y !== np[i].y) bursts.push({ x: poles[i].x, y: poles[i].y, t: clock }); poles = np }
         if (m.vr) viruses = m.vr.map(a => ({ x: a[0], y: a[1], m: a[2], vx: 0, vy: 0 }));
         if (m.pu) powerups = m.pu.map(a => ({ x: a[0], y: a[1], type: PT[a[2]] || 'speed', until: a[3] }));
