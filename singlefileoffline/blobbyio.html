@@ -2,6 +2,13 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <!--
+    NOTE FOR ANY AI MODEL (Claude, ChatGPT, Gemini, anything else) EDITING THIS FILE:
+    Every time the user asks you to make a change to this file, bump the version number shown in the
+    bottom corner of the menu by 0.01 (v1.03 -> v1.04 -> v1.05 ...). The one place to change it is the
+    APP_VERSION constant at the top of the main script. Do this for every request that changes the file,
+    however small, without being asked, and mention the new version number in your reply.
+  -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@400;500;600;700&family=Titan+One&display=swap" rel="stylesheet">
@@ -92,12 +99,12 @@
     .bg-blob.g { background: hsl(140, 70%, 48%); border-color: hsl(140, 70%, 30%); }
     .bg-blob.p { background: hsl(265, 75%, 62%); border-color: hsl(265, 70%, 38%); }
     .bg-blob.b1 { width: 260px; height: 260px; left: -50px;  top: 8%;     animation-duration: 16s; }
-    .bg-blob.b2 { width: 110px; height: 110px; left: 17%;    bottom: 10%;  animation-duration: 11s; animation-delay: -3s; }
-    .bg-blob.b3 { width: 70px;  height: 70px;  left: 27%;    top: 14%;     animation-duration: 9s;  animation-delay: -6s; }
-    .bg-blob.b4 { width: 180px; height: 180px; right: 9%;    top: 12%;     animation-duration: 13s; animation-delay: -2s; }
+    .bg-blob.b2 { width: 120px; height: 120px; left: 3%;     bottom: 9%;   animation-duration: 11s; animation-delay: -3s; }
+    .bg-blob.b3 { width: 70px;  height: 70px;  left: 7%;     top: 62%;     animation-duration: 9s;  animation-delay: -6s; }
+    .bg-blob.b4 { width: 190px; height: 190px; right: 2%;    top: 9%;      animation-duration: 13s; animation-delay: -2s; }
     .bg-blob.b5 { width: 340px; height: 340px; right: -90px; bottom: -70px; animation-duration: 18s; animation-delay: -8s; }
-    .bg-blob.b6 { width: 54px;  height: 54px;  right: 26%;   bottom: 16%;  animation-duration: 8s;  animation-delay: -1s; }
-    .bg-blob.b7 { width: 90px;  height: 90px;  left: 8%;     bottom: 34%;  animation-duration: 12s; animation-delay: -5s; }
+    .bg-blob.b6 { width: 54px;  height: 54px;  right: 5%;    bottom: 42%;  animation-duration: 8s;  animation-delay: -1s; }
+    .bg-blob.b7 { width: 90px;  height: 90px;  left: 9%;     bottom: 36%;  animation-duration: 12s; animation-delay: -5s; }
     @keyframes wander {
       0%   { transform: translate(0, 0); }
       50%  { transform: translate(40px, -30px); }
@@ -108,7 +115,7 @@
       position: relative;
       z-index: 1;
       width: 100%;
-      max-width: 400px;
+      max-width: 800px;
       margin: auto;
       text-align: center;
     }
@@ -122,7 +129,7 @@
       -webkit-text-stroke: 9px #12062b;
       paint-order: stroke fill;
       letter-spacing: 1px;
-      margin-bottom: 18px;
+      margin-bottom: 10px;
       filter: drop-shadow(0 5px 0 #12062b);
     }
     .logo span { color: var(--green); }
@@ -466,10 +473,45 @@
     #map-size { width: 140px; accent-color: var(--purple); cursor: pointer; }
     .dim { opacity: .4; pointer-events: none; }
     #pow-selector .theme-btn { padding: 4px 9px; font-size: 15px; }
-    @media (max-height: 820px) { .menu-panel { transform: scale(.9); transform-origin: center; } }
-    @media (max-height: 740px) { .menu-panel { transform: scale(.8); transform-origin: center; } }
-    @media (max-height: 640px) { .menu-panel { transform: scale(.7); transform-origin: center; } }
-    @media (max-height: 520px) { .menu-panel { transform: scale(.58); transform-origin: center; } }
+
+    /* ---------- wide two-column menu ---------- */
+    .menu-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.12fr); gap: 0 26px; align-items: start; }
+    .col-b { border-left: 1px solid var(--line); padding-left: 26px; }
+    .col-b .skin-picker { margin-top: 0; }
+    .col-b .settings { margin-top: 12px; padding-top: 12px; }
+    .col-a .skin-picker { margin-top: 14px; }
+    .col-a #colour-group { margin-top: 14px; }
+    .play-row { display: flex; gap: 12px; margin-top: 16px; }
+    .play-row .play-btn { margin-top: 0; flex: 1; }
+    .play-btn.online { background: var(--purple); color: #fff; box-shadow: 0 4px 0 var(--purple-dark); }
+    .play-btn.online:active { box-shadow: 0 0 0 var(--purple-dark); }
+    .play-btn:disabled { opacity: .6; cursor: default; }
+    .online-error { color: #ff5d6c; font-size: 13px; text-align: center; margin-top: 8px; }
+    .online-error.info { color: var(--muted); }
+    .online-error:empty { display: none; }
+    .room-list { display: none; margin-top: 12px; }
+    .room-list.open { display: block; }
+    .room-hint { font-size: 12px; color: var(--muted); text-align: center; margin-bottom: 8px; }
+    .room-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    .room-btn { font-family: inherit; text-align: left; padding: 9px 12px; border: 1px solid var(--line); border-radius: 8px; background: #120a21; color: var(--text); cursor: pointer; display: flex; flex-direction: column; gap: 2px; }
+    .room-btn:hover:not(:disabled) { border-color: var(--green); background: #1a0f2e; }
+    .room-btn:disabled { opacity: .5; cursor: default; }
+    .room-btn b { font-size: 14px; font-weight: 600; }
+    .room-btn small { color: var(--muted); font-size: 11.5px; line-height: 1.3; }
+    .room-btn.live b { color: var(--green); }
+    .ver { position: fixed; right: 12px; bottom: 10px; z-index: 2; font-size: 12px; font-weight: 600; color: var(--text); background: rgba(20, 11, 36, .78); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; }
+    @media (max-width: 760px) {
+      .fullscreen-menu { overflow-y: auto; }
+      .menu-panel { max-width: 440px; transform: none !important; }
+      .menu-grid { grid-template-columns: 1fr; }
+      .col-b { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
+    }
+    @media (max-width: 560px) { .room-grid { grid-template-columns: 1fr; } }
+    @media (max-height: 760px) { .menu-panel { transform: scale(.92); transform-origin: center; } }
+    @media (max-height: 680px) { .menu-panel { transform: scale(.84); transform-origin: center; } }
+    @media (max-height: 600px) { .menu-panel { transform: scale(.74); transform-origin: center; } }
+    @media (max-height: 520px) { .menu-panel { transform: scale(.64); transform-origin: center; } }
+    @media (max-height: 440px) { .menu-panel { transform: scale(.54); transform-origin: center; } }
   </style>
 </head>
 <body>
@@ -487,35 +529,39 @@
       <div class="bg-blob p b6"></div>
       <div class="bg-blob g b7"></div>
 
+      <div class="ver" id="ver"></div>
+
       <div class="menu-panel">
         <h1 class="logo">Blobby<span>.io</span></h1>
 
         <div class="box">
           <div id="tab-play" class="tab-content active">
-            <input type="text" id="player-name-input" class="name-input" placeholder="Nickname" maxlength="15">
+            <div class="menu-grid">
+              <div class="col-a">
+                <input type="text" id="player-name-input" class="name-input" placeholder="Nickname" maxlength="15">
             <div class="skin-picker">
               <button class="skin-arrow" onclick="cycleSkin(-1)" aria-label="Previous skin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
               <div class="skin-preview solid" id="skin-preview"></div>
               <button class="skin-arrow" onclick="cycleSkin(1)" aria-label="Next skin"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
             </div>
             <div class="skin-name" id="skin-name">Solid colour</div>
-            <div class="skin-picker mode-picker">
-              <button class="skin-arrow" onclick="cycleMode(-1)" aria-label="Previous mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
-              <div class="mode-name" id="mode-name">Free for all</div>
-              <button class="skin-arrow" onclick="cycleMode(1)" aria-label="Next mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
-            </div>
-            <div class="skin-name" id="mode-desc">Everyone for themselves</div>
-            <button class="play-btn" onclick="startGame()">Play</button>
-
-            <div class="settings">
-              <div class="form-group" id="colour-group">
+                <div class="form-group" id="colour-group">
                 <span class="form-label">Colour</span>
                 <div class="color-picker-wrapper">
                   <span class="color-label" id="color-hex-text">#3b82f6</span>
                   <input type="color" id="player-color-picker" class="color-picker" value="#3b82f6">
                 </div>
               </div>
-              <div class="form-group" id="size-group"><span class="form-label">Map size</span><div class="slider-wrap"><input type="range" id="map-size" min="1" max="10" step="0.5" value="3"><span class="color-label" id="map-size-text">3x</span></div></div>
+              </div>
+              <div class="col-b">
+                <div class="skin-picker mode-picker">
+              <button class="skin-arrow" onclick="cycleMode(-1)" aria-label="Previous mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></svg></button>
+              <div class="mode-name" id="mode-name">Free for all</div>
+              <button class="skin-arrow" onclick="cycleMode(1)" aria-label="Next mode"><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></svg></button>
+            </div>
+            <div class="skin-name" id="mode-desc">Everyone for themselves</div>
+                <div class="settings">
+                  <div class="form-group" id="size-group"><span class="form-label">Map size</span><div class="slider-wrap"><input type="range" id="map-size" min="1" max="10" step="1" value="3"><span class="color-label" id="map-size-text">3x</span></div></div>
               <div class="form-group" id="pow-group"><span class="form-label">Power-ups</span><div class="grid-selector" id="pow-selector"><button class="theme-btn" data-p="speed" title="Speed boost" onclick="togglePow('speed')">⚡</button><button class="theme-btn" data-p="shield" title="Shield" onclick="togglePow('shield')">🛡</button><button class="theme-btn" data-p="ghost" title="Ghost" onclick="togglePow('ghost')">👻</button><button class="theme-btn" data-p="magnet" title="Magnet" onclick="togglePow('magnet')">🧲</button><button class="theme-btn" data-p="steal" title="Steal mass" onclick="togglePow('steal')">💰</button></div></div>
               <div class="form-group">
                 <span class="form-label">Map</span>
@@ -535,8 +581,15 @@
                   <button class="diff-btn" onclick="setDiff('Extreme')">Extreme</button>
                 </div>
               </div>
+                </div>
+              </div>
             </div>
-
+            <div class="play-row">
+              <button class="play-btn" onclick="startGame()">Play offline</button>
+              <button class="play-btn online" id="play-online-btn" onclick="toggleOnline()">Play online</button>
+            </div>
+            <div class="online-error" id="online-error"></div>
+            <div class="room-list" id="room-list"></div>
             <div class="menu-foot">
               <span id="best-score-text">Best size 0</span>
               <button class="link-btn" onclick="switchTab('credits')">Credits</button>
@@ -561,13 +614,14 @@
       <button class="sp-btn" onclick="specStep(-1)" aria-label="Previous teammate">&#9664;</button>
       <div class="sp-mid"><span class="sp-label">SPECTATING</span><span class="sp-name" id="spec-name">-</span></div>
       <button class="sp-btn" onclick="specStep(1)" aria-label="Next teammate">&#9654;</button>
-      <button class="sp-btn wide" onclick="retryGame()">Play again</button>
+      <button class="sp-btn wide" id="spec-again" onclick="retryGame()">Play again</button>
       <button class="sp-btn wide ghost" onclick="leaveGame()">Leave</button>
     </div>
     <button id="pause-btn" title="Pause (Esc)" onclick="pauseGame()"><i></i><i></i></button>
     <div id="cb-ui"><span id="cb-name">RED</span><span id="cb-timer">10</span><span id="cb-round">Round 1</span></div>
     <div id="timer-ui"><span class="t-label">TIME</span><span id="timer-text">5:00</span></div>
     <div id="steal-ui" class="overlay"><div class="box"><h2>Steal 25% mass</h2><div class="over-label">PICK A PLAYER</div><div id="steal-list"></div><button class="ghost-btn" onclick="closeSteal()">Skip</button></div></div>
+    <div id="ol-end-ui" class="overlay"><div class="box"><h2 id="ol-title">Game over</h2><div class="over-sub" id="ol-sub"></div><div class="over-sub" id="ol-you" style="color:var(--green);font-weight:600;min-height:20px"></div><div class="over-label" style="margin-top:14px">NEW GAME STARTING IN</div><div class="over-size" id="ol-count">10</div><button class="ghost-btn" onclick="leaveGame()">Leave room</button></div></div>
     <div id="respawn-ui" class="overlay"><div class="box"><h2 id="respawn-title" style="color:#ff6b8b">You died!</h2><div class="over-label">RESPAWNING IN</div><div class="over-size" id="respawn-count">5</div></div></div>
 
     <div id="pause-ui" class="overlay">
@@ -597,6 +651,10 @@
   </div>
 
 <script>
+    // NOTE FOR ANY AI MODEL: every change the user asks for in this file = bump APP_VERSION by 0.01 (1.03 -> 1.04 ...).
+    const APP_VERSION = '1.05';
+    // Cloudflare Worker that runs online rooms (one WebSocket per player). Put your worker URL here, e.g. 'wss://blobby-rooms.yourname.workers.dev/'
+    const ONLINE_URL = 'wss://blobbybackend.gdharry123.workers.dev/';
     let W = window.innerWidth;
     let H = window.innerHeight;
 
@@ -819,8 +877,10 @@
         getEl('over-ui').style.display = scr == 'over' ? 'flex' : 'none';
         getEl('pause-ui').style.display = scr == 'play' && paused ? 'flex' : 'none';
         getEl('pause-btn').style.display = scr == 'play' && !paused && hero && hero.cells.length ? 'flex' : 'none';
-        getEl('spec-ui').style.display = scr == 'play' && SPEC[curMode] && hero && !hero.cells.length ? 'flex' : 'none';
-        getEl('respawn-ui').style.display = scr == 'play' && curMode == 'time' && hero && !hero.cells.length ? 'flex' : 'none';
+        getEl('spec-ui').style.display = scr == 'play' && (online.on ? (!OLRESP[curMode] && !online.over) : SPEC[curMode]) && hero && !hero.cells.length ? 'flex' : 'none'; getEl('spec-again').style.display = online.on ? 'none' : '';
+        getEl('respawn-ui').style.display = scr == 'play' && (online.on ? (!!OLRESP[curMode] && !online.over) : curMode == 'time') && hero && !hero.cells.length ? 'flex' : 'none';
+        const ovOn = scr == 'play' && online.on && !!online.over; getEl('ol-end-ui').style.display = ovOn ? 'flex' : 'none';
+        if (ovOn) { const o = online.over, key = o.title + '|' + o.sub + '|' + (o.winners.includes(online.myId) ? 1 : 0), cnt = String(Math.max(0, Math.ceil(o.left))); if (ovKey !== key) { ovKey = key; getEl('ol-title').innerText = o.title; getEl('ol-sub').innerText = o.sub; getEl('ol-you').innerText = o.winners.includes(online.myId) ? 'You won!' : '' } if (getEl('ol-count').innerText !== cnt) getEl('ol-count').innerText = cnt }
         getEl('timer-ui').style.display = scr == 'play' && LIMIT[curMode] ? 'flex' : 'none';
         getEl('steal-ui').style.display = scr == 'play' && stealOpen ? 'flex' : 'none';
         getEl('cb-ui').style.display = scr == 'play' && curMode == 'colour' ? 'flex' : 'none';
@@ -839,8 +899,8 @@
         AudioFX.ensure(); AudioFX.sync(true); playSound('ui');
         try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
         paused = false; scr = 'play'; roster = []; dots = []; viruses = []; floaters = []; topSize = 10; eatCount = 0; elapsed = 0; newBest = false; deathClock = 0; curMode = gameMode; if (curMode == 'koth') { WORLD = 4000; PEL = 0; VIRUS_COUNT = 0 } else if (curMode == 'colour') { WORLD = 3000; PEL = 0; VIRUS_COUNT = 0 } else { WORLD = 4000 * mapMul; const ar = WORLD * WORLD / 144e6; PEL = Math.min(20000, Math.round(5400 * ar)); VIRUS_COUNT = curMode == 'speed' ? 0 : Math.min(400, Math.max(12, Math.round(110 * ar))) } makeHot(); getEl('over-label').innerText = 'BIGGEST SIZE'; feedLog = []; spec = null; nextBolt = CALM[curMode] ? 1e9 : 0; bolts = []; flashT = -9; stealOpen = false; banner = null; nextFrenzy = GIANT_OK[curMode] ? 0 : 1e9; nextFever = PEL > 0 ? 0 : 1e9; steals = Array.from({ length: CALM[curMode] || !POW.steal ? 0 : Math.min(16, Math.max(2, Math.round(4 * WORLD * WORLD / 144e6))) }, makePower); endWin = false; awarded = false; bigAlert = null; stick.id = null; stick.ax = stick.ay = stick.mag = stick.kx = stick.ky = 0; keyMode = false; for (const k in heldKeys) heldKeys[k] = false; boostHeld = false; boostPid = null;
-        hero = makePlayer((nameInput.value.trim() || 'You').slice(0, 15), hueFromHex(colorPicker.value), false); hero.skin = selectedSkin; if (curMode == 'teams' || curMode == 'renegades') { hero.team = Math.random() < .5 ? 'red' : 'blue'; hero.col = TEAM[hero.team] } else hero.col = colorPicker.value; roster.push(hero);
-        const cnt = { red: hero.team == 'red' ? 1 : 0, blue: hero.team == 'blue' ? 1 : 0 };
+        hero = makePlayer((nameInput.value.trim() || 'You').slice(0, 15), hueFromHex(colorPicker.value), false); hero.skin = selectedSkin; if (curMode == 'teams' || curMode == 'renegades') { hero.team = Math.random() < .5 ? 'red' : 'blue'; hero.col = TEAM[hero.team] } else hero.col = colorPicker.value; if (online.on) hero.id = online.myId; roster.push(hero); if (online.on && online.host) online.peers.forEach(pe => roster.push(addRemote(pe)));
+        const cnt = { red: roster.filter(q => q.team == 'red').length, blue: roster.filter(q => q.team == 'blue').length };
         for (let i = 0; i < D().bots; i++) { const b = makeBot(); if (curMode == 'teams' || curMode == 'renegades') { b.team = cnt.red < cnt.blue ? 'red' : cnt.blue < cnt.red ? 'blue' : (Math.random() < .5 ? 'red' : 'blue'); cnt[b.team]++; b.col = TEAM[b.team] } roster.push(b) }
         poles = curMode == 'speed' ? genPoles(Math.min(1500, Math.round(150 * WORLD * WORLD / 64e6))) : [];
         if (curMode == 'colour') { buildHex(); cb = { round: 1, phase: 'run', t: 10, target: Math.floor(Math.random() * 11) }; roster.forEach(q => { q.cells[0].m = 10; q.cbRound = 0 }) }
@@ -856,6 +916,7 @@
         for (let i = 0; i < VIRUS_COUNT; i++) viruses.push(makeVirus());
         powerups = Array.from({ length: CALM[curMode] || !PT.some(t => POW[t]) ? 0 : Math.min(120, Math.max(3, Math.round(40 * WORLD * WORLD / 144e6))) }, makePower); if (curMode == 'time') roster.forEach(q => q.cells.forEach(c => c.m = 10));
         lens.x = hero.cells[0].x; lens.y = hero.cells[0].y; lens.z = .9;
+        if (online.on && online.host) { online.over = null; online.rem = []; online.addQ = []; online.fullAll = true; online.fullTo = []; online.evq = []; online.feedOut = []; online.last = {}; online.snapT = 0 }
         syncMenu();
       }
       function endLoss() {
@@ -931,26 +992,28 @@
       }
       function divide(p) { if (!p.cells.length || p.giant) return; const d = facing(p), add = [];
         p.cells.forEach(q => { if (q.m >= 36 && p.cells.length + add.length < 12) { q.m /= 2; q.merge = Math.min(30, 9 + q.m * .03); add.push({ x: q.x, y: q.y, m: q.m, vx: d.x * 600, vy: d.y * 600, merge: q.merge, wobble: .6 }) } });
-        if (add.length) { p.cells.push(...add); if (!p.bot) playSound('swipe') }
+        if (add.length) { p.cells.push(...add); if (p === hero) playSound('swipe') }
       }
       function ejectMass(p) {
         if (!p.cells.length) return; const d = facing(p);
         p.cells.forEach(q => { if (q.m >= 30) { q.m -= 10; dots.push({ x: q.x + d.x * bodyR(q.m), y: q.y + d.y * bodyR(q.m), m: 10, h: p.h, col: p.col, big: true, age: 0, vx: d.x * 640, vy: d.y * 640 }) } });
-        if (!p.bot) playSound('feed');
+        if (p === hero) playSound('feed');
       }
       function burstCell(p, q) {
         const n = Math.min(6, 13 - p.cells.length); if (n < 2) return;
         q.m /= n; q.merge = 10; q.wobble = 1;
         for (let i = 1; i < n; i++) { const a = randBetween(0, 6.28); p.cells.push({ x: q.x, y: q.y, m: q.m, vx: Math.cos(a) * 450, vy: Math.sin(a) * 450, merge: 10, wobble: 1 }) }
-        if (!p.bot) playSound('pop');
+        sfx(p, 'pop');
       }
-      const tcol = p => p ? (p.team && TEAM[p.team] ? TEAM[p.team] : (p === hero ? '#3ddc6e' : '#ece6ff')) : '#ece6ff';
+      const tcol = p => p ? (p.team && TEAM[p.team] ? TEAM[p.team] : (p === hero && !online.on ? '#3ddc6e' : '#ece6ff')) : '#ece6ff';
       function logKill(v) {
-        const k = v.lastKiller; if (k) feedLog.push({ t: clock, k: k.name, v: v.name, kc: tcol(k), vc: tcol(v) }); else if (curMode == 'colour') feedLog.push({ t: clock, k: v.name, w: ' fell off', v: '', kc: tcol(v), vc: '#fff' });
+        const k = v.lastKiller; if (k) pushFeed({ t: clock, k: k.name, v: v.name, kc: tcol(k), vc: tcol(v) }); else if (curMode == 'colour') pushFeed({ t: clock, k: v.name, w: ' fell off', v: '', kc: tcol(v), vc: '#fff' });
         if (feedLog.length > 20) feedLog.shift(); if (v === hero && SPEC[curMode]) playSound('lose');
         if ((curMode == 'duos' || curMode == 'squads') && v !== hero && v.team === hero.team) { const left = roster.filter(q => q.team === hero.team && q.cells.length).length; bigAlert = { text: curMode == 'duos' ? 'YOUR DUO IS OUT!' : 'TEAMMATE OUT!', sub: v.name + ' was eaten' + (curMode == 'squads' ? ' · ' + left + ' left in your squad' : ''), until: elapsed + 5 }; playSound('lose') }
+        if (online.on && online.host && (curMode == 'duos' || curMode == 'squads')) roster.forEach(q => { if (q.remote && q !== v && q.team && q.team === v.team) { const left2 = roster.filter(z => z.team === q.team && z.cells.length).length; evTo(q.id, curMode == 'duos' ? 'YOUR DUO IS OUT!' : 'TEAMMATE OUT!', v.name + ' was eaten' + (curMode == 'squads' ? ' · ' + left2 + ' left in your squad' : ''), 5, 'big') } })
       }
       function teamsOver(w) {
+        if (online.on) return olEnd((w == 'red' ? 'Red' : 'Blue') + ' team wins!', '', roster.filter(q => q.team === w));
         scr = 'over'; newBest = topSize > bestNow(); const b = saveBest(Math.round(topSize)); AudioFX.sync(false); playSound(w === hero.team ? 'coin' : 'lose'); endWin = w === hero.team;
         getEl('over-title').innerText = w === hero.team ? 'Victory!' : 'Defeat';
         getEl('over-size').innerText = fmt(topSize); getEl('over-best').innerText = (w == 'red' ? 'Red' : 'Blue') + ' team wins' + (newBest ? ' · New best!' : ' · Best ' + b);
@@ -958,8 +1021,8 @@
         syncMenu();
       }
       function specStep(d) {
-        if (!SPEC[curMode] || !hero || hero.cells.length) return;
-        const l = roster.filter(p => p.team === hero.team && p !== hero && p.cells.length); if (!l.length) { spec = null; return }
+        if ((!SPEC[curMode] && !online.on) || !hero || hero.cells.length) return;
+        const l = online.on ? roster.filter(p => p.cells.length && !p.giant) : roster.filter(p => p.team === hero.team && p !== hero && p.cells.length); if (!l.length) { spec = null; return }
         let i = l.indexOf(spec); i = i < 0 ? (d > 0 ? 0 : l.length - 1) : (i + d + l.length) % l.length; spec = l[i];
       }
       window.specStep = specStep;
@@ -977,7 +1040,7 @@
         hero.idle = false;
         if (stick.id !== null && stick.mag > 0) { hero.tx = cx + stick.ax * 500; hero.ty = cy + stick.ay * 500; hero.face = { x: stick.ax / stick.mag, y: stick.ay / stick.mag } }
         else if (kx || ky) { const L = Math.hypot(kx, ky); hero.tx = cx + kx / L * 500; hero.ty = cy + ky / L * 500; hero.face = { x: kx / L, y: ky / L } }
-        else if (touch || keyMode) { hero.tx = cx; hero.ty = cy; hero.idle = true }
+        else if (touch || keyMode || document.hidden) { hero.tx = cx; hero.ty = cy; hero.idle = true }
         else { hero.tx = lens.x + (cursor.x - W / 2) / lens.z; hero.ty = lens.y + (cursor.y - H / 2) / lens.z }
       }
       function safeSpot() { let bst = null, bd = -1; for (let i = 0; i < 8; i++) { const x0 = randBetween(300, WORLD - 300), y0 = randBetween(300, WORLD - 300); let md = 1e9; for (const p of roster) for (const c of p.cells) md = Math.min(md, Math.hypot(c.x - x0, c.y - y0) - bodyR(c.m)); if (md > bd) { bd = md; bst = [x0, y0] } } return bst }
@@ -987,6 +1050,7 @@
         if (p === hero) { lens.x = sx0; lens.y = sy0; lens.z = .9; playSound('click'); getEl('respawn-title').innerText = 'You died!' }
       }
       function timeOver() {
+        if (online.on) { const rs = roster.filter(q => !q.giant).map(q => ({ q, m: sumMass(q) })).sort((a, b) => b.m - a.m), w0 = rs[0]; return olEnd(w0.q.name + ' wins!', Math.round(w0.m) + ' mass', [w0.q]) }
         scr = 'over'; const res = roster.filter(q => !q.giant).map(q => ({ q, m: sumMass(q) })).sort((a, b) => b.m - a.m), w = res[0], rank = res.findIndex(r => r.q === hero) + 1;
         newBest = topSize > bestNow(); saveBest(Math.round(topSize)); AudioFX.sync(false); playSound(w.q === hero ? 'coin' : 'lose'); endWin = w.q === hero;
         getEl('over-title').innerText = w.q === hero ? 'You win!' : `${w.q.name} wins!`; getEl('over-size').innerText = fmt(topSize);
@@ -994,14 +1058,16 @@
       }
       const zoneR = () => 9000 + (500 - 9000) * Math.min(1, elapsed / 300);
       const say = (text, sub, sec = 5) => { banner = { text, sub, until: elapsed + sec } };
-      function endScreen(title, sub, win) {
+      function endScreen(title, sub, win, neutral) {
+        if (online.on) return olEnd(neutral ? neutral.title : title, neutral ? neutral.sub : sub, neutral ? neutral.winners : []);
         scr = 'over'; newBest = topSize > bestNow(); saveBest(Math.round(topSize)); AudioFX.sync(false); playSound(win ? 'coin' : 'lose'); endWin = !!win;
         getEl('over-title').innerText = title; getEl('over-size').innerText = fmt(topSize); getEl('over-best').innerText = sub;
         getEl('over-stats').innerText = `Blobs eaten: ${eatCount}   Time: ${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`; syncMenu();
       }
       function steal(a, v) {
         const amt = sumMass(v) * .25; v.cells.forEach(c => { c.m *= .75; c.wobble = 1 }); const q = a.cells.reduce((m, c) => c.m > m.m ? c : m); q.m += amt; q.wobble = 1;
-        feedLog.push({ t: clock, k: a.name, w: ' stole ' + Math.round(amt) + ' from ', v: v.name, kc: tcol(a), vc: tcol(v) });
+        pushFeed({ t: clock, k: a.name, w: ' stole ' + Math.round(amt) + ' from ', v: v.name, kc: tcol(a), vc: tcol(v) });
+        if (online.host) { if (a.remote) evTo(a.id, 'You stole ' + Math.round(amt) + ' mass!', 'from ' + v.name, 5); if (v.remote) evTo(v.id, a.name + ' stole ' + Math.round(amt) + ' mass from you!', '', 4) }
         if (a === hero) { say('You stole ' + Math.round(amt) + ' mass!', 'from ' + v.name); playSound('coin') } else if (v === hero) { say(a.name + ' stole ' + Math.round(amt) + ' mass from you!', '', 4); playSound('pop') }
       }
       function pickVictim(a) {
@@ -1018,22 +1084,22 @@
           row.className = 'steal-row'; av.className = 'steal-av'; tx.className = 'steal-tx'; av.style.backgroundColor = q.col || hueCss(q.h);
           if (q.skin && !em) av.style.backgroundImage = `url(${SKIN_URL(q.skin)})`; if (em) av.textContent = em;
           n1.textContent = q.name; n2.textContent = Math.round(sumMass(q)) + ' mass'; tx.append(n1, n2); row.append(av, tx);
-          row.onclick = () => { steal(hero, q); closeSteal() }; list.appendChild(row);
+          row.onclick = () => { if (online.on && !online.host) olSend({ t: 'act', a: 'steal', v: q.id }); else steal(hero, q); closeSteal() }; list.appendChild(row);
         }); syncMenu();
       }
-      const closeSteal = () => { stealOpen = false; syncMenu() }; window.closeSteal = closeSteal;
+      const closeSteal = () => { if (online.on && !online.host && stealOpen) olSend({ t: 'act', a: 'steal', v: null }); stealOpen = false; syncMenu() }; window.closeSteal = closeSteal;
       function frenzy() {
         for (let i = 0; i < 6; i++) { const g = makePlayer('Giant', 20, true); g.giant = true; g.hunter = true; g.col = '#f97316'; g.expires = elapsed + 300; const [gx, gy] = safeSpot(); g.cells = [{ x: gx, y: gy, m: 1000, vx: 0, vy: 0, merge: 0, wobble: 1 }]; roster.push(g) }
-        say('FRENZY!', '6 giant blobs dropped in. Run, or eat one with 1050+ mass.', 6); feedLog.push({ t: clock, k: 'Frenzy', w: ' dropped ', v: '6 giants', kc: '#f97316', vc: '#ece6ff' });
+        sayAll('FRENZY!', '6 giant blobs dropped in. Run, or eat one with 1050+ mass.', 6); pushFeed({ t: clock, k: 'Frenzy', w: ' dropped ', v: '6 giants', kc: '#f97316', vc: '#ece6ff' });
       }
       function fever() {
         const n = Math.min(600, Math.max(60, Math.round(150 * WORLD * WORLD / 144e6)));
         for (let i = 0; i < n; i++) dots.push({ x: randBetween(40, WORLD - 40), y: randBetween(40, WORLD - 40), m: 1000, h: randBetween(0, 360), vx: 0, vy: 0, fever: true, until: elapsed + 5 });
-        say('FEVER!', '1000-mass dots everywhere. Grab them in 5 seconds!', 5); feedLog.push({ t: clock, k: 'Fever', w: ' spawned ', v: n + ' dots', kc: '#fde047', vc: '#ece6ff' }); playSound('coin');
+        sayAll('FEVER!', '1000-mass dots everywhere. Grab them in 5 seconds!', 5); pushFeed({ t: clock, k: 'Fever', w: ' spawned ', v: n + ' dots', kc: '#fde047', vc: '#ece6ff' }); playSound('coin');
       }
       function kothOver() {
         const res = roster.map(q => ({ q, s: q.pts || 0 })).sort((a, b) => b.s - a.s), w = res[0], rank = res.findIndex(r => r.q === hero) + 1;
-        endScreen(w.q === hero ? 'You win!' : w.q.name + ' wins!', 'Winner: ' + w.q.name + ' · ' + Math.floor(w.s) + ' points', w.q === hero);
+        endScreen(w.q === hero ? 'You win!' : w.q.name + ' wins!', 'Winner: ' + w.q.name + ' · ' + Math.floor(w.s) + ' points', w.q === hero, { title: w.q.name + ' wins!', sub: Math.floor(w.s) + ' points', winners: [w.q] });
         getEl('over-label').innerText = 'YOUR POINTS'; getEl('over-size').innerText = Math.floor(hero.pts || 0); getEl('over-stats').innerText = 'You finished #' + rank + ' of ' + roster.length;
       }
       const roundTime = r => r <= 5 ? 10 : r <= 9 ? 9 : r <= 13 ? 8 : r <= 16 ? 7 : r == 17 ? 6 : r == 18 ? 5 : r == 19 ? 4 : 3;
@@ -1066,7 +1132,8 @@
         if (p.cbTile != null) { const [tx, ty] = hexPos(p.cbTile); p.tx = tx; p.ty = ty }
       }
       function colourTick(dt) {
-        if (!hero.cells.length) { endScreen('You fell!', 'You survived ' + (cb.round - 1) + ' rounds', false); getEl('over-label').innerText = 'ROUND REACHED'; getEl('over-size').innerText = cb.round; return }
+        if (online.on) { const al = roster.filter(q => q.cells.length); if (al.length <= 1) { olEnd(al[0] ? al[0].name + ' wins!' : 'Nobody wins', 'Last blob on the tiles · round ' + cb.round, al); return } }
+        else if (!hero.cells.length) { endScreen('You fell!', 'You survived ' + (cb.round - 1) + ' rounds', false); getEl('over-label').innerText = 'ROUND REACHED'; getEl('over-size').innerText = cb.round; return }
         if (!roster.some(q => q !== hero && q.cells.length)) { endScreen('You win!', 'Last blob on the tiles', true); getEl('over-label').innerText = 'ROUND REACHED'; getEl('over-size').innerText = cb.round; return }
         cb.t -= dt;
         if (cb.phase == 'run') { if (cb.t <= 0) { cb.phase = 'drop'; cb.t = 3; for (const p of roster) for (const q of p.cells) q.fall = hexColour(q.x, q.y) !== cb.target; playSound('pop') } }
@@ -1077,29 +1144,29 @@
       }
       function strike(p) {
         const T = sumMass(p); let cx = 0, cy = 0; p.cells.forEach(q => { cx += q.x; cy += q.y }); cx /= p.cells.length; cy /= p.cells.length;
-        p.cells = [{ x: cx, y: cy, m: 10, vx: 0, vy: 0, merge: 0, wobble: 1 }]; p.bolt = { until: elapsed + 10, total: T }; bolts.push({ x: cx, y: cy, t: elapsed });
-        feedLog.push({ t: clock, k: 'Lightning', w: ' struck ', v: p.name, kc: '#fde047', vc: tcol(p) }); if (p === hero) { flashT = elapsed; playSound('pop') }
+        p.cells = [{ x: cx, y: cy, m: 10, vx: 0, vy: 0, merge: 0, wobble: 1 }]; p.bolt = { until: elapsed + 10, total: T }; bolts.push({ x: cx, y: cy, t: elapsed }); evTo(null, Math.round(cx), Math.round(cy), 0, 'bolt');
+        pushFeed({ t: clock, k: 'Lightning', w: ' struck ', v: p.name, kc: '#fde047', vc: tcol(p) }); if (p === hero) { flashT = elapsed; playSound('pop') } else if (p.remote) evTo(p.id, '', '', 0, 'flash')
       }
       function upd(dt) {
-        clock += dt; if (paused || stealOpen || scr != 'play') return; elapsed += dt;
+        clock += dt; if (scr != 'play') return; if (online.on) { if (!online.host) { guestTick(dt); return } if (online.over) { hostOverTick(dt); return } } else if (paused || stealOpen) return; elapsed += dt;
         if (!nextBolt) nextBolt = elapsed + randBetween(40, 70);
         if (elapsed >= nextBolt) { nextBolt = elapsed + randBetween(45, 80); const al = roster.filter(q => q.cells.length && !q.bolt); if (al.length) strike(al[Math.floor(Math.random() * al.length)]) }
         for (const p of roster) if (p.bolt && elapsed >= p.bolt.until) { if (p.cells.length) { const q = p.cells.reduce((a, c) => c.m > a.m ? c : a); q.m += Math.max(0, p.bolt.total - 10); q.wobble = 1 } p.bolt = null }
         if (!nextFrenzy) nextFrenzy = elapsed + randBetween(100, 140); if (elapsed >= nextFrenzy) { nextFrenzy = elapsed + randBetween(110, 160); if (GIANT_OK[curMode] && !roster.some(q => q.giant)) frenzy() }
         if (!nextFever) nextFever = elapsed + randBetween(60, 110); if (elapsed >= nextFever) { nextFever = elapsed + randBetween(90, 150); fever() }
         for (const p of roster) if (p.giant && elapsed >= p.expires) p.cells = [];
-        if (hero.cells.length) { readInput(); const T0 = sumMass(hero); hero.boosting = boostHeld && T0 > 40; if (hero.boosting) { const lost = Math.min(200 * dt, T0 - 30); hero.cells.forEach(q => { q.m = Math.max(1, q.m - lost * q.m / T0) }) } } else hero.boosting = false;
+        if (hero.cells.length) readInput(); for (const p of roster) { if (p !== hero && !p.remote) continue; if (p.stealPend && elapsed >= p.stealPend) { p.stealPend = 0; evTo(p.id, '', '', 0, 'steal0'); const v0 = pickVictim(p); if (v0) steal(p, v0) } if (p.remote && clock - (p.lastIn || clock) > 1.5 && p.cells.length) { let ax = 0, ay = 0; p.cells.forEach(q => { ax += q.x; ay += q.y }); p.tx = ax / p.cells.length; p.ty = ay / p.cells.length; p.boostIn = false } const T0 = sumMass(p); p.boosting = (p === hero ? boostHeld : !!p.boostIn) && T0 > 40; if (p.boosting) { const lost = Math.min(200 * dt, T0 - 30); p.cells.forEach(q => { q.m = Math.max(1, q.m - lost * q.m / T0) }) } }
         for (const p of roster) {
           if (p.bot) { p.t -= dt; if (p.t <= 0 && p.cells.length) { p.t = D().smart || curMode == 'speed' ? .1 : .2; decide(p) } }
           for (const q of p.cells) {
             const ox = q.x, oy = q.y, dx = p.tx - q.x, dy = p.ty - q.y, d = Math.hypot(dx, dy) || 1, bm = (p.boostUntil > elapsed ? 1.9 : 1) * (curMode == 'infected' && p.team == 'infected' ? 1.12 : 1) * (p.giant ? .3 : 1) * (p.boosting ? 5 : 1), s = baseSpeed(q.m) * bm * (p.bot ? (d > 4 ? 1 : 0) : Math.min(1, d / bodyR(q.m)));
             q.x += (dx / d * s + q.vx) * dt; q.y += (dy / d * s + q.vy) * dt; const f = Math.pow(.02, dt); q.vx *= f; q.vy *= f;
             q.merge = Math.max(0, Math.min(30, q.merge - dt)); q.wobble = Math.max(0, q.wobble - dt * 1.5);
-            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); q.dx = (q.x - ox) / Math.max(dt, .001); q.dy = (q.y - oy) / Math.max(dt, .001); if (curMode == 'speed' && !(q.bu > elapsed)) for (const o of poles) { const sx = q.x - ox, sy = q.y - oy, sl = sx * sx + sy * sy, tt = sl ? Math.max(0, Math.min(1, ((o.x - ox) * sx + (o.y - oy) * sy) / sl)) : 0, cx2 = ox + sx * tt, cy2 = oy + sy * tt; if (Math.hypot(cx2 - o.x, cy2 - o.y) < bodyR(q.m) + PR) { let nx = cx2 - o.x, ny = cy2 - o.y; const nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl; const sp2 = Math.max(1500, Math.hypot(q.vx, q.vy) * 1.2); q.vx = nx * sp2; q.vy = ny * sp2; q.x = o.x + nx * (bodyR(q.m) + PR + 3); q.y = o.y + ny * (bodyR(q.m) + PR + 3); q.bu = elapsed + .12; q.wobble = 1; if (p === hero) playSound('swipe'); break } } if (curMode == 'royale' && Math.hypot(q.x - WORLD / 2, q.y - WORLD / 2) > zoneR()) { q.m -= (q.m * .08 + 1.5) * dt; if (q.m <= 2) { q.dead = true; p.lastKiller = STORM } }
+            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y)); q.dx = (q.x - ox) / Math.max(dt, .001); q.dy = (q.y - oy) / Math.max(dt, .001); if (curMode == 'speed' && !(q.bu > elapsed)) for (const o of poles) { const sx = q.x - ox, sy = q.y - oy, sl = sx * sx + sy * sy, tt = sl ? Math.max(0, Math.min(1, ((o.x - ox) * sx + (o.y - oy) * sy) / sl)) : 0, cx2 = ox + sx * tt, cy2 = oy + sy * tt; if (Math.hypot(cx2 - o.x, cy2 - o.y) < bodyR(q.m) + PR) { let nx = cx2 - o.x, ny = cy2 - o.y; const nl = Math.hypot(nx, ny) || 1; nx /= nl; ny /= nl; const sp2 = Math.max(1500, Math.hypot(q.vx, q.vy) * 1.2); q.vx = nx * sp2; q.vy = ny * sp2; q.x = o.x + nx * (bodyR(q.m) + PR + 3); q.y = o.y + ny * (bodyR(q.m) + PR + 3); q.bu = elapsed + .12; q.wobble = 1; sfx(p, 'swipe'); bursts.push({ x: o.x, y: o.y, t: clock }); movePole(o); break } } if (curMode == 'royale' && Math.hypot(q.x - WORLD / 2, q.y - WORLD / 2) > zoneR()) { q.m -= (q.m * .08 + 1.5) * dt; if (q.m <= 2) { q.dead = true; p.lastKiller = STORM } }
             for (const v of viruses) if (q.m > 130 && !(p.ghostUntil > elapsed) && !p.giant && Math.hypot(q.x - v.x, q.y - v.y) < bodyR(q.m) + virusR(v.m) * 1.05) { const nb = p.cells.length; burstCell(p, q); if (p.cells.length > nb) { const nv = makeVirus(); v.x = nv.x; v.y = nv.y; v.m = 130; v.vx = v.vy = 0 } break }
             if (p.magnetUntil > elapsed) for (const o of dots) { const dd = Math.hypot(q.x - o.x, q.y - o.y); if (dd < 320 && dd > 1) { const k = Math.min(1, dt * 6); o.x += (q.x - o.x) * k; o.y += (q.y - o.y) * k } }
-            for (const o of powerups) if (!p.giant && elapsed >= o.until && Math.hypot(q.x - o.x, q.y - o.y) < bodyR(q.m) + 16) { if (o.type == 'speed') p.boostUntil = elapsed + 3; else if (o.type == 'shield') p.shield = elapsed + 20; else if (o.type == 'ghost') p.ghostUntil = elapsed + 8; else p.magnetUntil = elapsed + 5; o.type = pickPT(); o.until = elapsed + 20; o.x = randBetween(150, WORLD - 150); o.y = randBetween(150, WORLD - 150); if (p === hero) playSound('swipe') }
-            for (const o of steals) if (!p.giant && elapsed >= o.until && Math.hypot(q.x - o.x, q.y - o.y) < bodyR(q.m) + 18) { o.until = elapsed + 45; o.x = randBetween(150, WORLD - 150); o.y = randBetween(150, WORLD - 150); if (p === hero) openSteal(); else { const v = pickVictim(p); if (v) steal(p, v) } }
+            for (const o of powerups) if (!p.giant && elapsed >= o.until && Math.hypot(q.x - o.x, q.y - o.y) < bodyR(q.m) + 16) { if (o.type == 'speed') p.boostUntil = elapsed + 3; else if (o.type == 'shield') p.shield = elapsed + 20; else if (o.type == 'ghost') p.ghostUntil = elapsed + 8; else p.magnetUntil = elapsed + 5; o.type = pickPT(); o.until = elapsed + 20; o.x = randBetween(150, WORLD - 150); o.y = randBetween(150, WORLD - 150); sfx(p, 'swipe') }
+            for (const o of steals) if (!p.giant && elapsed >= o.until && Math.hypot(q.x - o.x, q.y - o.y) < bodyR(q.m) + 18) { o.until = elapsed + 45; o.x = randBetween(150, WORLD - 150); o.y = randBetween(150, WORLD - 150); if (p === hero) openSteal(); else if (p.remote && online.host) { p.stealPend = elapsed + 12; evTo(p.id, '', '', 0, 'steal') } else { const v = pickVictim(p); if (v) steal(p, v) } }
             const r = bodyR(q.m);
             for (let i = dots.length - 1; i >= 0; i--) {
               const o = dots[i]; if (o.big && o.age < .3) continue;
@@ -1110,12 +1177,12 @@
             const a = p.cells[i], b = p.cells[j]; if (a.dead || b.dead) continue;
             const dx = b.x - a.x, dy = b.y - a.y, d = Math.hypot(dx, dy) || .01, ra = bodyR(a.m), rb = bodyR(b.m);
             if (a.merge > 0 || b.merge > 0) { const o = ra + rb - d; if (o > 0) { const k = o / 2 / d * Math.min(1, dt * 12); a.x -= dx * k; a.y -= dy * k; b.x += dx * k; b.y += dy * k } }
-            else if (d < Math.max(ra, rb) * .75) { a.m += b.m; a.wobble = .8; b.dead = true; if (!p.bot) playSound('click') }
+            else if (d < Math.max(ra, rb) * .75) { a.m += b.m; a.wobble = .8; b.dead = true; sfx(p, 'click') }
           }
           p.cells = p.cells.filter(q => !q.dead);
         }
         for (const a of roster) for (const ca of a.cells) for (const b of roster) { if (a === b || sameSide(a, b)) continue; for (const cb of b.cells) {
-          if (!cb.dead && !ca.dead && !sameSide(a, b) && ca.m > cb.m * EAT && Math.hypot(ca.x - cb.x, ca.y - cb.y) < bodyR(ca.m) - bodyR(cb.m) * .3) { if (curMode == 'infected' && a.team == 'infected' && b.team == 'human') { b.team = 'infected'; b.col = TEAM.infected; ca.m += cb.m * .1; b.cells.forEach(c => c.wobble = 1); feedLog.push({ t: clock, k: a.name, w: ' infected ', v: b.name, kc: TEAM.infected, vc: TEAM.infected }); if (b === hero) { say('YOU ARE INFECTED!', 'Convert the humans before time runs out.', 6); playSound('pop') } continue } if (b.shield > elapsed || b.grace > elapsed) { if (b.shield > elapsed) { b.shield = 0; b.grace = elapsed + 1.5 } const kx = ca.x - cb.x, ky = ca.y - cb.y, kl = Math.hypot(kx, ky) || 1; ca.vx += kx / kl * 500; ca.vy += ky / kl * 500; if (b === hero) playSound('pop'); continue } if (curMode == 'renegades') { b.team = a.team; b.col = TEAM[a.team]; b.grace = elapsed + 2; ca.m += cb.m * .1; ca.wobble = 1; b.cells.forEach(c => c.wobble = 1); feedLog.push({ t: clock, k: a.name, w: ' converted ', v: b.name, kc: TEAM[a.team], vc: TEAM[a.team] }); if (b === hero) { say('You joined the ' + a.team.toUpperCase() + ' team!', 'You keep your mass.', 5); playSound('pop') } continue } ca.m += cb.m; ca.wobble = .8; cb.dead = true; b.lastKiller = a; if (a === hero) { eatCount++; playSound('coin') } }
+          if (!cb.dead && !ca.dead && !sameSide(a, b) && ca.m > cb.m * EAT && Math.hypot(ca.x - cb.x, ca.y - cb.y) < bodyR(ca.m) - bodyR(cb.m) * .3) { if (curMode == 'infected' && a.team == 'infected' && b.team == 'human') { b.team = 'infected'; b.col = TEAM.infected; ca.m += cb.m * .1; b.cells.forEach(c => c.wobble = 1); pushFeed({ t: clock, k: a.name, w: ' infected ', v: b.name, kc: TEAM.infected, vc: TEAM.infected }); if (b.remote) evTo(b.id, 'YOU ARE INFECTED!', 'Convert the humans before time runs out.', 6); if (b === hero) { say('YOU ARE INFECTED!', 'Convert the humans before time runs out.', 6); playSound('pop') } continue } if (b.shield > elapsed || b.grace > elapsed) { if (b.shield > elapsed) { b.shield = 0; b.grace = elapsed + 1.5 } const kx = ca.x - cb.x, ky = ca.y - cb.y, kl = Math.hypot(kx, ky) || 1; ca.vx += kx / kl * 500; ca.vy += ky / kl * 500; sfx(b, 'pop'); continue } if (curMode == 'renegades') { b.team = a.team; b.col = TEAM[a.team]; b.grace = elapsed + 2; ca.m += cb.m * .1; ca.wobble = 1; b.cells.forEach(c => c.wobble = 1); pushFeed({ t: clock, k: a.name, w: ' converted ', v: b.name, kc: TEAM[a.team], vc: TEAM[a.team] }); if (b.remote) evTo(b.id, 'You joined the ' + a.team.toUpperCase() + ' team!', 'You keep your mass.', 5); if (b === hero) { say('You joined the ' + a.team.toUpperCase() + ' team!', 'You keep your mass.', 5); playSound('pop') } continue } ca.m += cb.m; ca.wobble = .8; cb.dead = true; b.lastKiller = a; if (a === hero) { eatCount++; playSound('coin') } }
         } }
         for (let i = 0; i < roster.length; i++) roster[i].cells = roster[i].cells.filter(q => !q.dead);
         for (let i = 0; i < roster.length; i++) for (let j = i + 1; j < roster.length; j++) {
@@ -1127,7 +1194,7 @@
             const push = o / 2 * Math.min(1, dt * 8); ca.x -= ux * push; ca.y -= uy * push; cb.x += ux * push; cb.y += uy * push;
           }
         }
-        for (let i = 0; i < roster.length; i++) { const p = roster[i]; if (!p.cells.length && !p.out) { p.out = true; logKill(p); if (p.giant) continue; if (((curMode == 'ffa' || curMode == 'speed') && p.bot) || curMode == 'time') p.respawnAt = elapsed + (curMode == 'time' ? 5 : randBetween(2, 10)) }
+        for (let i = 0; i < roster.length; i++) { const p = roster[i]; if (!p.cells.length && !p.out) { p.out = true; logKill(p); if (p.giant) continue; if (((curMode == 'ffa' || curMode == 'speed') && p.bot) || curMode == 'time' || (online.on && !p.bot && OLRESP[curMode])) p.respawnAt = elapsed + (online.on && !p.bot ? 3 : curMode == 'time' ? 5 : randBetween(2, 10)) }
           if (p.respawnAt != null && elapsed >= p.respawnAt && !p.cells.length) respawn(p) }
         roster = roster.filter(q => !(q.giant && !q.cells.length));
         for (const o of dots) if (o.vx || o.vy) {
@@ -1139,10 +1206,10 @@
           }
         }
         for (const o of dots) if (o.eater) { o.suck += dt; const e = o.eater, k = Math.min(1, dt * 14); o.vx = o.vy = 0; o.x += (e.x - o.x) * k; o.y += (e.y - o.y) * k; if (Math.hypot(e.x - o.x, e.y - o.y) < bodyR(e.m) * .3 + 2 || o.suck > .3) { if (!e.dead) e.m += o.m; o.dead = true } }
-        dots = dots.filter(o => !o.dead && !(o.fever && elapsed >= o.until)); const fvn = dots.reduce((n, o) => n + (o.fever ? 1 : 0), 0); while (dots.length - fvn < PEL) dots.push(makeDot());
+        { const kept = []; for (const o of dots) { if (o.dead || (o.fever && elapsed >= o.until)) { if (o.id && online.host) online.rem.push(o.id) } else kept.push(o) } dots = kept } const fvn = dots.reduce((n, o) => n + (o.fever ? 1 : 0), 0); while (dots.length - fvn < PEL) dots.push(makeDot());
         for (const v of viruses) { v.x = Math.max(60, Math.min(WORLD - 60, v.x + v.vx * dt)); v.y = Math.max(60, Math.min(WORLD - 60, v.y + v.vy * dt)); const f = Math.pow(.01, dt); v.vx *= f; v.vy *= f }
         while (viruses.length < VIRUS_COUNT) viruses.push(makeVirus());
-        if (curMode == 'colour') { colourTick(dt); if (scr != 'play') return }
+        if (curMode == 'colour') { colourTick(dt); if (scr != 'play' || online.over) return }
         if (curMode == 'koth') {
           zone.t -= dt; if (zone.t <= 0) { zone.da = randBetween(-5.5, 5.5); zone.t = randBetween(.15, .75); if (Math.random() < .3) zone.a += (Math.random() < .5 ? 1 : -1) * randBetween(1.2, 3.1) }
           zone.a += zone.da * dt; const ks = KSP - 8 + 10 * Math.sin(elapsed * 2.3); zone.x += Math.cos(zone.a) * ks * dt; zone.y += Math.sin(zone.a) * ks * dt; const mg = KZR + 40;
@@ -1151,20 +1218,22 @@
           if (elapsed >= 300) { kothOver(); return }
         }
         if (curMode == 'time' && elapsed >= 300) { timeOver(); return }
-        if (curMode == 'infected') { const hum = roster.filter(q => q.team == 'human' && q.cells.length).length; if (!hum) { endScreen(hero.team == 'infected' ? 'Everyone infected!' : 'You were infected', 'The infection wins', hero.team == 'infected'); return } if (elapsed >= 240) { endScreen(hero.team == 'human' ? 'You survived!' : 'Humans survived', hum + ' humans left', hero.team == 'human'); return } }
+        if (curMode == 'infected') { const hum = roster.filter(q => q.team == 'human' && q.cells.length).length; if (!hum) { endScreen(hero.team == 'infected' ? 'Everyone infected!' : 'You were infected', 'The infection wins', hero.team == 'infected', { title: 'The infection wins!', sub: 'Every human was infected', winners: roster.filter(q => q.team == 'infected') }); return } if (elapsed >= 240) { endScreen(hero.team == 'human' ? 'You survived!' : 'Humans survived', hum + ' humans left', hero.team == 'human', { title: 'Humans survived!', sub: hum + ' humans left', winners: roster.filter(q => q.team == 'human') }); return } }
         if (curMode == 'royale' && hero.cells.length && !roster.some(q => q !== hero && q.cells.length)) { endScreen('Last blob standing!', 'You win the arena', true); return }
         const teamsOn = !!SPEC[curMode];
-        if (curMode == 'duos' || curMode == 'squads') { const al = new Set(roster.filter(q => q.cells.length && !q.giant).map(q => q.team)), nm = curMode == 'duos' ? 'duo' : 'squad'; if (!al.has(hero.team)) { endScreen('Your ' + nm + ' is out', al.size + ' left standing', false); return } if (al.size <= 1) { endScreen('Your ' + nm + ' wins!', 'Last one standing', true); return } }
+        if (curMode == 'duos' || curMode == 'squads') { const al = new Set(roster.filter(q => q.cells.length && !q.giant).map(q => q.team)), nm = curMode == 'duos' ? 'duo' : 'squad'; if (!online.on && !al.has(hero.team)) { endScreen('Your ' + nm + ' is out', al.size + ' left standing', false); return } if (al.size <= 1) { endScreen('Your ' + nm + ' wins!', 'Last one standing', true, { title: al.size ? roster.filter(q => al.has(q.team)).map(q => q.name).slice(0, 3).join(' & ') + ' win!' : 'Nobody wins', sub: 'Last one standing', winners: roster.filter(q => al.has(q.team)) }); return } }
         if (curMode == 'renegades') {
           const rd = roster.filter(q => q.team == 'red').length, bl = roster.length - rd, win = rd == roster.length ? 'red' : bl == roster.length ? 'blue' : (elapsed >= 600 ? (rd > bl ? 'red' : bl > rd ? 'blue' : hero.team) : null);
-          if (win) { endScreen(win == hero.team ? 'Victory!' : 'Defeat', (win == 'red' ? 'Red' : 'Blue') + ' team converted the lobby (' + rd + ' v ' + bl + ')', win == hero.team); return }
+          if (win) { endScreen(win == hero.team ? 'Victory!' : 'Defeat', (win == 'red' ? 'Red' : 'Blue') + ' team converted the lobby (' + rd + ' v ' + bl + ')', win == hero.team, { title: (win == 'red' ? 'Red' : 'Blue') + ' team wins!', sub: 'Converted the lobby (' + rd + ' v ' + bl + ')', winners: roster.filter(q => q.team == win) }); return }
         }
         if (curMode == 'teams') {
           const alive = t => roster.some(q => q.team === t && q.cells.length);
           if (!alive('red') || !alive('blue')) { teamsOver(alive('red') ? 'red' : alive('blue') ? 'blue' : hero.team); return }
         }
+        if (online.on) olFlush(1 / 20, dt);
         let focus = hero;
-        if (!hero.cells.length) {
+        if (!hero.cells.length && online.on) focus = olSpectate();
+        else if (!hero.cells.length) {
           if (teamsOn) { if (!spec || !spec.cells.length) specStep(1); focus = spec && spec.cells.length ? spec : null }
           else if (curMode == 'time') focus = null;
           else { deathClock += dt; if (deathClock > .9) { endLoss(); return } focus = null }
@@ -1284,7 +1353,8 @@
       const getBtnPos = () => ({ split: { x: W - 52, y: H - 52, r: 34 }, feed: { x: W - 52, y: H - 130, r: 26 }, boost: { x: W - 130, y: H - 52, r: 28 } });
       function draw() {
         syncMenu(); if (scr == 'menu') return;
-        if (spec && SPEC[curMode] && !hero.cells.length) getEl('spec-name').innerText = spec.name;
+        if (spec && (SPEC[curMode] || online.on) && !hero.cells.length) getEl('spec-name').innerText = spec.name;
+        if (hero.respawnAt != null && !hero.cells.length) getEl('respawn-count').innerText = Math.max(1, Math.ceil(hero.respawnAt - elapsed));
         if (curMode == 'colour') { const nm = getEl('cb-name'); nm.innerText = cb.phase == 'run' ? CB_NAME[cb.target] : 'TILES DROP!'; nm.style.color = cb.phase == 'run' ? CB_COL[cb.target] : '#fff'; getEl('cb-timer').innerText = Math.max(0, Math.ceil(cb.t)); getEl('cb-round').innerText = 'Round ' + cb.round }
         if (LIMIT[curMode]) {
           const tl = Math.max(0, LIMIT[curMode] - elapsed), tt = Math.floor(tl / 60) + ':' + String(Math.floor(tl % 60)).padStart(2, '0'), te = getEl('timer-text');
@@ -1325,6 +1395,8 @@
           x.fillStyle = '#713f12'; x.font = '700 ' + Math.round(pr * 1.15) + 'px system-ui'; x.textAlign = 'center'; x.fillText(PI[o.type], sx, sy + pr * .4);
         }
         if (curMode == 'speed') for (const o of poles) { const [sx, sy] = toScreen(o.x, o.y); if (sx < -60 || sx > W + 60 || sy < -60 || sy > H + 60) continue; const pr = PR * lens.z; x.fillStyle = 'rgba(251,146,60,.18)'; x.beginPath(); x.arc(sx, sy, pr * 2.4, 0, 7); x.fill(); x.fillStyle = 'rgba(251,146,60,.4)'; x.beginPath(); x.arc(sx, sy, pr * 1.55, 0, 7); x.fill(); x.fillStyle = '#ffedd5'; x.beginPath(); x.arc(sx, sy, pr, 0, 7); x.fill(); x.strokeStyle = '#fb923c'; x.lineWidth = Math.max(2, pr * .25); x.stroke() }
+        bursts = bursts.filter(b => clock - b.t < .5);
+        for (const b of bursts) { const a = (clock - b.t) / .5, [sx, sy] = toScreen(b.x, b.y), pr = PR * lens.z * (1.4 + a * 3.2); x.globalAlpha = 1 - a; x.strokeStyle = '#fb923c'; x.lineWidth = Math.max(2, 7 * lens.z * (1 - a) + 2); x.beginPath(); x.arc(sx, sy, pr, 0, 7); x.stroke(); x.fillStyle = '#fed7aa'; for (let k = 0; k < 8; k++) { const an = k * .785 + b.t; x.beginPath(); x.arc(sx + Math.cos(an) * pr * 1.15, sy + Math.sin(an) * pr * 1.15, Math.max(1.5, 5 * lens.z * (1 - a)), 0, 7); x.fill() } x.globalAlpha = 1 }
         if (curMode == 'koth') { const [zx, zy] = toScreen(zone.x, zone.y), zr = KZR * lens.z, inz = hero.cells.some(q => Math.hypot(q.x - zone.x, q.y - zone.y) <= KZR); x.fillStyle = inz ? 'rgba(61,220,110,.22)' : 'rgba(168,85,247,.18)'; x.beginPath(); x.arc(zx, zy, zr, 0, 7); x.fill(); x.strokeStyle = inz ? '#3ddc6e' : '#a855f7'; x.lineWidth = 5; x.stroke() }
         if (curMode == 'royale') { const [zx, zy] = toScreen(WORLD / 2, WORLD / 2), zr = zoneR() * lens.z; x.save(); x.beginPath(); x.rect(0, 0, W, H); x.arc(zx, zy, zr, 0, 7, true); x.fillStyle = 'rgba(220,38,38,.3)'; x.fill('evenodd'); x.restore(); x.strokeStyle = '#ef4444'; x.lineWidth = 4; x.beginPath(); x.arc(zx, zy, zr, 0, 7); x.stroke() }
         for (const o of steals) { if (elapsed < o.until) continue; const [sx, sy] = toScreen(o.x, o.y); if (sx < -40 || sx > W + 40 || sy < -40 || sy > H + 40) continue; const pr = (20 + Math.sin(clock * 4) * 2) * lens.z + 3; x.fillStyle = 'rgba(250,204,21,.3)'; x.beginPath(); x.arc(sx, sy, pr * 1.5, 0, 7); x.fill(); x.fillStyle = '#7c3aed'; x.beginPath(); x.arc(sx, sy, pr, 0, 7); x.fill(); x.strokeStyle = '#facc15'; x.lineWidth = 3; x.stroke(); x.font = '700 ' + Math.round(pr * 1.1) + 'px system-ui'; x.textAlign = 'center'; x.fillText('💰', sx, sy + pr * .38) }
@@ -1364,7 +1436,7 @@
             panel(W - 242, fy, 232, 14 + live.length * 20);
             live.forEach((e, i) => {
               const yy = fy + 24 + i * 20; let px = W - 232; x.globalAlpha = Math.max(.25, Math.min(1, 7 - (clock - e.t))); x.font = '600 12px Fredoka, system-ui'; x.textAlign = 'left';
-              [[cut(e.k), e.kc], [e.w || ' ate ', '#8f82b3'], [cut(e.v), e.vc]].forEach(([t, col]) => { x.fillStyle = col; x.fillText(t, px, yy); px += x.measureText(t).width });
+              [[cut(e.k), e.kc, e.k], [e.w || ' ate ', '#8f82b3'], [cut(e.v), e.vc, e.v]].forEach(([t, col, full]) => { x.fillStyle = online.on && col === '#ece6ff' && full && hero && full === hero.name ? '#3ddc6e' : col; x.fillText(t, px, yy); px += x.measureText(t).width });
             });
             x.globalAlpha = 1;
           }
@@ -1410,7 +1482,7 @@
           touch = true;
           if (scr == 'play' && !paused && hero.cells.length) {
             const bt = getBtnPos(), hit = b => Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r + 8;
-            if (hit(bt.split)) { divide(hero); return } if (hit(bt.feed)) { ejectMass(hero); return } if (hit(bt.boost)) { boostHeld = true; boostPid = e.pointerId; return }
+            if (hit(bt.split)) { act('split'); return } if (hit(bt.feed)) { act('feed'); return } if (hit(bt.boost)) { boostHeld = true; boostPid = e.pointerId; return }
             const jb = joyBase(); if (stick.id === null && Math.hypot(e.clientX - jb.x, e.clientY - jb.y) < jb.r * 1.8) { stick.id = e.pointerId; try { c.setPointerCapture(e.pointerId) } catch (err) {} joyMove(e) }
           }
           return;
@@ -1423,11 +1495,349 @@
       window.addEventListener('keydown', e => {
         const k = e.key.toLowerCase();
         if (k == 'shift') { boostHeld = true; return } if (k == 'escape') { if (scr == 'play' && hero && hero.cells.length) paused ? resumeGame() : pauseGame(); return }
-        if (scr == 'play' && SPEC[curMode] && hero && !hero.cells.length) { if (k == 'arrowleft') specStep(-1); else if (k == 'arrowright') specStep(1); return }
+        if (scr == 'play' && (SPEC[curMode] || online.on) && hero && !hero.cells.length) { if (k == 'arrowleft') specStep(-1); else if (k == 'arrowright') specStep(1); return }
         if (scr == 'play' && !paused && hero && hero.cells.length && AK[k]) { e.preventDefault(); heldKeys[AK[k]] = true; keyMode = true; return }
         if (scr != 'play' || paused || e.repeat || !hero.cells.length) return;
-        if (k == ' ') { e.preventDefault(); divide(hero) } else if (k == 'w') ejectMass(hero);
+        if (k == ' ') { e.preventDefault(); act('split') } else if (k == 'w') act('feed');
       });
+
+
+      // =====================================================================
+      // ONLINE MULTIPLAYER
+      // One WebSocket per player to the Cloudflare Worker at ONLINE_URL. JSON messages:
+      //   client -> server  {t:'join', room:0-4, name, col, skin, settings:{mode,diff,map,pow}}   settings only matter if the room is empty
+      //                     {t:'in', tx, ty, b}  steering (world coords) + boost held       (guest -> host)
+      //                     {t:'act', a:'split'|'feed'}                                      (guest -> host)
+      //                     {t:'s', ...}         world snapshot, optional "to":id            (host -> guests)
+      //                     {t:'ping'}
+      //   server -> client  {t:'rooms', rooms:[{n:playerCount, s:settings|null} x5]}       (while not in a room)
+      //                     {t:'joined', room, id, host:bool, settings, peers:[{id,name,col,skin}]}
+      //                     {t:'peer', ev:'join'|'leave', id, name, col, skin}               (to host)
+      //                     {t:'in'|'act', from:id, ...}                                     (to host)
+      //                     {t:'s', ...}                                                     (to guests; only to "to" when given)
+      //                     {t:'host', peers:[...]}  you are the new host  /  {t:'hostchange'}  host left (to the rest)
+      //                     {t:'err', msg}
+      // The room's first player is the host: their browser runs the game (bots included) and streams snapshots.
+      // The settings of the first player stay for the room until it is empty again. Rooms hold up to 8 humans.
+      // =====================================================================
+      const OLRESP = { ffa: 1, speed: 1, time: 1, koth: 1, infected: 1, renegades: 1 };
+      const online = { on: false, host: false, ws: null, open: false, joining: false, room: -1, myId: null, settings: null, saved: null, ready: false, over: null, peers: new Map(), seq: 0, snapT: 0, inT: 0, rem: [], addQ: [], fullTo: [], fullAll: false, evq: [], feedOut: [], last: {}, pingT: null, joinT: null, waitT: null, prevT: 0, tickT: 0 };
+      const gm = { byId: new Map(), dots: new Map() };
+      let bursts = [], bgWorker = null;
+      // Browsers pause requestAnimationFrame in hidden tabs. A Web Worker's timer is not paused, so while the host's tab is hidden
+      // the worker ticks ~30 times a second and drives the game, which keeps the room running for everyone.
+      function startBgTicker() {
+        if (bgWorker || typeof Worker == 'undefined') return;
+        try {
+          const url = URL.createObjectURL(new Blob(['setInterval(function(){postMessage(0)},33)'], { type: 'text/javascript' }));
+          bgWorker = new Worker(url); bgWorker.onmessage = () => { if (document.hidden && online.on && online.host && scr == 'play') stepSim(performance.now()) };
+        } catch (e) { bgWorker = null }
+      }
+      function stopBgTicker() { if (bgWorker) { try { bgWorker.terminate() } catch (e) {} bgWorker = null } }
+      function movePole(o) {
+        for (let a = 0; a < 40; a++) { const nx = randBetween(200, WORLD - 200), ny = randBetween(200, WORLD - 200); if (!poles.some(r => r !== o && Math.hypot(r.x - nx, r.y - ny) < 220)) { o.x = nx; o.y = ny; return } }
+        o.x = randBetween(200, WORLD - 200); o.y = randBetween(200, WORLD - 200);
+      }
+      let ovKey = '';
+      const olSend = o => { try { if (online.ws && online.ws.readyState === 1) online.ws.send(JSON.stringify(o)) } catch (e) {} };
+      const act = a => { if (online.on && !online.host) { olSend({ t: 'act', a }); playSound(a == 'split' ? 'swipe' : 'feed') } else if (a == 'split') divide(hero); else ejectMass(hero) };
+      const evTo = (to, text, sub, sec, kind) => { if (online.on && online.host) online.evq.push([to, text, sub === undefined ? '' : sub, sec || 4, kind || 0]) };
+      const sfx = (p, n) => { if (p === hero) playSound(n); else if (p && p.remote) evTo(p.id, n, '', 0, 'snd') };
+      const sayAll = (text, sub, sec) => { say(text, sub, sec); evTo(null, text, sub, sec) };
+      const pushFeed = e => { feedLog.push(e); if (online.on && online.host) online.feedOut.push([e.k, e.w || 0, e.v, e.kc, e.vc]) };
+      const rnd1 = v => Math.round(v * 10) / 10;
+      const b64e = arr => { let t = ''; for (let i = 0; i < arr.length; i += 8192) t += String.fromCharCode.apply(null, arr.subarray(i, i + 8192)); return btoa(t) };
+      const b64d = t => { const bin = atob(t), arr = new Uint8Array(bin.length); for (let i = 0; i < bin.length; i++) arr[i] = bin.charCodeAt(i); return arr };
+      const POW_ICON = { speed: '⚡', shield: '🛡', ghost: '👻', magnet: '🧲', steal: '💰' };
+
+      const cleanSettings = s0 => {
+        s0 = s0 || {}; const mode = MODES.includes(s0.mode) ? s0.mode : 'ffa', df = DIFFS[s0.diff] ? s0.diff : 'Normal', mp = Math.max(1, Math.min(10, Math.round(+s0.map || 3))), pw = {};
+        for (const k in POW) pw[k] = s0.pow ? s0.pow[k] !== false : true;
+        return { mode, diff: df, map: mp, pow: pw };
+      };
+      const settingsNow = () => ({ mode: gameMode, diff, map: mapMul, pow: { ...POW } });
+      function applyRoomSettings(s0) {
+        if (!online.saved) online.saved = { gameMode, diff, mapMul, pow: { ...POW } };
+        s0 = cleanSettings(s0); online.settings = s0; gameMode = s0.mode; diff = s0.diff; mapMul = s0.map; Object.assign(POW, s0.pow);
+      }
+      function restoreSettings() {
+        if (!online.saved) return; const sv = online.saved; online.saved = null;
+        gameMode = sv.gameMode; diff = sv.diff; mapMul = sv.mapMul; Object.assign(POW, sv.pow); sizeEl.value = mapMul;
+        document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.toggle('active', btn.textContent == diff)); refreshModeUI();
+      }
+
+      // ---- menu: room list ----
+      const setOlError = (t, info) => { const e = getEl('online-error'); e.textContent = t || ''; e.classList.toggle('info', !!info) };
+      const roomLine = s0 => {
+        s0 = cleanSettings(s0); const fixed = s0.mode == 'koth' || s0.mode == 'colour', keys = Object.keys(POW), on = keys.filter(k => s0.pow[k]);
+        const pw = CALM[s0.mode] ? 'set by gamemode' : on.length == keys.length ? 'all' : on.length ? on.map(k => POW_ICON[k]).join(' ') : 'off';
+        return 'Gamemode: ' + MODE_LABEL[s0.mode] + ' · Power-ups: ' + pw + ' · Bots: ' + s0.diff + (fixed ? '' : ' · Map ' + s0.map + 'x');
+      };
+      function renderRooms(list) {
+        const box = getEl('room-list'); box.innerHTML = '';
+        const hint = document.createElement('div'); hint.className = 'room-hint'; hint.textContent = 'Join a room, or start an empty one with the mode and settings you have picked above.'; box.appendChild(hint);
+        const grid = document.createElement('div'); grid.className = 'room-grid';
+        for (let i = 0; i < 5; i++) {
+          const r = (list && list[i]) || { n: 0 }, bt = document.createElement('button'), t = document.createElement('b'), d = document.createElement('small');
+          bt.className = 'room-btn' + (r.n ? ' live' : ''); bt.type = 'button';
+          if (!r.n) { t.textContent = 'Room ' + (i + 1) + ': empty'; d.textContent = 'Start it with your settings' }
+          else { t.textContent = 'Room ' + (i + 1) + ' · ' + r.n + ' playing' + (r.n >= 8 ? ' (full)' : ''); d.textContent = roomLine(r.s) }
+          if (r.n >= 8) bt.disabled = true;
+          bt.onclick = () => joinRoom(i); bt.append(t, d); grid.appendChild(bt);
+        }
+        box.appendChild(grid);
+      }
+      function closeLobby(keepErr) {
+        if (!online.on) { if (online.pingT) { clearInterval(online.pingT); online.pingT = null } const ws = online.ws; if (ws) { online.ws = null; ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null; try { ws.close() } catch (e) {} } }
+        online.open = false; online.joining = false; getEl('room-list').classList.remove('open');
+        const bt = getEl('play-online-btn'); bt.disabled = false; bt.textContent = 'Play online'; if (!keepErr) setOlError('');
+      }
+      const lobbyFail = () => { closeLobby(true); setOlError("Couldn't connect to servers") };
+      window.toggleOnline = function() {
+        if (online.on || online.joining) return;
+        if (online.open || online.ws) { closeLobby(); return }
+        setOlError(''); const bt = getEl('play-online-btn'); bt.disabled = true; bt.textContent = 'Connecting...'; let ws, got = false;
+        try { ws = new WebSocket(ONLINE_URL) } catch (e) { lobbyFail(); return }
+        online.ws = ws;
+        const timer = setTimeout(() => { if (!got && online.ws === ws) lobbyFail() }, 5000);
+        ws.onmessage = ev => {
+          let m; try { m = JSON.parse(ev.data) } catch (e) { return }
+          if (m.t == 'rooms' && !got) { got = true; clearTimeout(timer); online.open = true; bt.disabled = false; bt.textContent = 'Hide rooms'; getEl('room-list').classList.add('open'); online.pingT = setInterval(() => olSend({ t: 'ping' }), 20000) }
+          olMsg(m);
+        };
+        ws.onerror = () => { if (!got && online.ws === ws) { clearTimeout(timer); lobbyFail() } };
+        ws.onclose = () => { clearTimeout(timer); if (online.ws !== ws) return; if (!got) lobbyFail(); else if (online.on) olLost(); else { online.ws = null; closeLobby(true); setOlError('Lost connection to the servers') } };
+      };
+      function joinRoom(i) {
+        if (online.on || online.joining || !online.ws) return; setOlError('Joining room ' + (i + 1) + '...', true);
+        try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
+        online.joining = true; AudioFX.ensure();
+        olSend({ t: 'join', room: i, name: (nameInput.value.trim() || 'You').slice(0, 15), col: colorPicker.value, skin: selectedSkin, settings: settingsNow() });
+        clearTimeout(online.joinT); online.joinT = setTimeout(() => { if (online.joining) { online.joining = false; setOlError("Couldn't join that room") } }, 6000);
+      }
+      function olTeardown() {
+        clearTimeout(online.joinT); clearTimeout(online.waitT); stopBgTicker();
+        if (online.pingT) { clearInterval(online.pingT); online.pingT = null }
+        const ws = online.ws; online.ws = null; if (ws) { ws.onopen = ws.onmessage = ws.onclose = ws.onerror = null; try { ws.close() } catch (e) {} }
+        online.on = false; online.host = false; online.ready = false; online.over = null; online.peers.clear(); online.room = -1;
+        closeLobby(); restoreSettings(); gm.byId.clear(); gm.dots.clear();
+      }
+      function olLost(msg) { olTeardown(); window.toMenu(); setOlError(msg || 'Lost connection to the servers') }
+
+      // ---- messages ----
+      function olMsg(m) {
+        switch (m.t) {
+          case 'rooms': if (!online.on && !online.joining) renderRooms(m.rooms); break;
+          case 'err': online.joining = false; clearTimeout(online.joinT); setOlError(String(m.msg || 'Could not join that room')); break;
+          case 'joined': olJoined(m); break;
+          case 'peer': if (online.on && online.host) olPeer(m); break;
+          case 'host': if (online.on && !online.host) olPromote(m); break;
+          case 'hostchange': if (online.on && !online.host) say('The host left', 'The game carries on...', 4); break;
+          case 's': if (online.on && !online.host) olSnap(m); break;
+          case 'in': if (online.on && online.host) olInput(m); break;
+          case 'act': if (online.on && online.host) olAct(m); break;
+        }
+      }
+      function olJoined(m) {
+        clearTimeout(online.joinT); online.joining = false; online.on = true; online.host = !!m.host; online.myId = m.id; online.room = m.room; online.ready = false; online.over = null;
+        online.peers.clear(); online.rem = []; online.addQ = []; online.fullTo = []; online.fullAll = false; online.evq = []; online.feedOut = []; online.last = {}; ovKey = '';
+        setOlError(''); getEl('room-list').classList.remove('open');
+        applyRoomSettings(m.settings);
+        (m.peers || []).forEach(pe => { if (pe.id !== online.myId) online.peers.set(pe.id, pe) });
+        if (online.host) { startBgTicker(); startRound() }
+        else { clearTimeout(online.waitT); online.waitT = setTimeout(() => { if (online.on && !online.ready) olLost("Couldn't load the room") }, 8000) }
+      }
+      function setWorldSizes() {
+        if (curMode == 'koth' || curMode == 'colour') { PEL = 0; VIRUS_COUNT = 0 }
+        else { const ar = WORLD * WORLD / 144e6; PEL = Math.min(20000, Math.round(5400 * ar)); VIRUS_COUNT = curMode == 'speed' ? 0 : Math.min(400, Math.max(12, Math.round(110 * ar))) }
+        makeHot();
+      }
+      // the previous host left: this browser already holds the whole world from the snapshots, so just carry on running it
+      function olPromote(m) {
+        clearTimeout(online.waitT); startBgTicker(); online.host = true; online.peers.clear(); (m.peers || []).forEach(pe => { if (pe.id !== online.myId) online.peers.set(pe.id, pe) });
+        if (!online.ready || !hero) { online.over = null; startRound(); say('You are now the host', 'A new game is starting...', 4); return }
+        setWorldSizes(); nextBolt = CALM[curMode] ? 1e9 : 0; nextFrenzy = GIANT_OK[curMode] ? 0 : 1e9; nextFever = PEL > 0 ? 0 : 1e9; bolts = [];
+        roster = roster.filter(p => p.bot || p === hero || online.peers.has(p.id));
+        let maxId = online.seq;
+        for (const p of roster) {
+          const c0 = p.cells[0]; p.targetPrey = null; p.t = 0; p.tx = c0 ? c0.x : WORLD / 2; p.ty = c0 ? c0.y : WORLD / 2; p.remote = !p.bot && p !== hero; p.boostIn = false; p.lastAct = 0;
+          if (typeof p.id == 'string' && p.id[0] == 'b') maxId = Math.max(maxId, parseInt(p.id.slice(1)) || 0);
+          for (const q of p.cells) { q.m = q.nm !== undefined ? q.nm : q.m; if (typeof q.id == 'number') maxId = Math.max(maxId, q.id) }
+        }
+        hero.bot = false; hero.remote = false;
+        for (const o of dots) { o.eater = null; o.suck = 0; o.sx = undefined; o.ss = undefined; if (typeof o.id == 'number') maxId = Math.max(maxId, o.id) }
+        online.seq = maxId + 1000; gm.byId.clear(); gm.dots.clear();
+        online.rem = []; online.addQ = []; online.fullAll = true; online.fullTo = []; online.evq = []; online.feedOut = []; online.last = {}; online.snapT = 0;
+        say('The host left', 'You are running the game now, it carries on', 4);
+      }
+      const olTeam = () => { const r = roster.filter(q => q.team == 'red').length, b2 = roster.filter(q => q.team == 'blue').length; return r < b2 ? 'red' : b2 < r ? 'blue' : (Math.random() < .5 ? 'red' : 'blue') };
+      function addRemote(pe) {
+        const okc = /^#[0-9a-f]{6}$/i.test(pe.col || '') ? pe.col : '#3b82f6', p = makePlayer(String(pe.name || 'Player').slice(0, 15), hueFromHex(okc), false);
+        p.remote = true; p.id = pe.id; p.skin = SKINS.includes(pe.skin) ? pe.skin : ''; p.col = okc; p.tx = p.cells[0].x; p.ty = p.cells[0].y;
+        if (curMode == 'teams' || curMode == 'renegades') { p.team = olTeam(); p.col = TEAM[p.team] } else if (curMode == 'infected') { p.team = 'human'; p.col = TEAM.human }
+        return p;
+      }
+      function olPeer(m) {
+        if (m.ev == 'join') {
+          if (roster.some(q => q.id === m.id)) return;
+          const pe = { id: m.id, name: m.name, col: m.col, skin: m.skin }; online.peers.set(m.id, pe);
+          const p = addRemote(pe), elim = curMode == 'duos' || curMode == 'squads' || curMode == 'colour';
+          if (elim) { p.cells = []; p.out = true; p.team = undefined } else { const [sx, sy] = safeSpot(); p.cells[0].x = sx; p.cells[0].y = sy; p.tx = sx; p.ty = sy }
+          roster.push(p); online.fullTo.push(m.id); pushFeed({ t: clock, k: p.name, w: ' joined the room', v: '', kc: '#3ddc6e', vc: '#fff' });
+        } else if (m.ev == 'leave') {
+          online.peers.delete(m.id); const i = roster.findIndex(q => q.id === m.id);
+          if (i >= 0) { if (spec === roster[i]) spec = null; pushFeed({ t: clock, k: roster[i].name, w: ' left the room', v: '', kc: '#8f82b3', vc: '#fff' }); roster.splice(i, 1) }
+        }
+      }
+      function olInput(m) {
+        const p = roster.find(q => q.id === m.from); if (!p || !p.remote) return;
+        if (isFinite(m.tx) && isFinite(m.ty)) { p.tx = Math.max(0, Math.min(WORLD, +m.tx)); p.ty = Math.max(0, Math.min(WORLD, +m.ty)) }
+        p.boostIn = !!m.b; p.idle = false; p.lastIn = clock;
+      }
+      function olAct(m) {
+        if (m.a == 'steal') { const p0 = roster.find(q => q.id === m.from); if (p0 && p0.remote && p0.stealPend) { p0.stealPend = 0; const v1 = m.v ? roster.find(q => q.id === m.v) : null; if (v1 && v1 !== p0 && v1.cells.length && !v1.giant && p0.cells.length) steal(p0, v1) } return }
+        const p = roster.find(q => q.id === m.from); if (!p || !p.remote || !p.cells.length || clock - (p.lastAct || 0) < .08) return; p.lastAct = clock;
+        if (m.a == 'split') divide(p); else if (m.a == 'feed') ejectMass(p);
+      }
+      function olSpectate() {
+        if (spec && spec.cells.length && !spec.giant) return spec;
+        spec = null; let best = null, bm = -1; for (const p of roster) if (p.cells.length && !p.giant) { const t = sumMass(p); if (t > bm) { bm = t; best = p } }
+        spec = best; return best;
+      }
+      function olEnd(title, sub, winners) {
+        const ids = (winners || []).filter(q => q.id && !q.bot).map(q => q.id);
+        online.over = { title, sub: sub || '', winners: ids, left: 10 }; ovKey = '';
+        playSound(ids.includes(online.myId) ? 'coin' : 'lose'); online.snapT = 0; sendSnap(false);
+      }
+      function hostOverTick(dt) {
+        online.over.left -= dt; olFlush(.5, dt);
+        if (online.over.left <= 0) { online.over = null; startRound() }
+      }
+
+      // ---- host: build and send snapshots ----
+      function packPlayers(full, commit) {
+        const out = [];
+        for (const p of roster) {
+          if (!p.id) p.id = 'b' + (++online.seq);
+          const ms = [p.name, Math.round(p.h), p.col || 0, p.skin || 0, p.team || 0, p.giant ? 1 : 0, p.bot ? 1 : 0, p.hunter ? 1 : 0], key = ms.join('|'), meta = (full || p._ms !== key) ? ms : null; if (commit) p._ms = key;
+          const dyn = [rnd1(p.shield || 0), rnd1(p.ghostUntil || 0), rnd1(p.magnetUntil || 0), rnd1(p.boostUntil || 0), rnd1(p.pts || 0), p.respawnAt == null ? -1 : rnd1(p.respawnAt), p.boosting ? 1 : 0, p.bolt ? rnd1(p.bolt.until) : 0, p.bolt ? Math.round(p.bolt.total) : 0, rnd1(p.expires || 0), p.out ? 1 : 0];
+          out.push([p.id, meta, dyn, p.cells.map(q => [q.id || (q.id = ++online.seq), Math.round(q.x), Math.round(q.y), rnd1(q.m), Math.round(q.vx), Math.round(q.vy), rnd1(q.merge || 0), Math.round(q.dx || 0), Math.round(q.dy || 0)])]);
+        }
+        return out;
+      }
+      const packDot = o => [o.id, Math.round(o.x), Math.round(o.y), o.m, Math.round(o.h || 0), (o.big ? 1 : 0) | (o.fever ? 2 : 0), o.fever ? rnd1(o.until) : (o.big && o.col ? o.col : 0)];
+      function assignDotIds() { for (const o of dots) if (!o.id) { o.id = ++online.seq; online.addQ.push(o); o.sx = Math.round(o.x); o.sy = Math.round(o.y) } }
+      function movedDots() {
+        const dm = [];
+        for (const o of dots) { const x0 = Math.round(o.x), y0 = Math.round(o.y), su = o.eater ? Math.round(o.suck * 100) / 100 : -1; if (x0 !== o.sx || y0 !== o.sy || su !== (o.ss === undefined ? -1 : o.ss)) { o.sx = x0; o.sy = y0; o.ss = su; dm.push([o.id, x0, y0, su]) } }
+        return dm;
+      }
+      function sendSnap(full, to) {
+        const commit = !to, m = { t: 's', el: Math.round(elapsed * 100) / 100 }; if (to) m.to = to;
+        if (full) { m.full = 1; m.W = WORLD; m.mode = curMode; if (curMode == 'colour' && hex.col) m.hx = { c: hex.cols, r: hex.rows, d: b64e(hex.col) } }
+        m.p = packPlayers(full, commit); assignDotIds();
+        if (!full) { const dm = movedDots(); if (online.addQ.length) m.da = online.addQ.map(packDot); if (online.rem.length) m.dr = online.rem; if (dm.length) m.dm = dm }
+        const chg = (key, arr) => { const t = JSON.stringify(arr); if (full || t !== online.last[key]) { m[key] = arr; if (commit) online.last[key] = t } };
+        chg('vr', viruses.map(v => [Math.round(v.x), Math.round(v.y), Math.round(v.m)]));
+        chg('pu', powerups.map(o => [Math.round(o.x), Math.round(o.y), PT.indexOf(o.type), rnd1(o.until)]));
+        if (curMode == 'speed' || full) chg('po', poles.map(o => [Math.round(o.x), Math.round(o.y)]));
+        chg('st', steals.map(o => [Math.round(o.x), Math.round(o.y), rnd1(o.until)]));
+        if (curMode == 'koth') m.zn = [Math.round(zone.x), Math.round(zone.y)];
+        if (curMode == 'colour') m.cb = [cb.round, cb.phase == 'run' ? 0 : 1, Math.round(cb.t * 100) / 100, cb.target];
+        m.ov = online.over ? { title: online.over.title, sub: online.over.sub, winners: online.over.winners, left: rnd1(online.over.left) } : null;
+        if (commit && online.feedOut.length) { m.fl = online.feedOut; online.feedOut = [] }
+        if (commit && online.evq.length) { m.ev = online.evq; online.evq = [] }
+        if (!full && commit) { online.addQ = []; online.rem = [] }
+        olSend(m);
+        if (full) {
+          const all = dots.map(packDot);
+          for (let i = 0; i < all.length; i += 2500) { const c2 = { t: 's', da: all.slice(i, i + 2500) }; if (to) c2.to = to; olSend(c2) }
+          if (commit) { online.addQ = []; online.rem = []; movedDots() }
+        }
+      }
+      function olFlush(rate, dt) {
+        if (online.fullAll) { online.fullAll = false; online.fullTo = []; sendSnap(true); online.snapT = 0; return }
+        for (const id of online.fullTo.splice(0)) sendSnap(true, id);
+        online.snapT += dt; if (online.snapT >= rate) { online.snapT = 0; sendSnap(false) }
+      }
+
+      // ---- guest: apply snapshots, smooth, send input ----
+      function olSnap(m) {
+        if (m.full) {
+          clearTimeout(online.waitT); gm.byId.clear(); gm.dots.clear(); roster = []; dots = []; viruses = []; powerups = []; steals = []; feedLog = []; floaters = []; banner = null; bigAlert = null; spec = null; bolts = []; stealOpen = false;
+          WORLD = m.W; curMode = m.mode; poles = []; bursts = []; zone = { x: WORLD / 2, y: WORLD / 2, a: 0, da: 0, t: 0 }; cb = { round: 1, phase: 'run', t: 10, target: 0 };
+          if (m.hx) { hex.cols = m.hx.c; hex.rows = m.hx.r; hex.col = b64d(m.hx.d) }
+          topSize = 10; eatCount = 0; elapsed = m.el || 0; online.ready = true; online.over = null; online.prevT = 0; ovKey = ''; hero = null;
+          if (scr != 'play') { scr = 'play'; paused = false; AudioFX.ensure(); AudioFX.sync(true); lens.z = .9; lens.fresh = true }
+        }
+        if (!online.ready) return;
+        if (m.el !== undefined) elapsed = m.el;
+        if (m.p) {
+          const seen = new Set();
+          for (const e of m.p) {
+            const id = e[0]; seen.add(id); let p = gm.byId.get(id);
+            if (!p) { p = { id, name: '', h: 0, bot: true, skin: '', tx: 0, ty: 0, cells: [], t: 0 }; gm.byId.set(id, p); roster.push(p) }
+            const mt = e[1]; if (mt) { p.name = mt[0]; p.h = mt[1]; p.col = mt[2] || undefined; p.skin = mt[3] || ''; p.team = mt[4] || undefined; p.giant = !!mt[5]; p.bot = !!mt[6]; p.hunter = !!mt[7] }
+            const dy = e[2]; p.shield = dy[0]; p.ghostUntil = dy[1]; p.magnetUntil = dy[2]; p.boostUntil = dy[3]; p.pts = dy[4]; p.respawnAt = dy[5] < 0 ? null : dy[5]; p.boosting = !!dy[6]; p.bolt = dy[7] > 0 ? { until: dy[7], total: dy[8] } : null; p.expires = dy[9]; p.out = !!dy[10];
+            const old = new Map(p.cells.map(q => [q.id, q])), nc = [];
+            for (const ce of e[3]) {
+              let q = old.get(ce[0]);
+              if (!q) { q = { id: ce[0], x: ce[1], y: ce[2], m: ce[3], vx: 0, vy: 0, merge: 0, wobble: 0 }; if (p.cells.length) q.wobble = 1 } else if (ce[3] > q.nm * 1.04) q.wobble = .8;
+              q.nx = ce[1]; q.ny = ce[2]; q.nm = ce[3]; q.vx = ce[4]; q.vy = ce[5]; q.merge = ce[6]; q.ndx = ce[7] || 0; q.ndy = ce[8] || 0; q.nt = clock; nc.push(q);
+            }
+            p.cells = nc;
+          }
+          if (seen.size !== roster.length || gm.byId.size !== roster.length) { roster = roster.filter(p => seen.has(p.id)); for (const id of Array.from(gm.byId.keys())) if (!seen.has(id)) gm.byId.delete(id) }
+          const me2 = gm.byId.get(online.myId); if (me2) hero = me2;
+          if (!hero) { hero = { id: online.myId, name: 'You', h: 0, cells: [], bot: false, tx: 0, ty: 0 }; gm.byId.set(online.myId, hero); roster.push(hero) }
+        }
+        if (m.da || m.dr) {
+          if (m.da) for (const d of m.da) gm.dots.set(d[0], { id: d[0], x: d[1], y: d[2], m: d[3], h: d[4], vx: 0, vy: 0, big: !!(d[5] & 1), fever: !!(d[5] & 2), col: (d[5] & 1) && d[6] ? d[6] : undefined, until: (d[5] & 2) ? d[6] : 0, age: 1 });
+          if (m.dr) for (const id of m.dr) gm.dots.delete(id);
+          dots = Array.from(gm.dots.values());
+        }
+        if (m.dm) for (const d of m.dm) { const o = gm.dots.get(d[0]); if (o) { o.x = d[1]; o.y = d[2]; if (d[3] >= 0) { o.eater = true; o.suck = d[3] } else o.eater = false } }
+        if (m.po) { const np = m.po.map(o => ({ x: o[0], y: o[1] })); if (!m.full) for (let i = 0; i < np.length && i < poles.length; i++) if (poles[i].x !== np[i].x || poles[i].y !== np[i].y) bursts.push({ x: poles[i].x, y: poles[i].y, t: clock }); poles = np }
+        if (m.vr) viruses = m.vr.map(a => ({ x: a[0], y: a[1], m: a[2], vx: 0, vy: 0 }));
+        if (m.pu) powerups = m.pu.map(a => ({ x: a[0], y: a[1], type: PT[a[2]] || 'speed', until: a[3] }));
+        if (m.st) steals = m.st.map(a => ({ x: a[0], y: a[1], until: a[2] }));
+        if (m.zn) { zone.x = m.zn[0]; zone.y = m.zn[1] }
+        if (m.cb) { cb.round = m.cb[0]; cb.phase = m.cb[1] ? 'drop' : 'run'; cb.t = m.cb[2]; cb.target = m.cb[3] }
+        if (m.fl) m.fl.forEach(a => { feedLog.push({ t: clock, k: a[0], w: a[1] || undefined, v: a[2], kc: a[3], vc: a[4] }); if (feedLog.length > 20) feedLog.shift() });
+        if (m.ev) m.ev.forEach(a => {
+          if (!(a[0] == null || a[0] === online.myId)) return; const kd = a[4];
+          if (kd == 'snd') playSound(a[1]); else if (kd == 'big') { bigAlert = { text: a[1], sub: a[2], until: elapsed + a[3] }; playSound('lose') }
+          else if (kd == 'flash') { flashT = elapsed; playSound('pop') } else if (kd == 'bolt') bolts.push({ x: a[1], y: a[2], t: elapsed })
+          else if (kd == 'steal') openSteal(); else if (kd == 'steal0') { stealOpen = false; syncMenu() }
+          else { say(a[1], a[2], a[3]); if (a[1] == 'FEVER!' || a[1] == 'FRENZY!') playSound('coin') }
+        });
+        if (m.p) online.over = m.ov ? { title: m.ov.title, sub: m.ov.sub, winners: m.ov.winners || [], left: m.ov.left } : null;
+        if (lens.fresh && hero && hero.cells.length) { lens.fresh = false; lens.x = hero.cells[0].nx; lens.y = hero.cells[0].ny }
+        syncMenu();
+      }
+      function guestTick(dt) {
+        if (!online.ready || !hero) return;
+        if (online.over) online.over.left = Math.max(0, online.over.left - dt); else elapsed += dt;
+        const k = Math.min(1, dt * 20), live = hero.cells.length > 0 && !online.over, T0 = live ? sumMass(hero) : 0;
+        if (live) readInput();
+        for (const p of roster) for (const q of p.cells) {
+          const ox = q.x, oy = q.y, age = Math.min(.12, clock - (q.nt || clock)), ex = q.nx + (q.ndx || 0) * age, ey = q.ny + (q.ndy || 0) * age;
+          if (live && p === hero) {
+            // your own blob moves instantly with your mouse, and is gently pulled back to what the host says
+            const d0 = Math.hypot(hero.tx - q.x, hero.ty - q.y) || 1, bm = (hero.boostUntil > elapsed ? 1.9 : 1) * (curMode == 'infected' && hero.team == 'infected' ? 1.12 : 1) * (boostHeld && T0 > 40 ? 5 : 1), sp = baseSpeed(q.m) * bm * Math.min(1, d0 / bodyR(q.m));
+            q.x += (hero.tx - q.x) / d0 * sp * dt; q.y += (hero.ty - q.y) / d0 * sp * dt;
+            const rx = ex - q.x, ry = ey - q.y, kk = Math.min(1, dt * (Math.hypot(rx, ry) > 150 ? 8 : 2)); q.x += rx * kk; q.y += ry * kk;
+            q.x = Math.max(0, Math.min(WORLD, q.x)); q.y = Math.max(0, Math.min(WORLD, q.y));
+          } else { q.x += (ex - q.x) * k; q.y += (ey - q.y) * k }
+          q.m += (q.nm - q.m) * k; q.wobble = Math.max(0, (q.wobble || 0) - dt * 1.5); q.dx = (q.x - ox) / Math.max(dt, .001); q.dy = (q.y - oy) / Math.max(dt, .001);
+        }
+        if (curMode == 'colour') cb.t = Math.max(0, cb.t - dt);
+        online.inT += dt; if (online.inT >= .05 && live) { online.inT = 0; olSend({ t: 'in', tx: Math.round(hero.tx), ty: Math.round(hero.ty), b: boostHeld ? 1 : 0 }) }
+        const T = hero.cells.length ? sumMass(hero) : 0;
+        if (T > 0) { topSize = Math.max(topSize, T); if (online.prevT > 0) { if (T > online.prevT * 1.3) playSound('coin'); else if (T > online.prevT * 1.004 && clock - online.tickT > .08) { online.tickT = clock; playSound('tick') } } } else if (online.prevT > 0) playSound('lose');
+        online.prevT = T;
+        const focus = hero.cells.length ? hero : olSpectate(); if (focus) followCam(focus, dt);
+      }
 
       window.setDiff = function(d) {
         diff = d;
@@ -1437,7 +1847,7 @@
       };
 
       window.startGame = function() {
-        startRound();
+        closeLobby(); startRound();
       };
 
       const unfocus = () => { if (document.activeElement && document.activeElement.blur) document.activeElement.blur() };
@@ -1460,6 +1870,7 @@
       window.resumeGame = function() { paused = false; unfocus(); syncMenu() };
       window.retryGame = function() { unfocus(); startRound(); syncMenu() };
       window.toMenu = function() {
+        if (online.on || online.ws) olTeardown();
         scr = 'menu'; paused = false; unfocus();
         AudioFX.sync(false);
         getEl('best-score-text').innerText = 'Best size ' + bestNow();
@@ -1497,10 +1908,10 @@
         refreshModeUI(); unfocus(); playSound('click');
       };
       const sizeEl = getEl('map-size'), sizeTxt = getEl('map-size-text');
-      try { const mm = parseFloat(localStorage.getItem('blobs-mapmul')); if (mm >= 1 && mm <= 10) mapMul = mm } catch (e) {}
+      try { const mm = parseFloat(localStorage.getItem('blobs-mapmul')); if (mm >= 1 && mm <= 10) mapMul = Math.round(mm) } catch (e) {}
       try { Object.assign(POW, JSON.parse(localStorage.getItem('blobs-pow') || '{}')) } catch (e) {}
       sizeEl.value = mapMul;
-      sizeEl.addEventListener('input', () => { mapMul = parseFloat(sizeEl.value) || 3; try { localStorage.setItem('blobs-mapmul', mapMul) } catch (e) {} refreshSetupUI() });
+      sizeEl.addEventListener('input', () => { mapMul = Math.round(parseFloat(sizeEl.value)) || 3; try { localStorage.setItem('blobs-mapmul', mapMul) } catch (e) {} refreshSetupUI() });
       function refreshSetupUI() {
         const fixed = gameMode == 'koth' || gameMode == 'colour', calm = !!CALM[gameMode];
         sizeEl.disabled = fixed; getEl('size-group').classList.toggle('dim', fixed);
@@ -1509,6 +1920,7 @@
         document.querySelectorAll('#pow-selector .theme-btn').forEach(b => b.classList.toggle('active', !!POW[b.dataset.p]));
       }
       window.togglePow = function(n) { POW[n] = !POW[n]; try { localStorage.setItem('blobs-pow', JSON.stringify(POW)) } catch (e) {} refreshSetupUI(); unfocus(); playSound('click') };
+      getEl('ver').textContent = 'v' + APP_VERSION;
       refreshOptUI();
       refreshModeUI();
       document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.toggle('active', btn.textContent == diff));
@@ -1517,6 +1929,7 @@
       syncMenu();
       
       let lastFrame = performance.now();
+      const stepSim = t => { const dt = Math.min(.1, (t - lastFrame) / 1000); lastFrame = t; try { upd(dt) } catch (e) { console.error(e) } };
       const frame = now => {
         const dt = Math.min(.1, (now - lastFrame) / 1000); lastFrame = now;
         try { upd(dt) } catch (e) { console.error(e) }
