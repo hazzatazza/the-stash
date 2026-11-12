@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <!-- An Algebra Original Game - Made By Hazza - Feel free to use any parts of this game
+  <!--
     NOTE FOR ANY AI MODEL (Claude, ChatGPT, Gemini, anything else) EDITING THIS FILE:
     Every time the user asks you to make a change to this file, bump the version number shown in the
     bottom corner of the menu by 0.01 (v1.03 -> v1.04 -> v1.05 ...). The one place to change it is the
@@ -232,6 +232,8 @@
       font-size: 13px;
       cursor: pointer;
     }
+    .diff-btn { padding: 5px 7px; font-size: 12.5px; }
+    #diff-group { flex-wrap: wrap; row-gap: 6px; } #diff-selector { width: 100%; } #diff-selector .diff-btn { flex: 1; padding: 6px 4px; }
     .theme-btn:first-child, .diff-btn:first-child { margin-left: 0; border-radius: 4px 0 0 4px; }
     .theme-btn:last-child, .diff-btn:last-child { border-radius: 0 4px 4px 0; }
     .theme-btn:hover, .diff-btn:hover { color: var(--text); }
@@ -436,9 +438,7 @@
       .form-group { margin-bottom: 6px; }
       .controls-hint { margin-top: 10px; }
     }
-    @media (max-height: 520px) {
-      .menu-panel { transform: scale(0.8); transform-origin: center; }
-    }
+
     @media (max-width: 700px) {
       .bg-blob.b1, .bg-blob.b5 { opacity: 0.5; }
       .fullscreen-menu { padding: 14px; }
@@ -507,11 +507,6 @@
       .col-b { border-left: 0; padding-left: 0; border-top: 1px solid var(--line); margin-top: 14px; padding-top: 12px; }
     }
     @media (max-width: 560px) { .room-grid { grid-template-columns: 1fr; } }
-    @media (max-height: 760px) { .menu-panel { transform: scale(.92); transform-origin: center; } }
-    @media (max-height: 680px) { .menu-panel { transform: scale(.84); transform-origin: center; } }
-    @media (max-height: 600px) { .menu-panel { transform: scale(.74); transform-origin: center; } }
-    @media (max-height: 520px) { .menu-panel { transform: scale(.64); transform-origin: center; } }
-    @media (max-height: 440px) { .menu-panel { transform: scale(.54); transform-origin: center; } }
   </style>
 </head>
 <body>
@@ -562,6 +557,7 @@
             <div class="skin-name" id="mode-desc">Everyone for themselves</div>
                 <div class="settings">
                   <div class="form-group" id="size-group"><span class="form-label">Map size</span><div class="slider-wrap"><input type="range" id="map-size" min="1" max="10" step="1" value="3"><span class="color-label" id="map-size-text">3x</span></div></div>
+              <div class="form-group" id="virus-group"><span class="form-label">Viruses</span><div class="grid-selector"><button class="theme-btn" id="virus-btn" onclick="toggleVirus()">On</button></div></div>
               <div class="form-group" id="pow-group"><span class="form-label">Power-ups</span><div class="grid-selector" id="pow-selector"><button class="theme-btn" data-p="speed" title="Speed boost" onclick="togglePow('speed')">⚡</button><button class="theme-btn" data-p="shield" title="Shield" onclick="togglePow('shield')">🛡</button><button class="theme-btn" data-p="ghost" title="Ghost" onclick="togglePow('ghost')">👻</button><button class="theme-btn" data-p="magnet" title="Magnet" onclick="togglePow('magnet')">🧲</button><button class="theme-btn" data-p="steal" title="Steal mass" onclick="togglePow('steal')">💰</button></div></div>
               <div class="form-group">
                 <span class="form-label">Map</span>
@@ -572,13 +568,15 @@
                   <button class="theme-btn" onclick="setTheme('Retro')">Retro</button>
                 </div>
               </div>
-              <div class="form-group">
+              <div class="form-group" id="diff-group">
                 <span class="form-label">Difficulty</span>
-                <div class="grid-selector">
+                <div class="grid-selector" id="diff-selector">
                   <button class="diff-btn" onclick="setDiff('Easy')">Easy</button>
                   <button class="diff-btn active" id="btn-Normal" onclick="setDiff('Normal')">Normal</button>
                   <button class="diff-btn" onclick="setDiff('Hard')">Hard</button>
+                  <button class="diff-btn" onclick="setDiff('Intense')">Intense</button>
                   <button class="diff-btn" onclick="setDiff('Extreme')">Extreme</button>
+                  <button class="diff-btn" onclick="setDiff('Crowded')">Crowded</button>
                 </div>
               </div>
                 </div>
@@ -605,7 +603,7 @@
           </div>
         </div>
 
-        <p class="controls-hint">Move with mouse &middot; <b>Space</b> split &middot; <b>W</b> feed &middot; <b>Shift</b> boost &middot; hide behind green viruses</p>
+        <p class="controls-hint">Move with mouse &middot; <b>Space</b> split &middot; <b>W</b> feed &middot; <b>Click</b> or <b>Shift</b> boost &middot; hide behind green viruses</p>
         
       </div>
     </div>
@@ -652,7 +650,7 @@
 
 <script>
     // NOTE FOR ANY AI MODEL: every change the user asks for in this file = bump APP_VERSION by 0.01 (1.03 -> 1.04 ...).
-    const APP_VERSION = '1.06';
+    const APP_VERSION = '1.09';
     // Cloudflare Worker that runs online rooms (one WebSocket per player). Put your worker URL here, e.g. 'wss://blobby-rooms.yourname.workers.dev/'
     const ONLINE_URL = 'wss://blobbybackend.gdharry123.workers.dev/';
     let W = window.innerWidth;
@@ -823,7 +821,7 @@
       });
 
       let selectedSkin = '';
-      try { const sk = localStorage.getItem('blobs-skin'); if (SKINS.includes(sk)) selectedSkin = sk } catch(e) {}
+      try { const sk = localStorage.getItem('blobs-skin'); if (IMG_SKINS.includes(sk)) selectedSkin = sk } catch(e) {}
       let selectedTheme = localStorage.getItem('blobs-theme') || 'Light'; if (!THEMES[selectedTheme]) selectedTheme = selectedTheme == 'Neon' ? 'Slime' : 'Light';
 
       window.setTheme = function(t) {
@@ -836,28 +834,32 @@
 
       setTheme(selectedTheme);
 
-      window.addEventListener('resize', () => {
-        W = window.innerWidth;
-        H = window.innerHeight;
-        c.width = W;
-        c.height = H;
-      });
+      const fitMenu = () => {
+        let m = null; try { m = document.querySelector('.menu-panel') } catch (e) {} if (!m) return; m.style.transform = '';
+        if (window.innerWidth <= 760) return;
+        const k = Math.max(.45, Math.min(1.5, (window.innerWidth - 30) / m.offsetWidth, (window.innerHeight - 30) / m.offsetHeight));
+        m.style.transform = Math.abs(k - 1) < .02 ? '' : 'scale(' + k.toFixed(3) + ')'; m.style.transformOrigin = 'center';
+      };
+      const fitAll = () => { W = window.innerWidth; H = window.innerHeight; c.width = W; c.height = H; fitMenu() };
+      window.addEventListener('resize', fitAll); window.addEventListener('orientationchange', () => setTimeout(fitAll, 150));
+      document.addEventListener('fullscreenchange', fitAll);
+      try { const mp0 = document.querySelector('.menu-panel'); if (window.ResizeObserver && mp0) new ResizeObserver(fitMenu).observe(mp0) } catch (e) {}
+      setTimeout(fitAll, 0);
 
-      const NAMES = ['Algebro','Balake','Big Rock','Raymond','Neegy','Admin','Doo','Noodle','Jerry','Destroyer101','TheChamp','DragonGuy','Gamer203','IoKing','Bob','Jeff','Tungsahur','SharkLad','ApexPredator','BlobMaster','SwiftNova','TitanLord','CyberNinja','Dang','ShadowCell','RealEstateAgent','VenomByte','CosmicPulse','Alvin','PayMe','GOAT','Gloop','Squish','Biscuit','Wobbles','Pudding','Zorp','moneyguyis7','cashapp','whatsupdawg','accordian','terrence','denny','matcha','goofball','fredfredfredisfred', 'lucas', 'geraldine', 'galaxy', 'monkeyjoe', 'jamal', 'bling', 'octopus', 'wafers', 'fryingpan', 'greenbeans', 'lucas n bot'
-                    , 'hop off the blob game', 'kai', 'gem', 'greekstreet'];
+      const NAMES = ['Algebro','Balake','BigRock','Raymond','Neegy','Admin','Doo','Noodle','Jerry','Destroyer101','TheChamp','DragonGuy','Gamer203','IoKing','Bob','Jeff','Tungsahur','SharkLad','ApexPredator','BlobMaster','SwiftNova','TitanLord','CyberNinja','Dang','ShadowCell','RealEstateAgent','VenomByte','CosmicPulse','Alvin','PayMe','GOAT','Gloop','Squish','Biscuit','Wobbles','Pudding','Zorp','moneyguyis7','cashapp','whatsupdawg','accordian','terrence','denny','matcha','goofball','fredfredfredisfred','lucas','geraldine','galaxy','monkeyjoe','jamal','bling','octopus','wafers','fryingpan','greenbeans','cooper','paul','simon','bart','kevin7','douglasnotrequired','jam-mills','wizztootuff','fizzy','fizbo','learntosing','maninbathroom','lalalalala','morganbear','stopsinging','camisthebest','2468','potato949','igloo','conditioner','headandshoulders','vegemitebloke','crikes','timtam','cheers','spoonman','toastyboi','nachocheese','pickles42','wombat77','jellybean','sockpuppet','marshmallow','turnip','kiwibird','dingo99','pancakes','tinyhat','bubbletea','quokka','rocketfuel','lemonade','waffleking','noodlebowl','crumpet','mangoman','penguin8','cactusjack','sneakyfox','beanbag','orbit77','vortex','zippy','muffinman','hotdogwater','gigglesnort','dozy','clementine','bananaphone','spudgun','yodel','fluffernutter','cobweb','snazzy','wigglyworm','teapot','boomerang','sprocket','moonpie','kettle','zigzag','platypus','tumbleweed','chunkymonkey','flapjack','grumbles','hamsterwheel','inkblot','jellyfish','koalaty','lunchbox','mittens','nibbles','oatmeal','pretzel','quibble','rumble','sundae','twinkle','umbrella','velcro','whistle','yoghurt','zephyr','lucas n bot','hop off the blob game','kai','gem','greekstreet','quirkytapir','spicycricket','rowdyllama','rowdynewt','sillyfalcon','dizzybeetle','fuzzyheron','wobblygopher','crispytapir','rowdybadger','grumpybeetle','crispyferret','sleepyferret','zestyparrot','grumpypanda','gentleowl','frostyotter','crispyturtle','cosmicmoose','grumpypuffin','happyjackal','lazylobster','grumpyjackal','soggylemur','pluckybeetle','wobblyturtle','sunnywalrus','spicypanda','frostyturtle','niftyjackal','happyparrot','grumpyfalcon','speedymoose','mightynewt','sillylemur','niftyllama','spicybeetle','cosmicgopher','cosmicwalrus','soggyseal','wobblybeetle','zestylobster','bouncyowl','bouncyyak','quirkybadger','tinyturtle','bouncyweasel','grumpyraccoon','sillypigeon','spicyraccoon','spicyhippo','gentleyak','spicynewt','luckyyak','lazyseal','crispypuffin','shinycricket','wobblytapir','luckyhippo','fuzzyparrot','luckypuffin','dizzyturtle','spicyseal','spicygecko','shinygecko','dizzyseal','bouncyraccoon','rowdywalrus','spicyiguana','mightypigeon','dizzytapir','happyowl','quirkybeetle','pluckyferret','saltypuffin','luckylemur','cosmiccricket','jollypigeon','soggytapir','sunnynewt','rowdypigeon','happyhippo','quirkynewt','wittywalrus','happyraccoon','humblenewt','wittyotter','zestyweasel','pluckyturtle','bouncybison','speedyllama','shinyotter','mightyyak','quirkyheron','sunnyjackal','crispylemur','wittynewt','luckybadger','zestymoose','wobblybadger','saltypigeon','bouncybadger','luckyllama','lazyferret','sneakypanda','luckyturtle','humbleparrot','humbleturtle','saltyhippo','saltyfalcon','soggypigeon','soggycricket','sleepylemur','pluckyseal','niftyheron','soggyturtle','sneakyfalcon','soggydonkey','happybison','fuzzyjackal','tinyowl','crispybadger','speedycricket','sunnytapir','sunnyfalcon'];
       const hexToHsl = hex => { let t = hex.replace('#', ''); if (t.length === 3) t = t.split('').map(q => q + q).join(''); const r = parseInt(t.substr(0, 2), 16) / 255, g = parseInt(t.substr(2, 2), 16) / 255, b = parseInt(t.substr(4, 2), 16) / 255, mx = Math.max(r, g, b), mn = Math.min(r, g, b), l = (mx + mn) / 2; let h = 0, sat = 0; if (mx !== mn) { const d = mx - mn; sat = l > .5 ? d / (2 - mx - mn) : d / (mx + mn); h = (mx === r ? (g - b) / d + (g < b ? 6 : 0) : mx === g ? (b - r) / d + 2 : (r - g) / d + 4) * 60 } return [h, sat, l] };
       const shade = (hex, dl) => { const [h, sat, l] = hexToHsl(hex); return `hsl(${Math.round(h)},${Math.round(sat * 100)}%,${Math.round(Math.max(.05, Math.min(.95, l + dl)) * 100)}%)` };
       const hueCss = h => `hsl(${h},75%,58%)`;
       const fillOf = p => p.col || hueCss(p.h), strokeOf = p => p.col ? shade(p.col, -.2) : darker(p.h);
       const bodyR = m => Math.sqrt(m) * 4, virusR = m => Math.sqrt(m) * 8.5, baseSpeed = m => curMode == 'speed' ? 978 * Math.pow(m / 10, -.07) : 310 * Math.pow(m, -.2), EAT = 1.05;
-      const DIFFS = { Easy: { bots: 20, sight: .7, aggr: .35, react: .55, slip: .03, cbd: [1.2, 4], cbMiss: .22, cbK: 6, chase: .6, giveUp: 2.5, cool: 6, split: false }, Normal: { bots: 30, sight: 1, aggr: .7, react: .35, slip: .02, cbd: [.7, 2.4], cbMiss: .12, cbK: 3, chase: 1, giveUp: 5, cool: 4, split: false }, Hard: { bots: 40, sight: 1.35, aggr: 1, react: .18, slip: .012, cbd: [.4, 1.5], cbMiss: .06, cbK: 2, chase: 1, giveUp: 1e9, cool: 0, split: true }, Extreme: { bots: 50, sight: 1.7, aggr: 1.4, react: 0, slip: .008, cbd: [.15, .7], cbMiss: .02, cbK: 1, chase: 1, giveUp: 1e9, cool: 0, split: true, smart: true } };
+      const DIFFS = { Easy: { bots: 20, sight: .7, aggr: .35, react: .55, slip: .03, cbd: [1.2, 4], cbMiss: .22, cbK: 6, chase: .6, giveUp: 2.5, cool: 6, split: false }, Normal: { bots: 30, sight: 1, aggr: .7, react: .35, slip: .02, cbd: [.7, 2.4], cbMiss: .12, cbK: 3, chase: 1, giveUp: 5, cool: 4, split: false }, Hard: { bots: 40, sight: 1.35, aggr: 1, react: .18, slip: .012, cbd: [.4, 1.5], cbMiss: .06, cbK: 2, chase: 1, giveUp: 1e9, cool: 0, split: true }, Intense: { bots: 50, sight: 1.7, aggr: 1.4, react: 0, slip: .008, cbd: [.15, .7], cbMiss: .02, cbK: 1, chase: 1, giveUp: 1e9, cool: 0, split: true, smart: true }, Extreme: { bots: 50, sight: 2, aggr: 1.6, react: 0, slip: .002, cbd: [.06, .3], cbMiss: .004, cbK: 1, chase: 1, giveUp: 1e9, cool: 0, split: true, smart: true }, Crowded: { bots: 200, sight: 1.35, aggr: 1, react: .18, slip: .012, cbd: [.4, 1.5], cbMiss: .06, cbK: 2, chase: 1, giveUp: 1e9, cool: 0, split: true } };
       const bestNow = () => { try { return +localStorage.getItem('best-blobs') || 0 } catch (e) { return 0 } };
       const saveBest = v => { try { if (v > bestNow()) localStorage.setItem('best-blobs', v) } catch (e) {} return bestNow() };
       let diff = 'Normal'; try { const d0 = localStorage.getItem('blobs-diff'); if (DIFFS[d0]) diff = d0 } catch (e) {}
       const D = () => DIFFS[diff];
       const TEAM = { red: '#ef4444', blue: '#3b82f6', human: '#3ddc6e', infected: '#a855f7' }, STORM = { name: 'Storm' }, LIMIT = { time: 300, infected: 240, renegades: 600, koth: 300 }, SPEC = { teams: 1, duos: 1, squads: 1 }, TEAMMODE = { teams: 1, infected: 1, renegades: 1, duos: 1, squads: 1 }, KZR = 300, KSP = 170, PR = 26, CALM = { koth: 1, speed: 1, colour: 1 }, HR = 18, HW = Math.sqrt(3) * 18, HV = 27, CB_COL = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#2563eb', '#38bdf8', '#a855f7', '#ec4899', '#92400e', '#111827', '#f8fafc'], CB_NAME = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE', 'LIGHT BLUE', 'PURPLE', 'PINK', 'BROWN', 'BLACK', 'WHITE'];
       let gameMode = 'ffa', curMode = 'ffa', feedLog = [], spec = null;
-      let hot = [], boostHeld = false, boostPid = null, nextFever = 0, mapMul = 3;
+      let hot = [], boostHeld = false, boostPid = null, nextFever = 0, mapMul = 3, virusOn = true;
       const GIANT_OK = { ffa: 1, speed: 1, time: 1, duos: 1, squads: 1 };
       const POW = { speed: true, shield: true, ghost: true, magnet: true, steal: true };
       const pickPT = () => { const en = PT.filter(t => POW[t]); return en[Math.floor(Math.random() * en.length)] || 'speed' };
@@ -886,8 +888,8 @@
         getEl('steal-ui').style.display = scr == 'play' && stealOpen ? 'flex' : 'none';
         getEl('cb-ui').style.display = scr == 'play' && curMode == 'colour' ? 'flex' : 'none';
       };
-      const chooseName = () => { const used = new Set(roster.map(q => q.name)), free = NAMES.filter(n => !used.has(n)); return free[Math.floor(Math.random() * free.length)] || NAMES[0] };
-      const makeBot = () => { const p = makePlayer(chooseName(), randBetween(0, 360), true); p.hunter = Math.random() < D().aggr * .6 + .15; if (Math.random() < .35) p.skin = SKINS[Math.floor(Math.random() * SKINS.length)]; return p };
+      const chooseName = () => { const used = new Set(roster.map(q => q.name)), free = NAMES.filter(n => !used.has(n)); return free.length ? free[Math.floor(Math.random() * free.length)] : (() => { for (let k = 2; ; k++) { const c = NAMES[Math.floor(Math.random() * NAMES.length)] + '-' + k; if (!used.has(c)) return c } })() };
+      const makeBot = () => { const p = makePlayer(chooseName(), randBetween(0, 360), true); p.hunter = Math.random() < D().aggr * .6 + .15; if (Math.random() < .35) p.skin = IMG_SKINS[Math.floor(Math.random() * IMG_SKINS.length)]; return p };
       function makePlayer(name, h, bot) { return { name, h, bot, skin: '', tx: WORLD / 2, ty: WORLD / 2, t: 0, targetPrey: null, cells: [{ x: randBetween(300, WORLD - 300), y: randBetween(300, WORLD - 300), m: bot ? randBetween(10, 50) : 10, vx: 0, vy: 0, merge: 0, wobble: 0 }] } }
       const makeDot = () => { const r = Math.random(), hp = hotPos(); return { x: hp[0], y: hp[1], m: r < .004 ? 100 : r < .018 ? 25 : r < .058 ? 10 : r < .14 ? 3 : 1, h: randBetween(0, 360), vx: 0, vy: 0 } };
       const PT = ['speed', 'shield', 'ghost', 'magnet'];
@@ -899,7 +901,7 @@
       function startRound() {
         AudioFX.ensure(); AudioFX.sync(true); playSound('ui');
         try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
-        paused = false; scr = 'play'; roster = []; dots = []; viruses = []; floaters = []; topSize = 10; eatCount = 0; elapsed = 0; newBest = false; deathClock = 0; curMode = gameMode; if (curMode == 'koth') { WORLD = 4000; PEL = 0; VIRUS_COUNT = 0 } else if (curMode == 'colour') { WORLD = 3000; PEL = 0; VIRUS_COUNT = 0 } else { WORLD = 4000 * mapMul; const ar = WORLD * WORLD / 144e6; PEL = Math.min(20000, Math.round(5400 * ar)); VIRUS_COUNT = curMode == 'speed' ? 0 : Math.min(400, Math.max(12, Math.round(110 * ar))) } makeHot(); getEl('over-label').innerText = 'BIGGEST SIZE'; feedLog = []; spec = null; nextBolt = CALM[curMode] ? 1e9 : 0; bolts = []; flashT = -9; stealOpen = false; banner = null; nextFrenzy = GIANT_OK[curMode] ? 0 : 1e9; nextFever = PEL > 0 ? 0 : 1e9; steals = Array.from({ length: CALM[curMode] || !POW.steal ? 0 : Math.min(16, Math.max(2, Math.round(4 * WORLD * WORLD / 144e6))) }, makePower); endWin = false; awarded = false; bigAlert = null; stick.id = null; stick.ax = stick.ay = stick.mag = stick.kx = stick.ky = 0; keyMode = false; for (const k in heldKeys) heldKeys[k] = false; boostHeld = false; boostPid = null;
+        paused = false; scr = 'play'; roster = []; dots = []; viruses = []; floaters = []; topSize = 10; eatCount = 0; elapsed = 0; newBest = false; deathClock = 0; curMode = gameMode; if (curMode == 'koth') { WORLD = 4000; PEL = 0; VIRUS_COUNT = 0 } else if (curMode == 'colour') { WORLD = 3000; PEL = 0; VIRUS_COUNT = 0 } else { WORLD = 4000 * mapMul; const ar = WORLD * WORLD / 144e6; PEL = Math.min(20000, Math.round(5400 * ar)); VIRUS_COUNT = curMode == 'speed' || !virusOn ? 0 : Math.min(400, Math.max(12, Math.round(110 * ar))) } makeHot(); getEl('over-label').innerText = 'BIGGEST SIZE'; feedLog = []; spec = null; nextBolt = CALM[curMode] ? 1e9 : 0; bolts = []; flashT = -9; stealOpen = false; banner = null; nextFrenzy = GIANT_OK[curMode] ? 0 : 1e9; nextFever = PEL > 0 ? 0 : 1e9; steals = Array.from({ length: CALM[curMode] || !POW.steal ? 0 : Math.min(16, Math.max(2, Math.round(4 * WORLD * WORLD / 144e6))) }, makePower); endWin = false; awarded = false; bigAlert = null; stick.id = null; stick.ax = stick.ay = stick.mag = stick.kx = stick.ky = 0; keyMode = false; for (const k in heldKeys) heldKeys[k] = false; boostHeld = false; boostPid = null;
         hero = makePlayer((nameInput.value.trim() || 'You').slice(0, 15), hueFromHex(colorPicker.value), false); hero.skin = selectedSkin; if (curMode == 'teams' || curMode == 'renegades') { hero.team = Math.random() < .5 ? 'red' : 'blue'; hero.col = TEAM[hero.team] } else hero.col = colorPicker.value; if (online.on) hero.id = online.myId; roster.push(hero); if (online.on && online.host) online.peers.forEach(pe => roster.push(addRemote(pe)));
         const cnt = { red: roster.filter(q => q.team == 'red').length, blue: roster.filter(q => q.team == 'blue').length };
         for (let i = 0; i < D().bots; i++) { const b = makeBot(); if (curMode == 'teams' || curMode == 'renegades') { b.team = cnt.red < cnt.blue ? 'red' : cnt.blue < cnt.red ? 'blue' : (Math.random() < .5 ? 'red' : 'blue'); cnt[b.team]++; b.col = TEAM[b.team] } roster.push(b) }
@@ -909,7 +911,7 @@
         if (curMode == 'duos' || curMode == 'squads') {
           const sz = curMode == 'duos' ? 2 : 4; while (roster.length % sz) roster.push(makeBot());
           const rest = roster.filter(q => q !== hero), groups = [[hero, ...rest.splice(0, sz - 1)]]; while (rest.length) groups.push(rest.splice(0, sz));
-          groups.forEach((g0, gi) => { const lead = g0[0], hh = lead === hero ? hero.h : randBetween(0, 360), sk = lead === hero ? hero.skin : (Math.random() < .5 ? SKINS[Math.floor(Math.random() * SKINS.length)] : '');
+          groups.forEach((g0, gi) => { const lead = g0[0], hh = lead === hero ? hero.h : randBetween(0, 360), sk = lead === hero ? hero.skin : (Math.random() < .5 ? IMG_SKINS[Math.floor(Math.random() * IMG_SKINS.length)] : '');
             g0.forEach((q, qi) => { q.team = 't' + gi; q.h = hh; q.skin = sk; q.col = lead === hero ? hero.col : null; if (qi) { q.cells[0].x = lead.cells[0].x + randBetween(-130, 130); q.cells[0].y = lead.cells[0].y + randBetween(-130, 130) } }) });
         }
         if (curMode == 'infected') { hero.team = 'human'; hero.col = TEAM.human; roster.forEach(q => { if (q !== hero) { q.team = 'human'; q.col = TEAM.human } }); roster.filter(q => q.bot).slice(0, Math.ceil(D().bots / 15)).forEach(q => { q.team = 'infected'; q.col = TEAM.infected; q.cells[0].m = 60 }) }
@@ -1033,7 +1035,7 @@
         const zs = curMode == 'speed' ? .55 : 1, z = Math.min(Math.max(.28, 2.2 / (1 + Math.sqrt(T) * .08)) * zs, Math.min(W, H) * .42 / sp), k = Math.min(1, dt * (curMode == 'speed' ? 8 : 2.5));
         lens.x += (cx - lens.x) * k; lens.y += (cy - lens.y) * k; lens.z += (z - lens.z) * k; lens.z = Math.max(1e-5, Math.min(lens.z, Math.min(W, H) * 1.1 / sp));
       }
-      const heldKeys = { up: false, down: false, left: false, right: false }, stick = { id: null, ax: 0, ay: 0, mag: 0, kx: 0, ky: 0 }; let keyMode = false;
+      const heldKeys = { up: false, down: false, left: false, right: false }, stick = { id: null, ax: 0, ay: 0, mag: 0, kx: 0, ky: 0, ox: 0, oy: 0 }; let keyMode = false;
       const joyBase = () => ({ x: 92, y: H - 98, r: 58 });
       function readInput() {
         let cx = 0, cy = 0; hero.cells.forEach(q => { cx += q.x; cy += q.y }); cx /= hero.cells.length; cy /= hero.cells.length;
@@ -1090,11 +1092,11 @@
       }
       const closeSteal = () => { if (online.on && !online.host && stealOpen) olSend({ t: 'act', a: 'steal', v: null }); stealOpen = false; syncMenu() }; window.closeSteal = closeSteal;
       function frenzy() {
-        for (let i = 0; i < 6; i++) { const g = makePlayer('Giant', 20, true); g.giant = true; g.hunter = true; g.col = '#f97316'; g.expires = elapsed + 300; const [gx, gy] = safeSpot(); g.cells = [{ x: gx, y: gy, m: 1000, vx: 0, vy: 0, merge: 0, wobble: 1 }]; roster.push(g) }
-        sayAll('FRENZY!', '6 giant blobs dropped in. Run, or eat one with 1050+ mass.', 6); pushFeed({ t: clock, k: 'Frenzy', w: ' dropped ', v: '6 giants', kc: '#f97316', vc: '#ece6ff' });
+        for (let i = 0; i < 5; i++) { const g = makePlayer(['giant-ellie', 'giant-jack', 'giant-viv', 'giant-derek', 'giant-steve'][i], 20, true); g.giant = true; g.hunter = true; g.col = '#f97316'; g.expires = elapsed + 300; const [gx, gy] = safeSpot(); g.cells = [{ x: gx, y: gy, m: 1000, vx: 0, vy: 0, merge: 0, wobble: 1 }]; roster.push(g) }
+        sayAll('FRENZY!', '5 giant blobs dropped in. Run, or eat one with 1050+ mass.', 6); pushFeed({ t: clock, k: 'Frenzy', w: ' dropped ', v: '5 giants', kc: '#f97316', vc: '#ece6ff' });
       }
       function fever() {
-        const n = Math.min(600, Math.max(60, Math.round(150 * WORLD * WORLD / 144e6)));
+        const n = Math.min(3000, Math.max(250, Math.round(800 * WORLD * WORLD / 144e6)));
         for (let i = 0; i < n; i++) dots.push({ x: randBetween(40, WORLD - 40), y: randBetween(40, WORLD - 40), m: 1000, h: randBetween(0, 360), vx: 0, vy: 0, fever: true, until: elapsed + 5 });
         sayAll('FEVER!', '1000-mass dots everywhere. Grab them in 5 seconds!', 5); pushFeed({ t: clock, k: 'Fever', w: ' spawned ', v: n + ' dots', kc: '#fde047', vc: '#ece6ff' }); playSound('coin');
       }
@@ -1112,7 +1114,7 @@
       }
       const hexColour = (px, py) => hex.col[hexIdx(px, py)];
       // share of tiles in the called colour: Easy = an even share, then fewer and fewer on the harder difficulties
-      const hexWeight = () => ({ Easy: 1, Normal: .7, Hard: .35, Extreme: .15 })[diff] || 1;
+      const hexWeight = () => ({ Easy: 1, Normal: .7, Hard: .35, Intense: .15, Extreme: .08, Crowded: .35 })[diff] || 1;
       function buildHex(target, wt) {
         hexVer++; hex.cols = Math.ceil(WORLD / HW) + 1; hex.rows = Math.ceil(WORLD / HV) + 1; hex.col = new Uint8Array(hex.cols * hex.rows); const cnt = new Array(11).fill(0);
         for (let rr = 0; rr < hex.rows; rr++) for (let cc = 0; cc < hex.cols; cc++) {
@@ -1423,7 +1425,7 @@
           const pill = (txt, col) => { panel(178, py, 136, 26); x.textAlign = 'left'; x.fillStyle = col; x.font = '15px "Titan One", Fredoka, system-ui'; x.fillText(txt, 188, py + 19); py += 32 };
           if (gl > 0) pill('GIANTS ' + Math.floor(gl / 60) + ':' + String(Math.floor(gl % 60)).padStart(2, '0'), '#f97316');
           if (mg > 0) pill('MERGE ' + mg.toFixed(1) + 's', '#38bdf8') }
-        const rank = roster.filter(p => p.cells.length).map(p => ({ n: p.name, m: curMode == 'koth' ? (p.pts || 0) : sumMass(p), hero: p === hero, team: p.team })).sort((a, b) => b.m - a.m);
+        const rank = roster.filter(p => p.cells.length && !p.giant).map(p => ({ n: p.name, m: curMode == 'koth' ? (p.pts || 0) : sumMass(p), hero: p === hero, team: p.team })).sort((a, b) => b.m - a.m);
         const mi = rank.findIndex(q => q.hero), lb = rank.slice(0, 6).map((q, i) => ({ ...q, rank: i + 1 }));
         if (mi >= 6) lb.push({ ...rank[mi], rank: mi + 1 });
         panel(W - 182, 10, 172, 36 + lb.length * 21);
@@ -1465,8 +1467,8 @@
         if (OPT.minimap && curMode == 'royale') { const ms = Math.round(Math.max(110, Math.min(170, Math.min(W, H) * .26))), mx0 = touch ? 168 : 12, my0 = H - ms - 12; x.save(); x.beginPath(); x.rect(mx0, my0, ms, ms); x.clip(); x.strokeStyle = '#ef4444'; x.lineWidth = 2; x.beginPath(); x.arc(mx0 + ms / 2, my0 + ms / 2, zoneR() / WORLD * ms, 0, 7); x.stroke(); x.restore() }
         if (OPT.minimap) { const kb = roster.filter(q => q.cells.length).sort((a, b) => sumMass(b) - sumMass(a))[0]; if (kb) { const c0 = kb.cells[0], ms = Math.round(Math.max(110, Math.min(170, Math.min(W, H) * .26))), mx0 = touch ? 168 : 12, my0 = H - ms - 12; x.textAlign = 'center'; x.font = '14px system-ui'; x.fillText('👑', mx0 + c0.x / WORLD * ms, my0 + c0.y / WORLD * ms - 5) } }
         if (touch && hero.cells.length) { const bt = getBtnPos(); [[bt.split, 'SPLIT'], [bt.feed, 'FEED'], [bt.boost, 'BOOST']].forEach(([b, t]) => { x.fillStyle = 'rgba(20,11,36,.8)'; x.beginPath(); x.arc(b.x, b.y, b.r, 0, 7); x.fill(); x.strokeStyle = '#3ddc6e'; x.lineWidth = 2; x.stroke(); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '700 12px Fredoka, system-ui'; x.fillText(t, b.x, b.y + 4) }) }
-        if (touch && hero.cells.length) {
-          const jb = joyBase(); x.fillStyle = 'rgba(20,11,36,.45)'; x.beginPath(); x.arc(jb.x, jb.y, jb.r, 0, 7); x.fill(); x.strokeStyle = 'rgba(61,220,110,.65)'; x.lineWidth = 3; x.stroke();
+        if (touch && hero.cells.length && stick.id !== null) {
+          const jb = { x: stick.ox, y: stick.oy, r: 70 }; x.fillStyle = 'rgba(20,11,36,.45)'; x.beginPath(); x.arc(jb.x, jb.y, jb.r, 0, 7); x.fill(); x.strokeStyle = 'rgba(61,220,110,.65)'; x.lineWidth = 3; x.stroke();
           x.fillStyle = 'rgba(61,220,110,.6)'; x.beginPath(); x.arc(jb.x + stick.kx, jb.y + stick.ky, 26, 0, 7); x.fill(); x.strokeStyle = 'rgba(255,255,255,.55)'; x.lineWidth = 2; x.stroke();
         }
         if (!hero.cells.length && scr == 'play') { x.fillStyle = '#0008'; x.fillRect(0, 0, W, H) }
@@ -1474,8 +1476,10 @@
       }
       const AK = { arrowup: 'up', arrowdown: 'down', arrowleft: 'left', arrowright: 'right' };
       const joyMove = e => {
-        const jb = joyBase(), dx = e.clientX - jb.x, dy = e.clientY - jb.y, L = Math.hypot(dx, dy) || 1, mag = Math.min(1, L / jb.r);
-        stick.mag = mag < .12 ? 0 : mag; stick.ax = dx / L * stick.mag; stick.ay = dy / L * stick.mag; stick.kx = dx / L * Math.min(L, jb.r); stick.ky = dy / L * Math.min(L, jb.r);
+        const R = 70; let dx = e.clientX - stick.ox, dy = e.clientY - stick.oy, L = Math.hypot(dx, dy) || 1;
+        if (L > R * 1.5) { const ex = L - R * 1.5; stick.ox += dx / L * ex; stick.oy += dy / L * ex; dx = e.clientX - stick.ox; dy = e.clientY - stick.oy; L = Math.hypot(dx, dy) || 1 }
+        const mag = Math.min(1, L / R);
+        stick.mag = mag < .1 ? 0 : mag; stick.ax = dx / L * stick.mag; stick.ay = dy / L * stick.mag; stick.kx = dx / L * Math.min(L, R); stick.ky = dy / L * Math.min(L, R);
       };
       const joyEnd = e => { if (e.pointerId === boostPid) { boostHeld = false; boostPid = null } if (e.pointerId === stick.id) { stick.id = null; stick.ax = stick.ay = stick.mag = stick.kx = stick.ky = 0 } };
       c.addEventListener('pointermove', e => {
@@ -1488,11 +1492,12 @@
           if (scr == 'play' && !paused && hero.cells.length) {
             const bt = getBtnPos(), hit = b => Math.hypot(e.clientX - b.x, e.clientY - b.y) < b.r + 8;
             if (hit(bt.split)) { act('split'); return } if (hit(bt.feed)) { act('feed'); return } if (hit(bt.boost)) { boostHeld = true; boostPid = e.pointerId; return }
-            const jb = joyBase(); if (stick.id === null && Math.hypot(e.clientX - jb.x, e.clientY - jb.y) < jb.r * 1.8) { stick.id = e.pointerId; try { c.setPointerCapture(e.pointerId) } catch (err) {} joyMove(e) }
+            if (stick.id === null) { stick.id = e.pointerId; stick.ox = e.clientX; stick.oy = e.clientY; try { c.setPointerCapture(e.pointerId) } catch (err) {} joyMove(e) }
           }
           return;
         }
         cursor.x = e.clientX; cursor.y = e.clientY; keyMode = false; touch = false;
+        if (e.button === 0 && scr == 'play' && !paused && hero.cells.length) { boostHeld = true; boostPid = e.pointerId }
       });
       window.addEventListener('pointerup', joyEnd); window.addEventListener('pointercancel', joyEnd);
       window.addEventListener('keyup', e => { if (e.key == 'Shift') boostHeld = false; const a = AK[e.key.toLowerCase()]; if (a) heldKeys[a] = false });
@@ -1556,18 +1561,18 @@
       const POW_ICON = { speed: '⚡', shield: '🛡', ghost: '👻', magnet: '🧲', steal: '💰' };
 
       const cleanSettings = s0 => {
-        s0 = s0 || {}; const mode = MODES.includes(s0.mode) ? s0.mode : 'ffa', df = DIFFS[s0.diff] ? s0.diff : 'Normal', mp = Math.max(1, Math.min(10, Math.round(+s0.map || 3))), pw = {};
+        s0 = s0 || {}; const mode = MODES.includes(s0.mode) ? s0.mode : 'ffa', df = DIFFS[s0.diff] && s0.diff != 'Crowded' ? s0.diff : 'Normal', mp = Math.max(1, Math.min(10, Math.round(+s0.map || 3))), pw = {};
         for (const k in POW) pw[k] = s0.pow ? s0.pow[k] !== false : true;
-        return { mode, diff: df, map: mp, pow: pw };
+        return { mode, diff: df, map: mp, pow: pw, vir: s0.vir !== false };
       };
-      const settingsNow = () => ({ mode: gameMode, diff, map: mapMul, pow: { ...POW } });
+      const settingsNow = () => ({ mode: gameMode, diff, map: mapMul, pow: { ...POW }, vir: virusOn });
       function applyRoomSettings(s0) {
-        if (!online.saved) online.saved = { gameMode, diff, mapMul, pow: { ...POW } };
-        s0 = cleanSettings(s0); online.settings = s0; gameMode = s0.mode; diff = s0.diff; mapMul = s0.map; Object.assign(POW, s0.pow);
+        if (!online.saved) online.saved = { gameMode, diff, mapMul, pow: { ...POW }, vir: virusOn };
+        s0 = cleanSettings(s0); online.settings = s0; gameMode = s0.mode; diff = s0.diff; mapMul = s0.map; virusOn = s0.vir; Object.assign(POW, s0.pow);
       }
       function restoreSettings() {
         if (!online.saved) return; const sv = online.saved; online.saved = null;
-        gameMode = sv.gameMode; diff = sv.diff; mapMul = sv.mapMul; Object.assign(POW, sv.pow); sizeEl.value = mapMul;
+        gameMode = sv.gameMode; diff = sv.diff; mapMul = sv.mapMul; virusOn = sv.vir !== false; Object.assign(POW, sv.pow); sizeEl.value = mapMul;
         document.querySelectorAll('.diff-btn').forEach(btn => btn.classList.toggle('active', btn.textContent == diff)); refreshModeUI();
       }
 
@@ -1576,7 +1581,7 @@
       const roomLine = s0 => {
         s0 = cleanSettings(s0); const fixed = s0.mode == 'koth' || s0.mode == 'colour', keys = Object.keys(POW), on = keys.filter(k => s0.pow[k]);
         const pw = CALM[s0.mode] ? 'set by gamemode' : on.length == keys.length ? 'all' : on.length ? on.map(k => POW_ICON[k]).join(' ') : 'off';
-        return 'Gamemode: ' + MODE_LABEL[s0.mode] + ' · Power-ups: ' + pw + ' · Difficulty: ' + s0.diff + (fixed ? '' : ' · Map ' + s0.map + 'x');
+        return 'Gamemode: ' + MODE_LABEL[s0.mode] + ' · Power-ups: ' + pw + ' · Difficulty: ' + s0.diff + (CALM[s0.mode] || s0.vir ? '' : ' · Viruses: off') + (fixed ? '' : ' · Map ' + s0.map + 'x');
       };
       function renderRooms(list) {
         const box = getEl('room-list'); box.innerHTML = '';
@@ -1614,7 +1619,9 @@
         ws.onclose = () => { clearTimeout(timer); if (online.ws !== ws) return; if (!got) lobbyFail(); else if (online.on) olLost(); else { online.ws = null; closeLobby(true); setOlError('Lost connection to the servers') } };
       };
       function joinRoom(i) {
-        if (online.on || online.joining || !online.ws) return; setOlError('Joining room ' + (i + 1) + '...', true);
+        if (online.on || online.joining || !online.ws) return;
+        if (diff == 'Crowded') { setOlError("Crowded can't be played in online mode, switch to another difficulty"); return }
+        setOlError('Joining room ' + (i + 1) + '...', true);
         try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
         online.joining = true; AudioFX.ensure();
         olSend({ t: 'join', room: i, name: (nameInput.value.trim() || 'You').slice(0, 15), col: colorPicker.value, skin: selectedSkin, settings: settingsNow() });
@@ -1654,7 +1661,7 @@
       }
       function setWorldSizes() {
         if (curMode == 'koth' || curMode == 'colour') { PEL = 0; VIRUS_COUNT = 0 }
-        else { const ar = WORLD * WORLD / 144e6; PEL = Math.min(20000, Math.round(5400 * ar)); VIRUS_COUNT = curMode == 'speed' ? 0 : Math.min(400, Math.max(12, Math.round(110 * ar))) }
+        else { const ar = WORLD * WORLD / 144e6; PEL = Math.min(20000, Math.round(5400 * ar)); VIRUS_COUNT = curMode == 'speed' || !virusOn ? 0 : Math.min(400, Math.max(12, Math.round(110 * ar))) }
         makeHot();
       }
       // the previous host left: this browser already holds the whole world from the snapshots, so just carry on running it
@@ -1678,14 +1685,15 @@
       const olTeam = () => { const r = roster.filter(q => q.team == 'red').length, b2 = roster.filter(q => q.team == 'blue').length; return r < b2 ? 'red' : b2 < r ? 'blue' : (Math.random() < .5 ? 'red' : 'blue') };
       function addRemote(pe) {
         const okc = /^#[0-9a-f]{6}$/i.test(pe.col || '') ? pe.col : '#3b82f6', p = makePlayer(String(pe.name || 'Player').slice(0, 15), hueFromHex(okc), false);
-        p.remote = true; p.id = pe.id; p.skin = SKINS.includes(pe.skin) ? pe.skin : ''; p.col = okc; p.tx = p.cells[0].x; p.ty = p.cells[0].y;
+        p.remote = true; p.id = pe.id; p.skin = IMG_SKINS.includes(pe.skin) ? pe.skin : ''; p.col = okc; p.tx = p.cells[0].x; p.ty = p.cells[0].y;
         if (curMode == 'teams' || curMode == 'renegades') { p.team = olTeam(); p.col = TEAM[p.team] } else if (curMode == 'infected') { p.team = 'human'; p.col = TEAM.human }
         return p;
       }
       function olPeer(m) {
         if (m.ev == 'join') {
           if (roster.some(q => q.id === m.id)) return;
-          const pe = { id: m.id, name: m.name, col: m.col, skin: m.skin }; online.peers.set(m.id, pe);
+          let nm = String(m.name || 'Player').slice(0, 15); if (roster.some(q => q.name === nm)) { for (let k = 1; ; k++) { const sf = '-' + k, c = nm.slice(0, 15 - sf.length) + sf; if (!roster.some(q => q.name === c)) { nm = c; break } } }
+          const pe = { id: m.id, name: nm, col: m.col, skin: m.skin }; online.peers.set(m.id, pe);
           const p = addRemote(pe), elim = curMode == 'duos' || curMode == 'squads' || curMode == 'colour';
           if (elim) { p.cells = []; p.out = true; p.team = undefined } else { const [sx, sy] = safeSpot(); p.cells[0].x = sx; p.cells[0].y = sy; p.tx = sx; p.ty = sy }
           roster.push(p); online.fullTo.push(m.id); pushFeed({ t: clock, k: p.name, w: ' joined the room', v: '', kc: '#3ddc6e', vc: '#fff' });
@@ -1897,7 +1905,7 @@
         getEl('skin-name').innerText = skinLabel(selectedSkin);
       };
       window.cycleSkin = function(d) {
-        const opts = [''].concat(SKINS), i = opts.indexOf(selectedSkin);
+        const opts = [''].concat(IMG_SKINS), i = opts.indexOf(selectedSkin);
         selectedSkin = opts[(i + d + opts.length) % opts.length];
         try { localStorage.setItem('blobs-skin', selectedSkin) } catch(e) {}
         refreshSkinUI(); unfocus(); playSound('click');
@@ -1916,6 +1924,7 @@
       const sizeEl = getEl('map-size'), sizeTxt = getEl('map-size-text');
       try { const mm = parseFloat(localStorage.getItem('blobs-mapmul')); if (mm >= 1 && mm <= 10) mapMul = Math.round(mm) } catch (e) {}
       try { Object.assign(POW, JSON.parse(localStorage.getItem('blobs-pow') || '{}')) } catch (e) {}
+      try { virusOn = localStorage.getItem('blobs-virus') !== '0' } catch (e) {}
       sizeEl.value = mapMul;
       sizeEl.addEventListener('input', () => { mapMul = Math.round(parseFloat(sizeEl.value)) || 3; try { localStorage.setItem('blobs-mapmul', mapMul) } catch (e) {} refreshSetupUI() });
       function refreshSetupUI() {
@@ -1923,8 +1932,10 @@
         sizeEl.disabled = fixed; getEl('size-group').classList.toggle('dim', fixed);
         sizeTxt.innerText = fixed ? 'Fixed' : mapMul + 'x';
         getEl('pow-group').classList.toggle('dim', calm);
+        getEl('virus-group').classList.toggle('dim', calm); getEl('virus-btn').classList.toggle('active', virusOn); getEl('virus-btn').textContent = virusOn ? 'On' : 'Off';
         document.querySelectorAll('#pow-selector .theme-btn').forEach(b => b.classList.toggle('active', !!POW[b.dataset.p]));
       }
+      window.toggleVirus = function() { virusOn = !virusOn; try { localStorage.setItem('blobs-virus', virusOn ? '1' : '0') } catch (e) {} refreshSetupUI(); unfocus(); playSound('click') };
       window.togglePow = function(n) { POW[n] = !POW[n]; try { localStorage.setItem('blobs-pow', JSON.stringify(POW)) } catch (e) {} refreshSetupUI(); unfocus(); playSound('click') };
       getEl('ver').textContent = 'v' + APP_VERSION;
       refreshOptUI();
