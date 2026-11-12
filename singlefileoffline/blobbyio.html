@@ -11,7 +11,7 @@
   -->
   <!--
     An Algebra practise original game - made by hazza. Feel free to copy or use this, as the code is straight AI,
-    but if you do, feel free to let me know so I can check it out!
+    and if you'd like, let me know so I can check it out!
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -1165,7 +1165,7 @@
         if (elapsed >= nextBolt) { nextBolt = elapsed + randBetween(45, 80); const al = roster.filter(q => q.cells.length && !q.bolt); if (al.length) strike(al[Math.floor(Math.random() * al.length)]) }
         for (const p of roster) if (p.bolt && elapsed >= p.bolt.until) { if (p.cells.length) { const q = p.cells.reduce((a, c) => c.m > a.m ? c : a); q.m += Math.max(0, p.bolt.total - 10); q.wobble = 1 } p.bolt = null }
         if (!nextFrenzy) nextFrenzy = elapsed + randBetween(100, 140); if (elapsed >= nextFrenzy) { nextFrenzy = elapsed + randBetween(110, 160); if (GIANT_OK[curMode] && !roster.some(q => q.giant)) frenzy() }
-        if (!nextFever) nextFever = elapsed + randBetween(60, 110); if (elapsed >= nextFever) { nextFever = elapsed + randBetween(90, 150); fever() }
+        if (!nextFever) nextFever = elapsed + randBetween(300, 420); if (elapsed >= nextFever) { nextFever = elapsed + randBetween(300, 360); fever() }
         for (const p of roster) if (p.giant && elapsed >= p.expires) p.cells = [];
         if (hero.cells.length) readInput(); for (const p of roster) { if (p !== hero && !p.remote) continue; if (p.stealPend && elapsed >= p.stealPend) { p.stealPend = 0; evTo(p.id, '', '', 0, 'steal0'); const v0 = pickVictim(p); if (v0) steal(p, v0) } if (p.remote && clock - (p.lastIn || clock) > 1.5 && p.cells.length) { let ax = 0, ay = 0; p.cells.forEach(q => { ax += q.x; ay += q.y }); p.tx = ax / p.cells.length; p.ty = ay / p.cells.length; p.boostIn = false } const T0 = sumMass(p); p.boosting = (p === hero ? boostHeld : !!p.boostIn) && T0 > 40; if (p.boosting) { const lost = Math.min(200 * dt, T0 - 30); p.cells.forEach(q => { q.m = Math.max(1, q.m - lost * q.m / T0) }) } }
         for (const p of roster) {
