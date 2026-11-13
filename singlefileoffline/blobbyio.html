@@ -10,8 +10,8 @@
     however small, without being asked, and mention the new version number in your reply.
   -->
   <!--
-    An Algebra practice original game - made by hazza. Feel free to copy or use this, as the code is straight AI,
-    and if you do, let me know so I can check it out!
+    An Algebro original game - made by hazza. Feel free to copy or use this, as the code is straight AI,
+    but if you do, let me know so I can check it out!
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -476,6 +476,12 @@
     .slider-wrap { display: flex; align-items: center; gap: 8px; }
     #map-size { width: 140px; accent-color: var(--purple); cursor: pointer; }
     .dim { opacity: .4; pointer-events: none; }
+    .tp-card { background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 14px; padding: 14px 16px; min-height: 260px; text-align: left; }
+    .tp-card h3 { margin: 0 0 8px; font-size: 18px; } .tp-item { margin: 8px 0; font-size: 13.5px; line-height: 1.45; } .tp-item b { color: var(--green); }
+    .tp-nav { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 10px; } .tp-dots { display: flex; gap: 5px; flex-wrap: wrap; justify-content: center; }
+    .tp-dots i { width: 7px; height: 7px; border-radius: 50%; background: var(--line); } .tp-dots i.on { background: var(--purple); }
+    .st-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; } .st-card { background: rgba(255,255,255,.04); border: 1px solid var(--line); border-radius: 12px; padding: 8px 10px; text-align: left; }
+    .st-card small { color: var(--muted); font-size: 11px; display: block; } .st-card b { font-size: 16px; }
     .lb-row { display: flex; gap: 10px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; }
     .lb-rank { width: 26px; color: var(--muted); flex: none; } .lb-main { display: flex; flex-direction: column; min-width: 0; } .lb-main b { font-size: 14px; } .lb-main small { color: var(--muted); font-size: 11px; }
     .lb-score { margin-left: auto; font-weight: 700; font-size: 15px; } .lb-empty { text-align: center; color: var(--muted); padding: 18px 0; font-size: 13px; }
@@ -597,10 +603,24 @@
             <div class="room-list" id="room-list"></div>
             <div class="menu-foot">
               <span id="best-score-text">Best size 0</span>
-              <span><button class="link-btn" onclick="lbOpen()">Leaderboard</button> &middot; <button class="link-btn" onclick="switchTab('credits')">Credits</button></span>
+              <span><button class="link-btn" onclick="tipsOpen()">Tips</button> &middot; <button class="link-btn" onclick="statsOpen()">Stats</button> &middot; <button class="link-btn" onclick="lbOpen()">Leaderboard</button> &middot; <button class="link-btn" onclick="switchTab('credits')">Credits</button></span>
             </div>
           </div>
 
+          <div id="tab-tips" class="tab-content">
+            <div class="over-label" style="text-align:center;margin-bottom:6px">TIPS</div>
+            <div class="tp-card" id="tp-card"></div>
+            <div class="tp-nav"><button class="theme-btn" onclick="tipsStep(-1)">&#9664; Back</button><div class="tp-dots" id="tp-dots"></div><button class="theme-btn" onclick="tipsStep(1)">Next &#9654;</button></div>
+            <div style="text-align:center;margin-top:10px"><button class="link-btn" onclick="switchTab('play')">Close</button></div>
+          </div>
+          <div id="tab-stats" class="tab-content">
+            <div class="over-label" style="text-align:center">YOUR STATS</div>
+            <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:6px">Saved on this device</div>
+            <div class="over-label" style="text-align:left;margin:8px 0 2px">TOP 5 HIGH SCORES</div>
+            <div id="st-top"></div>
+            <div class="st-grid" id="st-grid"></div>
+            <div style="text-align:center;margin-top:10px"><button class="link-btn" onclick="switchTab('play')">Back</button> &middot; <button class="link-btn" onclick="statsReset()">Reset stats</button></div>
+          </div>
           <div id="tab-leaderboard" class="tab-content">
             <div class="grid-selector" style="justify-content:center;margin-bottom:8px"><button class="theme-btn active" id="lb-off" onclick="lbShow('off')">Offline</button><button class="theme-btn" id="lb-on" onclick="lbShow('on')">Online</button></div>
             <div class="over-label" style="text-align:center">TOP 10 FREE FOR ALL SCORES</div>
@@ -665,7 +685,7 @@
 <script>
     // NOTE FOR ANY AI MODEL: every change the user asks for in this file = bump APP_VERSION by 0.01 (1.03 -> 1.04 ...).
     // An Algebro original game - made by hazza. Feel free to copy or use this, the code is straight AI, but if you do, let me know so I can check it out!
-    const APP_VERSION = '1.15';
+    const APP_VERSION = '1.16';
     // Cloudflare Worker that runs online rooms (one WebSocket per player). Put your worker URL here, e.g. 'wss://blobby-rooms.yourname.workers.dev/'
     const ONLINE_URL = 'wss://blobbybackend.gdharry123.workers.dev/';
     let W = window.innerWidth;
@@ -1055,7 +1075,7 @@
       }
       function specStep(d) {
         if ((!SPEC[curMode] && !online.on) || !hero || hero.cells.length) return;
-        const l = online.on ? roster.filter(p => p.cells.length && !p.giant) : roster.filter(p => p.team === hero.team && p !== hero && p.cells.length); if (!l.length) { spec = null; return }
+        const l = online.on ? specList() : roster.filter(p => p.team === hero.team && p !== hero && p.cells.length); if (!l.length) { spec = null; return }
         let i = l.indexOf(spec); i = i < 0 ? (d > 0 ? 0 : l.length - 1) : (i + d + l.length) % l.length; spec = l[i];
       }
       window.specStep = specStep;
@@ -1396,7 +1416,7 @@
       const getBtnPos = () => ({ split: { x: W - 52, y: H - 52, r: 34 }, feed: { x: W - 52, y: H - 130, r: 26 }, boost: { x: W - 130, y: H - 52, r: 28 } });
       function draw() {
         syncMenu(); if (scr == 'menu') return;
-        if (spec && (SPEC[curMode] || online.on) && !hero.cells.length) getEl('spec-name').innerText = spec.name;
+        if (spec && (SPEC[curMode] || online.on) && !hero.cells.length) getEl('spec-name').innerText = spec.name + (spec.bot ? ' (bot)' : '');
         if (hero.respawnAt != null && !hero.cells.length) getEl('respawn-count').innerText = Math.max(1, Math.ceil(hero.respawnAt - elapsed));
         if (curMode == 'colour') { const nm = getEl('cb-name'); nm.innerText = cb.phase == 'run' ? CB_NAME[cb.target] : 'TILES DROP!'; nm.style.color = cb.phase == 'run' ? CB_COL[cb.target] : '#fff'; getEl('cb-timer').innerText = Math.max(0, Math.ceil(cb.t)); getEl('cb-round').innerText = 'Round ' + cb.round }
         if (LIMIT[curMode]) {
@@ -1750,9 +1770,12 @@
         const p = roster.find(q => q.id === m.from); if (!p || !p.remote || !p.cells.length || clock - (p.lastAct || 0) < .08) return; p.lastAct = clock;
         if (m.a == 'split') divide(p); else if (m.a == 'feed') ejectMass(p);
       }
+      function specRank(p) { return (p.bot ? 2 : 0) + (hero.team && p.team !== hero.team ? 1 : 0) }
+      function specList() { return roster.filter(p => p !== hero && p.cells.length && !p.giant).sort((a, b) => specRank(a) - specRank(b) || (a.name < b.name ? -1 : 1)) }
       function olSpectate() {
         if (spec && spec.cells.length && !spec.giant) return spec;
-        spec = null; let best = null, bm = -1; for (const p of roster) if (p.cells.length && !p.giant) { const t = sumMass(p); if (t > bm) { bm = t; best = p } }
+        spec = null; const l = specList(); if (!l.length) return null; const r0 = specRank(l[0]); let best = null, bm = -1;
+        for (const p of l) if (specRank(p) === r0) { const t = sumMass(p); if (t > bm) { bm = t; best = p } }
         spec = best; return best;
       }
       function olEnd(title, sub, winners) {
@@ -1920,6 +1943,72 @@
         paused = true; refreshOptUI(); unfocus(); syncMenu();
       };
       window.resumeGame = function() { paused = false; unfocus(); syncMenu() };
+      const TIPS = [
+        { t: 'How to play', i: [['Grow', 'Move around eating dots and smaller blobs. The bigger you are, the more you can eat, but the slower you move.'], ['Eating', 'You can only eat a blob that is noticeably smaller than you, and you eat it by covering its centre. Anything bigger than you can eat you, so keep away.'], ['Win', 'Climb the leaderboard. Most modes end when you are eaten; some have a timer or a last team standing.']] },
+        { t: 'Controls', i: [['Computer', 'Move the mouse to steer. Space splits, W feeds mass, hold left click or Shift to boost (costs mass), Esc pauses.'], ['Phone', 'Touch and drag anywhere on the screen to steer in that direction. Use the on-screen buttons to split, feed and boost.'], ['Splitting', 'Split to lunge at a target or dodge. Your pieces join back together after a timer (30 seconds at most).']] },
+        { t: 'Viruses and hiding', i: [['Green viruses', 'Big blobs that touch a virus pop into lots of pieces, so avoid them when you are large. After a virus pops someone it moves somewhere else on the map.'], ['Hide', 'Small blobs can sit behind a virus to hide from bigger ones.'], ['Feeding', 'Feed mass into a virus to make it pop towards an enemy.']] },
+        { t: 'Power-ups', i: [['⚡ Speed', 'A short burst of extra speed.'], ['🛡 Shield', 'Protects you for up to 20 seconds and blocks one attempt to eat you.'], ['👻 Ghost', 'For 8 seconds you pass straight through viruses.'], ['🧲 Magnet', 'For 5 seconds nearby dots are pulled towards you.'], ['💰 Steal', 'Pick a player from the menu that opens and take some of their mass.']] },
+        { t: 'Events', i: [['Fever', 'Now and then a swarm of 1000-mass dots appears all over the map for 5 seconds. Grab as many as you can.'], ['Lightning', 'The bigger you are, the more likely you are to be struck. A strike shrinks you to a tiny blob for a few seconds, then you get your mass back.'], ['Giants', 'Slow orange blobs that show up in Free for all, Speed Arena, Time Attack, Duos and Squads. They stay for 5 minutes, and if you are bigger they are easy to eat.']] },
+        { t: 'Menu settings', i: [['Difficulty', 'Easy, Normal, Hard and Intense set how clever and aggressive the bots are. Extreme keeps 50 bots but they almost never make mistakes. Crowded has 200 bots and is offline only.'], ['Map size', 'Slide from 1x to 10x. A bigger map means more room, more dots and more viruses. King of the Hill and Color Block have a fixed size.'], ['Power-ups and viruses', 'Switch each power-up, or viruses, on or off. Modes that do not use them grey the setting out.']] },
+        { t: 'Online rooms', i: [['Joining', 'Press Play online and pick one of the 5 rooms. Up to 8 players fit in a room.'], ['The host', 'The first player into an empty room picks the settings: mode, difficulty, map size, power-ups and viruses. Those settings stay until everyone has left and the room is empty again.'], ['Joining a running room', 'You play with that room\'s settings, whatever you had chosen. If your name is already taken you get a number added, like name-1.'], ['Rounds', 'When a round ends the winner is shown and a new game starts after a countdown. Crowded cannot be played online.']] },
+        { t: 'Free for all, Time Attack', i: [['Free for all', 'Everyone for themselves. Get as big as you can.'], ['Time Attack', '5 minutes, the biggest blob wins, and you respawn when eaten.']] },
+        { t: 'Red v Blue, Renegades', i: [['Red v Blue', 'Two teams. The last team standing wins. When you are out you can watch the others.'], ['Renegades', 'Get eaten and you switch sides, keeping your mass. One team must convert everyone.']] },
+        { t: 'Duos, Squads', i: [['Duos', 'Teams of two. The last duo standing wins.'], ['Squads', 'Squads of four. The last squad standing wins.'], ['Spectating', 'Once you are out you can watch teammates, other players or bots with the arrow buttons.']] },
+        { t: 'King of the Hill, Infected', i: [['King of the Hill', 'Everyone starts at 10 mass. Stay inside the moving zone to score a point each second. Most points in 5:00 wins.'], ['Infected', 'Humans have to survive for 4:00. Infected blobs turn you into one of them when they eat you.']] },
+        { t: 'Speed Arena, Color Block', i: [['Speed Arena', 'Everything moves 5 times faster, and orange pinball poles bounce you around. Pure chaos.'], ['Color Block', 'Stand on the colour that is called out before time runs out, or fall. In harder difficulties there is less of the right colour. Last blob standing wins.']] }
+      ];
+      let tipN = 0;
+      const tipsRender = () => {
+        const sl = TIPS[tipN], card = getEl('tp-card'), dots = getEl('tp-dots'); card.innerHTML = ''; dots.innerHTML = '';
+        const h = document.createElement('h3'); h.textContent = sl.t; card.appendChild(h);
+        sl.i.forEach(([a, b]) => { const d = document.createElement('div'), bb = document.createElement('b'); d.className = 'tp-item'; bb.textContent = a + ': '; d.append(bb, document.createTextNode(b)); card.appendChild(d) });
+        TIPS.forEach((_, k) => { const i = document.createElement('i'); if (k == tipN) i.className = 'on'; dots.appendChild(i) });
+      };
+      window.tipsStep = function(d) { tipN = (tipN + d + TIPS.length) % TIPS.length; tipsRender(); unfocus() };
+      window.tipsOpen = function() { switchTab('tips'); tipsRender() };
+      window.addEventListener('keydown', e => { try { const t = getEl('tab-tips'); if (t && t.classList.contains('active')) { if (e.key == 'ArrowRight') window.tipsStep(1); else if (e.key == 'ArrowLeft') window.tipsStep(-1) } } catch (err) {} });
+
+      // ---- lifetime stats (kept in localStorage, key never changes between versions) ----
+      const ST_KEY = 'blobs-stats';
+      const st = { top: [], mass: 0, blobs: 0, games: 0, time: 0, longest: 0, modes: {} };
+      try { const sv = JSON.parse(localStorage.getItem(ST_KEY) || '{}'); if (sv && typeof sv == 'object') { if (Array.isArray(sv.top)) st.top = sv.top.slice(0, 5); for (const k of ['mass', 'blobs', 'games', 'time', 'longest']) if (isFinite(sv[k])) st[k] = +sv[k]; if (sv.modes && typeof sv.modes == 'object') st.modes = sv.modes } } catch (e) {}
+      const stSave = () => { try { localStorage.setItem(ST_KEY, JSON.stringify(st)) } catch (e) {} };
+      let stPrev = 0, stEat = 0, stLife = 0, stClock = 0, stBolt = false, stSaveT = 0;
+      const stTrack = (alive, peak) => {
+        const dtc = Math.min(.5, Math.max(0, clock - stClock)); stClock = clock;
+        if (alive) {
+          const t = sumMass(hero), bolt = !!hero.bolt;
+          if (stPrev > 0 && t > stPrev && !bolt && !stBolt) st.mass += t - stPrev;
+          stPrev = t; stBolt = bolt; st.time += dtc; stLife += dtc;
+          if (eatCount < stEat) stEat = eatCount; st.blobs += eatCount - stEat; stEat = eatCount;
+          stSaveT += dtc; if (stSaveT > 15) { stSaveT = 0; stSave() }
+          return;
+        }
+        stPrev = 0; stBolt = false; stEat = eatCount;
+        if (peak > 0) {
+          st.games++; st.modes[curMode] = (st.modes[curMode] || 0) + 1; if (stLife > st.longest) st.longest = stLife;
+          if (peak > 10) st.top.push({ s: Math.round(peak), m: curMode, o: online.on ? 1 : 0, t: Date.now() }); st.top.sort((a, b) => b.s - a.s); st.top = st.top.slice(0, 5);
+          stLife = 0; stSave();
+        }
+      };
+      window.addEventListener('pagehide', stSave);
+      const stDur = n => { n = Math.round(n); const h = Math.floor(n / 3600), m = Math.floor(n % 3600 / 60); return h ? h + 'h ' + m + 'm' : m ? m + 'm ' + (n % 60) + 's' : n + 's' };
+      const stRender = () => {
+        const top = getEl('st-top'), grid = getEl('st-grid'); top.innerHTML = ''; grid.innerHTML = '';
+        if (!st.top.length) { const e = document.createElement('div'); e.className = 'lb-empty'; e.textContent = 'No scores yet. Go play a game!'; top.appendChild(e) }
+        st.top.forEach((en, i) => {
+          const row = document.createElement('div'), rk = document.createElement('span'), mn = document.createElement('div'), nm = document.createElement('b'), cf = document.createElement('small'), sc = document.createElement('span');
+          row.className = 'lb-row'; rk.className = 'lb-rank'; rk.textContent = '#' + (i + 1); mn.className = 'lb-main'; sc.className = 'lb-score'; nm.textContent = MODE_LABEL[en.m] || en.m; sc.textContent = fmt(en.s);
+          cf.textContent = (en.o ? 'Online' : 'Offline') + ' · ' + new Date(en.t).toLocaleDateString(); mn.append(nm, cf); row.append(rk, mn, sc); top.appendChild(row);
+        });
+        const fav = Object.keys(st.modes).sort((a, b) => st.modes[b] - st.modes[a])[0];
+        [['Games played', st.games], ['Time played', stDur(st.time)], ['Total mass eaten', fmt(st.mass)], ['Blobs eaten', st.blobs.toLocaleString()], ['Longest survival', stDur(st.longest)], ['Favourite mode', fav ? (MODE_LABEL[fav] || fav) : '-']].forEach(([a, b]) => {
+          const c = document.createElement('div'), sm = document.createElement('small'), bb = document.createElement('b'); c.className = 'st-card'; sm.textContent = a; bb.textContent = b; c.append(sm, bb); grid.appendChild(c);
+        });
+      };
+      window.statsOpen = function() { switchTab('stats'); stRender() };
+      window.statsReset = function() { if (!confirm('Reset all your stats?')) return; st.top = []; st.mass = 0; st.blobs = 0; st.games = 0; st.time = 0; st.longest = 0; st.modes = {}; stSave(); stRender() };
+
       const LB_HTTP = ONLINE_URL.replace(/^ws/, 'http'); let lbCache = null, lbCacheT = 0, lbWhich = 'off', lbPeak = 0;
       const lbSubmit = async pk => {
         pk = Math.round(pk); if (pk < 50 || !hero) return; const nm = (nameInput.value || '').trim().slice(0, 15) || hero.name || 'Player', which = online.on ? 'on' : 'off';
@@ -1932,8 +2021,9 @@
       };
       const lbTrack = () => {
         if (!hero || !roster.length) return;
-        if (hero.cells.length > 0 && scr == 'play' && !(online.on && online.over)) { const t = sumMass(hero); if (t > lbPeak) lbPeak = t; return }
-        if (lbPeak > 0) { const pk = lbPeak; lbPeak = 0; if (curMode == 'ffa') lbSubmit(pk) }
+        if (hero.cells.length > 0 && scr == 'play' && !(online.on && online.over)) { const t = sumMass(hero); if (t > lbPeak) lbPeak = t; stTrack(true, 0); return }
+        const pk = lbPeak; lbPeak = 0; stTrack(false, pk);
+        if (pk > 0 && curMode == 'ffa') lbSubmit(pk)
       };
       const lbRender = d => {
         const box = getEl('lb-list'); box.innerHTML = ''; const list = (d && d[lbWhich]) || [];
