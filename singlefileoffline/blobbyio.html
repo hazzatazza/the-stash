@@ -10,8 +10,8 @@
     however small, without being asked, and mention the new version number in your reply.
   -->
   <!--
-    An Algebra practise original game - made by hazza. Feel free to copy or use this, as the code is straight AI,
-    and if you'd like, let me know so I can check it out!
+    An Algebra practice original game - made by hazza. Feel free to copy or use this, as the code is straight AI,
+    and if you do, let me know so I can check it out!
   -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -476,6 +476,9 @@
     .slider-wrap { display: flex; align-items: center; gap: 8px; }
     #map-size { width: 140px; accent-color: var(--purple); cursor: pointer; }
     .dim { opacity: .4; pointer-events: none; }
+    .lb-row { display: flex; gap: 10px; align-items: center; padding: 6px 8px; border-bottom: 1px solid var(--line); text-align: left; }
+    .lb-rank { width: 26px; color: var(--muted); flex: none; } .lb-main { display: flex; flex-direction: column; min-width: 0; } .lb-main b { font-size: 14px; } .lb-main small { color: var(--muted); font-size: 11px; }
+    .lb-score { margin-left: auto; font-weight: 700; font-size: 15px; } .lb-empty { text-align: center; color: var(--muted); padding: 18px 0; font-size: 13px; }
     #pow-selector .theme-btn { padding: 4px 9px; font-size: 15px; }
 
     /* ---------- wide two-column menu ---------- */
@@ -594,10 +597,17 @@
             <div class="room-list" id="room-list"></div>
             <div class="menu-foot">
               <span id="best-score-text">Best size 0</span>
-              <button class="link-btn" onclick="switchTab('credits')">Credits</button>
+              <span><button class="link-btn" onclick="lbOpen()">Leaderboard</button> &middot; <button class="link-btn" onclick="switchTab('credits')">Credits</button></span>
             </div>
           </div>
 
+          <div id="tab-leaderboard" class="tab-content">
+            <div class="grid-selector" style="justify-content:center;margin-bottom:8px"><button class="theme-btn active" id="lb-off" onclick="lbShow('off')">Offline</button><button class="theme-btn" id="lb-on" onclick="lbShow('on')">Online</button></div>
+            <div class="over-label" style="text-align:center">TOP 10 FREE FOR ALL SCORES</div>
+            <div style="text-align:center;font-size:11px;color:var(--muted);margin-bottom:4px">Minimum score is 50 mass</div>
+            <div id="lb-list"></div>
+            <div style="text-align:center;margin-top:10px"><button class="link-btn" onclick="switchTab('play')">Back</button></div>
+          </div>
           <div id="tab-credits" class="tab-content">
             <div class="credits-box">
               <p>Made by Hazza</p>
@@ -646,7 +656,7 @@
         <div class="over-size" id="over-size">0</div>
         <div class="over-sub" id="over-best"></div>
         <div class="over-sub" id="over-stats"></div>
-        <button class="play-btn" onclick="retryGame()">Try again</button>
+        <button class="play-btn" id="over-again" onclick="retryGame()">Try again</button>
         <button class="ghost-btn" onclick="toMenu()">Back to menu</button>
       </div>
     </div>
@@ -655,7 +665,7 @@
 <script>
     // NOTE FOR ANY AI MODEL: every change the user asks for in this file = bump APP_VERSION by 0.01 (1.03 -> 1.04 ...).
     // An Algebro original game - made by hazza. Feel free to copy or use this, the code is straight AI, but if you do, let me know so I can check it out!
-    const APP_VERSION = '1.10';
+    const APP_VERSION = '1.15';
     // Cloudflare Worker that runs online rooms (one WebSocket per player). Put your worker URL here, e.g. 'wss://blobby-rooms.yourname.workers.dev/'
     const ONLINE_URL = 'wss://blobbybackend.gdharry123.workers.dev/';
     let W = window.innerWidth;
@@ -791,7 +801,7 @@
     const EMOJI_LABEL = { crying: 'Crying', starstruck: 'Star-struck', cool: 'Cool', goofy: 'Goofy', money: 'Money face', laughing: 'Laughing', hearteyes: 'Heart eyes', party: 'Party', devil: 'Devil', clown: 'Clown', ghost: 'Ghost', skull: 'Skull', robot: 'Robot', alien: 'Alien', frozen: 'Frozen', angry: 'Angry', star: 'Star', poo: 'Poop', moon: 'Moon' };
     const SKINS = IMG_SKINS.concat(Object.keys(EMOJI));
     const skinLabel = n => !n ? 'Solid colour' : (EMOJI_LABEL[n] || n[0].toUpperCase() + n.slice(1));
-    const SKIN_URL = n => `https://cdn.jsdelivr.net/gh/hazzatazza/blobby.io@main/skins/${n}.png`;
+    const SKIN_URL = n => `https://raw.githubusercontent.com/hazzatazza/images-for-stuff/main/blobbyioskins/${n}.png`;
     const SKIN_IMG = {};
     IMG_SKINS.forEach(n => { const im = new Image(); im.src = SKIN_URL(n); SKIN_IMG[n] = im; });
     Object.keys(EMOJI).forEach(n => {
@@ -864,13 +874,20 @@
       const D = () => DIFFS[diff];
       const TEAM = { red: '#ef4444', blue: '#3b82f6', human: '#3ddc6e', infected: '#a855f7' }, STORM = { name: 'Storm' }, LIMIT = { time: 300, infected: 240, renegades: 600, koth: 300 }, SPEC = { teams: 1, duos: 1, squads: 1 }, TEAMMODE = { teams: 1, infected: 1, renegades: 1, duos: 1, squads: 1 }, KZR = 300, KSP = 170, PR = 26, CALM = { koth: 1, speed: 1, colour: 1 }, HR = 18, HW = Math.sqrt(3) * 18, HV = 27, CB_COL = ['#ef4444', '#f97316', '#eab308', '#22c55e', '#2563eb', '#38bdf8', '#a855f7', '#ec4899', '#92400e', '#111827', '#f8fafc'], CB_NAME = ['RED', 'ORANGE', 'YELLOW', 'GREEN', 'BLUE', 'LIGHT BLUE', 'PURPLE', 'PINK', 'BROWN', 'BLACK', 'WHITE'];
       let gameMode = 'ffa', curMode = 'ffa', feedLog = [], spec = null;
-      let hot = [], boostHeld = false, boostPid = null, nextFever = 0, mapMul = 3, virusOn = true;
+      let hot = [], boostHeld = false, boostPid = null, nextFever = 0, feverWin = 420, coverT = 0, mapMul = 3, virusOn = true;
       const GIANT_OK = { ffa: 1, speed: 1, time: 1, duos: 1, squads: 1 };
       const POW = { speed: true, shield: true, ghost: true, magnet: true, steal: true };
       const pickPT = () => { const en = PT.filter(t => POW[t]); return en[Math.floor(Math.random() * en.length)] || 'speed' };
       const fmt = n => { n = Math.round(n); return n >= 1e12 ? (n / 1e12).toFixed(2) + 'T' : n >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e5 ? Math.round(n / 1e3) + 'K' : String(n) };
-      const hotPos = () => { if (hot.length && Math.random() < .55) { const h = hot[Math.floor(Math.random() * hot.length)], a = randBetween(0, 6.283), d = h.r * Math.sqrt(Math.random()); return [Math.max(20, Math.min(WORLD - 20, h.x + Math.cos(a) * d)), Math.max(20, Math.min(WORLD - 20, h.y + Math.sin(a) * d))] } return [randBetween(20, WORLD - 20), randBetween(20, WORLD - 20)] };
-      const makeHot = () => { const n = Math.min(60, Math.max(3, Math.round(16 * WORLD * WORLD / 144e6))); hot = Array.from({ length: n }, () => ({ x: randBetween(300, WORLD - 300), y: randBetween(300, WORLD - 300), r: randBetween(350, 800) })) };
+      let gridQ = [], gridG = 0, hotI = 0;
+      const hotPos = () => {
+        if (hot.length && Math.random() < .3) { const h = hot[hotI++ % hot.length], a = randBetween(0, 6.283), d = h.r * Math.sqrt(Math.random()); return [Math.max(20, Math.min(WORLD - 20, h.x + Math.cos(a) * d)), Math.max(20, Math.min(WORLD - 20, h.y + Math.sin(a) * d))] }
+        const g = Math.max(1, Math.ceil(Math.sqrt(PEL * .8)));
+        if (gridG !== g || !gridQ.length) { gridG = g; gridQ = Array.from({ length: g * g }, (_, i) => i); for (let i = gridQ.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const t = gridQ[i]; gridQ[i] = gridQ[j]; gridQ[j] = t } }
+        const idx = gridQ.pop(), cs = WORLD / g;
+        return [Math.max(20, Math.min(WORLD - 20, ((idx % g) + Math.random()) * cs)), Math.max(20, Math.min(WORLD - 20, (Math.floor(idx / g) + Math.random()) * cs))];
+      };
+      const makeHot = () => { const g = Math.max(2, Math.round(WORLD / 1500)), cs = WORLD / g; hot = []; gridQ = []; hotI = Math.floor(Math.random() * 1000); for (let gx = 0; gx < g; gx++) for (let gy = 0; gy < g; gy++) hot.push({ x: (gx + .5 + randBetween(-.2, .2)) * cs, y: (gy + .5 + randBetween(-.2, .2)) * cs, r: randBetween(250, 450) }) };
       try { const gm = localStorage.getItem('blobs-mode'); if (gm == 'ffa' || gm == 'teams' || gm == 'time' || gm == 'infected' || gm == 'speed' || gm == 'colour' || gm == 'renegades' || gm == 'koth' || gm == 'duos' || gm == 'squads') gameMode = gm } catch (e) {}
       const sameSide = (a, b) => TEAMMODE[curMode] && !!a.team && a.team === b.team;
       let scr = 'menu', roster = [], hero = null, dots = [], viruses = [], lens = { x: WORLD / 2, y: WORLD / 2, z: .9 }, cursor = { x: W / 2 + 1, y: H / 2 };
@@ -906,7 +923,7 @@
       function startRound() {
         AudioFX.ensure(); AudioFX.sync(true); playSound('ui');
         try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
-        paused = false; scr = 'play'; roster = []; dots = []; viruses = []; floaters = []; topSize = 10; eatCount = 0; elapsed = 0; newBest = false; deathClock = 0; curMode = gameMode; if (curMode == 'koth') { WORLD = 4000; PEL = 0; VIRUS_COUNT = 0 } else if (curMode == 'colour') { WORLD = 3000; PEL = 0; VIRUS_COUNT = 0 } else { WORLD = 4000 * mapMul; const ar = WORLD * WORLD / 144e6; PEL = Math.min(20000, Math.round(5400 * ar)); VIRUS_COUNT = curMode == 'speed' || !virusOn ? 0 : Math.min(400, Math.max(12, Math.round(110 * ar))) } makeHot(); getEl('over-label').innerText = 'BIGGEST SIZE'; feedLog = []; spec = null; nextBolt = CALM[curMode] ? 1e9 : 0; bolts = []; flashT = -9; stealOpen = false; banner = null; nextFrenzy = GIANT_OK[curMode] ? 0 : 1e9; nextFever = PEL > 0 ? 0 : 1e9; steals = Array.from({ length: CALM[curMode] || !POW.steal ? 0 : Math.min(16, Math.max(2, Math.round(4 * WORLD * WORLD / 144e6))) }, makePower); endWin = false; awarded = false; bigAlert = null; stick.id = null; stick.ax = stick.ay = stick.mag = stick.kx = stick.ky = 0; keyMode = false; for (const k in heldKeys) heldKeys[k] = false; boostHeld = false; boostPid = null;
+        paused = false; scr = 'play'; coverT = 0; getEl('over-again').textContent = 'Try again'; roster = []; dots = []; viruses = []; floaters = []; topSize = 10; eatCount = 0; elapsed = 0; newBest = false; deathClock = 0; curMode = gameMode; if (curMode == 'koth') { WORLD = 4000; PEL = 0; VIRUS_COUNT = 0 } else if (curMode == 'colour') { WORLD = 3000; PEL = 0; VIRUS_COUNT = 0 } else { WORLD = 4000 * mapMul; const ar = WORLD * WORLD / 144e6; PEL = Math.min(20000, Math.round(5400 * ar)); VIRUS_COUNT = curMode == 'speed' || !virusOn ? 0 : Math.min(400, Math.max(12, Math.round(110 * ar))) } makeHot(); getEl('over-label').innerText = 'BIGGEST SIZE'; feedLog = []; spec = null; nextBolt = CALM[curMode] ? 1e9 : 0; bolts = []; flashT = -9; stealOpen = false; banner = null; nextFrenzy = GIANT_OK[curMode] ? 0 : 1e9; nextFever = PEL > 0 ? 0 : 1e9; steals = Array.from({ length: CALM[curMode] || !POW.steal ? 0 : Math.min(16, Math.max(2, Math.round(4 * WORLD * WORLD / 144e6))) }, makePower); endWin = false; awarded = false; bigAlert = null; stick.id = null; stick.ax = stick.ay = stick.mag = stick.kx = stick.ky = 0; keyMode = false; for (const k in heldKeys) heldKeys[k] = false; boostHeld = false; boostPid = null;
         hero = makePlayer((nameInput.value.trim() || 'You').slice(0, 15), hueFromHex(colorPicker.value), false); hero.skin = selectedSkin; if (curMode == 'teams' || curMode == 'renegades') { hero.team = Math.random() < .5 ? 'red' : 'blue'; hero.col = TEAM[hero.team] } else hero.col = colorPicker.value; if (online.on) hero.id = online.myId; roster.push(hero); if (online.on && online.host) online.peers.forEach(pe => roster.push(addRemote(pe)));
         const cnt = { red: roster.filter(q => q.team == 'red').length, blue: roster.filter(q => q.team == 'blue').length };
         for (let i = 0; i < D().bots; i++) { const b = makeBot(); if (curMode == 'teams' || curMode == 'renegades') { b.team = cnt.red < cnt.blue ? 'red' : cnt.blue < cnt.red ? 'blue' : (Math.random() < .5 ? 'red' : 'blue'); cnt[b.team]++; b.col = TEAM[b.team] } roster.push(b) }
@@ -978,11 +995,12 @@
         if (prey && preyOwner === hero) { if (p.chaseOwner !== hero) { p.chaseOwner = hero; p.chaseStart = clock } else if (clock - p.chaseStart > d.giveUp) { p.ignoreOwner = hero; p.ignoreUntil = clock + d.cool; p.chaseOwner = null; prey = null } } else p.chaseOwner = null;
         p.targetPrey = prey;
         if (threat && d.smart) { const e = 1500; if (b.x < e) fx0 += 1; if (b.x > WORLD - e) fx0 -= 1; if (b.y < e) fy0 += 1; if (b.y > WORLD - e) fy0 -= 1 }
-        if (threat) { const L = Math.hypot(fx0, fy0) || 1; p.tx = b.x + fx0 / L * 400; p.ty = b.y + fy0 / L * 400 }
+        if (threat) { const L = Math.hypot(fx0, fy0) || 1; p.tx = b.x + fx0 / L * 400; p.ty = b.y + fy0 / L * 400; if (L > 1.1 && !p.giant && sumMass(p) > 200 && Math.random() < (d.smart ? .6 : .35)) p.boostEnd = clock + .5 }
         else if (prey) {
           const pd = Math.hypot(prey.x - b.x, prey.y - b.y), lead = Math.min(.8, pd / (baseSpeed(b.m) + 1));
           p.tx = prey.x + (prey.dx || 0) * lead; p.ty = prey.y + (prey.dy || 0) * lead;
           if (d.split && b.m > prey.m * (d.smart ? 2.2 : 2.6) && b.m > 60 && pd < bodyR(b.m) * (d.smart ? 4 : 3.2) && p.cells.length < (d.smart ? 4 : 3)) divide(p);
+          if (!p.giant && pd < rb * 5 && pd > rb * 1.2 && b.m > prey.m * 1.6 && sumMass(p) > 400 && Math.random() < (d.smart ? .5 : .25)) p.boostEnd = clock + .4;
         } else {
           let bp = null, bs = 0, rg = (450 * d.sight) ** 2;
           if (!(p.boostUntil > elapsed) && !p.giant) for (const o of powerups) { if (elapsed < o.until) continue; if ((o.x - b.x) ** 2 + (o.y - b.y) ** 2 < (380 * d.sight) ** 2 && Math.random() < .8) { bp = o; bs = 1e9; break } }
@@ -1020,6 +1038,13 @@
         if ((curMode == 'duos' || curMode == 'squads') && v !== hero && v.team === hero.team) { const left = roster.filter(q => q.team === hero.team && q.cells.length).length; bigAlert = { text: curMode == 'duos' ? 'YOUR DUO IS OUT!' : 'TEAMMATE OUT!', sub: v.name + ' was eaten' + (curMode == 'squads' ? ' · ' + left + ' left in your squad' : ''), until: elapsed + 5 }; playSound('lose') }
         if (online.on && online.host && (curMode == 'duos' || curMode == 'squads')) roster.forEach(q => { if (q.remote && q !== v && q.team && q.team === v.team) { const left2 = roster.filter(z => z.team === q.team && z.cells.length).length; evTo(q.id, curMode == 'duos' ? 'YOUR DUO IS OUT!' : 'TEAMMATE OUT!', v.name + ' was eaten' + (curMode == 'squads' ? ' · ' + left2 + ' left in your squad' : ''), 5, 'big') } })
       }
+      function coverEnd(w) {
+        if (online.on) { olEnd(w.name + ' covered the map', '', [w]); online.over.left = 3; return }
+        scr = 'over'; newBest = topSize > bestNow(); const b = saveBest(Math.round(topSize)); AudioFX.sync(false); playSound(w === hero ? 'coin' : 'lose'); endWin = w === hero;
+        getEl('over-title').innerText = w.name + ' won!'; getEl('over-size').innerText = fmt(topSize); getEl('over-best').innerText = 'Covered the map' + (newBest ? ' · New best!' : ' · Best ' + b);
+        getEl('over-stats').innerText = `Blobs eaten: ${eatCount}   Time: ${Math.floor(elapsed / 60)}:${String(Math.floor(elapsed % 60)).padStart(2, '0')}`;
+        getEl('over-again').textContent = 'Play again'; syncMenu();
+      }
       function teamsOver(w) {
         if (online.on) return olEnd((w == 'red' ? 'Red' : 'Blue') + ' team wins!', '', roster.filter(q => q.team === w));
         scr = 'over'; newBest = topSize > bestNow(); const b = saveBest(Math.round(topSize)); AudioFX.sync(false); playSound(w === hero.team ? 'coin' : 'lose'); endWin = w === hero.team;
@@ -1051,7 +1076,7 @@
         else if (touch || keyMode || document.hidden) { hero.tx = cx; hero.ty = cy; hero.idle = true }
         else { hero.tx = lens.x + (cursor.x - W / 2) / lens.z; hero.ty = lens.y + (cursor.y - H / 2) / lens.z }
       }
-      function safeSpot() { let bst = null, bd = -1; for (let i = 0; i < 8; i++) { const x0 = randBetween(300, WORLD - 300), y0 = randBetween(300, WORLD - 300); let md = 1e9; for (const p of roster) for (const c of p.cells) md = Math.min(md, Math.hypot(c.x - x0, c.y - y0) - bodyR(c.m)); if (md > bd) { bd = md; bst = [x0, y0] } } return bst }
+      function safeSpot() { let bst = null, bd = -Infinity; for (let i = 0; i < 8; i++) { const x0 = randBetween(300, WORLD - 300), y0 = randBetween(300, WORLD - 300); let md = 1e9; for (const p of roster) for (const c of p.cells) md = Math.min(md, Math.hypot(c.x - x0, c.y - y0) - bodyR(c.m)); if (md > bd) { bd = md; bst = [x0, y0] } } return bst }
       function respawn(p) {
         const [sx0, sy0] = safeSpot(); p.cells = [{ x: sx0, y: sy0, m: 10, vx: 0, vy: 0, merge: 0, wobble: 0 }];
         p.out = false; p.respawnAt = null; p.targetPrey = p.chaseOwner = null; p.alarm = 0; p.lastKiller = null; p.boostUntil = 0; p.t = 0; p.bolt = null; p.shield = p.ghostUntil = p.magnetUntil = 0;
@@ -1162,12 +1187,18 @@
       function upd(dt) {
         clock += dt; if (scr != 'play') return; if (online.on) { if (!online.host) { guestTick(dt); return } if (online.over) { hostOverTick(dt); return } } else if (paused || stealOpen) return; elapsed += dt;
         if (!nextBolt) nextBolt = elapsed + randBetween(40, 70);
-        if (elapsed >= nextBolt) { nextBolt = elapsed + randBetween(45, 80); const al = roster.filter(q => q.cells.length && !q.bolt); if (al.length) strike(al[Math.floor(Math.random() * al.length)]) }
+        if ((curMode == 'ffa' || curMode == 'speed' || curMode == 'time') && !(online.on && online.over)) {
+          let Lo = null, Lm = 0; for (const p of roster) { if (p.giant || !p.cells.length) continue; const tm = sumMass(p); if (tm > Lm) { Lm = tm; Lo = p } }
+          let ok = !!Lo && bodyR(Lm) >= WORLD / 2; if (ok) for (const p of roster) { if (p === Lo || p.giant || !p.cells.length) continue; if (sumMass(p) * 1.05 > Lm) ok = false }
+          coverT = ok ? coverT + dt : 0; if (coverT > 8) { coverT = 0; coverEnd(Lo) }
+        }
+        if (elapsed >= nextBolt) { nextBolt = elapsed + randBetween(45, 80); const al = roster.filter(q => q.cells.length && !q.bolt); if (al.length) { const w = al.map(q => Math.pow(sumMass(q), 3)), tot = w.reduce((a, b) => a + b, 0); let r = Math.random() * tot, k = 0; while (k < al.length - 1 && (r -= w[k]) > 0) k++; strike(al[k]) } }
         for (const p of roster) if (p.bolt && elapsed >= p.bolt.until) { if (p.cells.length) { const q = p.cells.reduce((a, c) => c.m > a.m ? c : a); q.m += Math.max(0, p.bolt.total - 10); q.wobble = 1 } p.bolt = null }
         if (!nextFrenzy) nextFrenzy = elapsed + randBetween(100, 140); if (elapsed >= nextFrenzy) { nextFrenzy = elapsed + randBetween(110, 160); if (GIANT_OK[curMode] && !roster.some(q => q.giant)) frenzy() }
-        if (!nextFever) nextFever = elapsed + randBetween(300, 420); if (elapsed >= nextFever) { nextFever = elapsed + randBetween(300, 360); fever() }
+        if (!nextFever) { feverWin = 420; nextFever = feverWin + randBetween(0, 600) } if (elapsed >= nextFever) { fever(); feverWin += 600; while (feverWin + 600 <= elapsed) feverWin += 600; nextFever = Math.max(elapsed + 30, feverWin + randBetween(0, 600)) }
         for (const p of roster) if (p.giant && elapsed >= p.expires) p.cells = [];
         if (hero.cells.length) readInput(); for (const p of roster) { if (p !== hero && !p.remote) continue; if (p.stealPend && elapsed >= p.stealPend) { p.stealPend = 0; evTo(p.id, '', '', 0, 'steal0'); const v0 = pickVictim(p); if (v0) steal(p, v0) } if (p.remote && clock - (p.lastIn || clock) > 1.5 && p.cells.length) { let ax = 0, ay = 0; p.cells.forEach(q => { ax += q.x; ay += q.y }); p.tx = ax / p.cells.length; p.ty = ay / p.cells.length; p.boostIn = false } const T0 = sumMass(p); p.boosting = (p === hero ? boostHeld : !!p.boostIn) && T0 > 40; if (p.boosting) { const lost = Math.min(200 * dt, T0 - 30); p.cells.forEach(q => { q.m = Math.max(1, q.m - lost * q.m / T0) }) } }
+        for (const p of roster) if (p.bot && !p.giant) { const T0 = sumMass(p); p.boosting = p.cells.length > 0 && clock < (p.boostEnd || 0) && T0 > 40; if (p.boosting) { const lost = Math.min(200 * dt, T0 - 30); p.cells.forEach(q => { q.m = Math.max(1, q.m - lost * q.m / T0) }) } }
         for (const p of roster) {
           if (p.bot) { p.t -= dt; if (p.t <= 0 && p.cells.length) { p.t = D().smart || curMode == 'speed' ? .1 : .2; decide(p) } }
           for (const q of p.cells) {
@@ -1589,6 +1620,7 @@
         return 'Gamemode: ' + MODE_LABEL[s0.mode] + ' · Power-ups: ' + pw + ' · Difficulty: ' + s0.diff + (CALM[s0.mode] || s0.vir ? '' : ' · Viruses: off') + (fixed ? '' : ' · Map ' + s0.map + 'x');
       };
       function renderRooms(list) {
+        online.lastRooms = list;
         const box = getEl('room-list'); box.innerHTML = '';
         const hint = document.createElement('div'); hint.className = 'room-hint'; hint.textContent = 'Join a room, or start an empty one with the mode and settings you have picked above.'; box.appendChild(hint);
         const grid = document.createElement('div'); grid.className = 'room-grid';
@@ -1625,7 +1657,7 @@
       };
       function joinRoom(i) {
         if (online.on || online.joining || !online.ws) return;
-        if (diff == 'Crowded') { setOlError("Crowded can't be played in online mode, switch to another difficulty"); return }
+        const rr0 = online.lastRooms && online.lastRooms[i]; if (diff == 'Crowded' && !(rr0 && rr0.n > 0)) { setOlError("Crowded can't be played in online mode, switch to another difficulty"); return }
         setOlError('Joining room ' + (i + 1) + '...', true);
         try { localStorage.setItem('blobs-player-name', nameInput.value) } catch (e) {}
         online.joining = true; AudioFX.ensure();
@@ -1645,6 +1677,7 @@
       function olMsg(m) {
         switch (m.t) {
           case 'rooms': if (!online.on && !online.joining) renderRooms(m.rooms); break;
+          case 'reset': olLost('The rooms were reset by the server'); break;
           case 'err': online.joining = false; clearTimeout(online.joinT); setOlError(String(m.msg || 'Could not join that room')); break;
           case 'joined': olJoined(m); break;
           case 'peer': if (online.on && online.host) olPeer(m); break;
@@ -1887,6 +1920,40 @@
         paused = true; refreshOptUI(); unfocus(); syncMenu();
       };
       window.resumeGame = function() { paused = false; unfocus(); syncMenu() };
+      const LB_HTTP = ONLINE_URL.replace(/^ws/, 'http'); let lbCache = null, lbCacheT = 0, lbWhich = 'off', lbPeak = 0;
+      const lbSubmit = async pk => {
+        pk = Math.round(pk); if (pk < 50 || !hero) return; const nm = (nameInput.value || '').trim().slice(0, 15) || hero.name || 'Player', which = online.on ? 'on' : 'off';
+        try {
+          if (!lbCache) { lbCache = await (await fetch(LB_HTTP + 'lb')).json() }
+          const list = lbCache[which] || []; if (list.length >= 10 && pk <= list[list.length - 1].score) return;
+          const r = await (await fetch(LB_HTTP + 'score', { method: 'POST', headers: { 'Content-Type': 'text/plain' }, body: JSON.stringify({ b: which, name: nm, score: pk, cfg: { map: mapMul, diff, pow: { ...POW }, vir: virusOn } }) })).json();
+          if (r && r.lb) { lbCache = r.lb; if (getEl('tab-leaderboard').classList.contains('active')) lbRender(lbCache) }
+        } catch (e) {}
+      };
+      const lbTrack = () => {
+        if (!hero || !roster.length) return;
+        if (hero.cells.length > 0 && scr == 'play' && !(online.on && online.over)) { const t = sumMass(hero); if (t > lbPeak) lbPeak = t; return }
+        if (lbPeak > 0) { const pk = lbPeak; lbPeak = 0; if (curMode == 'ffa') lbSubmit(pk) }
+      };
+      const lbRender = d => {
+        const box = getEl('lb-list'); box.innerHTML = ''; const list = (d && d[lbWhich]) || [];
+        if (!list.length) { const e = document.createElement('div'); e.className = 'lb-empty'; e.textContent = d ? 'No scores yet. Be the first!' : 'Loading...'; box.appendChild(e); return }
+        const ic = { speed: '⚡', shield: '🛡', ghost: '👻', magnet: '🧲', steal: '💰' };
+        list.forEach((en, i) => {
+          const row = document.createElement('div'), rk = document.createElement('span'), mn = document.createElement('div'), nm = document.createElement('b'), cf = document.createElement('small'), sc = document.createElement('span'), c = en.cfg || {};
+          row.className = 'lb-row'; rk.className = 'lb-rank'; rk.textContent = '#' + (i + 1); mn.className = 'lb-main'; sc.className = 'lb-score'; nm.textContent = en.name; sc.textContent = fmt(en.score);
+          const on = Object.keys(ic).filter(k => !c.pow || c.pow[k] !== false);
+          cf.textContent = 'Map ' + (c.map || 3) + 'x · ' + (c.diff || 'Normal') + ' · Power-ups ' + (on.length == 5 ? 'all' : on.length ? on.map(k => ic[k]).join(' ') : 'none') + ' · Viruses ' + (c.vir === false ? 'off' : 'on');
+          mn.append(nm, cf); row.append(rk, mn, sc); box.appendChild(row);
+        });
+      };
+      window.lbShow = function(w) {
+        lbWhich = w; getEl('lb-off').classList.toggle('active', w == 'off'); getEl('lb-on').classList.toggle('active', w == 'on'); unfocus();
+        if (lbCache) return lbRender(lbCache);
+        lbRender(null);
+        fetch(LB_HTTP + 'lb').then(r => r.json()).then(d => { lbCache = d; lbRender(d) }).catch(() => { const b = getEl('lb-list'); b.innerHTML = ''; const e = document.createElement('div'); e.className = 'lb-empty'; e.style.color = '#f87171'; e.textContent = "Couldn't load the leaderboard"; b.appendChild(e) });
+      };
+      window.lbOpen = function() { switchTab('leaderboard'); window.lbShow(lbWhich) };
       window.retryGame = function() { unfocus(); startRound(); syncMenu() };
       window.toMenu = function() {
         if (online.on || online.ws) olTeardown();
@@ -1955,6 +2022,7 @@
       const frame = now => {
         const dt = Math.min(.1, (now - lastFrame) / 1000); lastFrame = now;
         try { upd(dt) } catch (e) { console.error(e) }
+        try { lbTrack() } catch (e) {}
         try { draw() } catch (e) { console.error(e) }
         requestAnimationFrame(frame);
       };
