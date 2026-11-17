@@ -52,16 +52,16 @@ input:focus{outline:0;border-color:var(--acc)}
 #splash{position:fixed;inset:0;z-index:50;overflow:hidden;cursor:pointer}
 #splash .sl{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;transition:transform .85s cubic-bezier(.77,0,.18,1)}
 #splash .s1{background:linear-gradient(160deg,#0a2447,#0f3a6b 60%,#124a85);z-index:2;color:#fff}
-#splash .s2{background:#fff;z-index:1;transform:translateY(100%);color:#333}
+#splash .s2{background:#fff;z-index:1;color:#333}
 #splash .s1 div{font-size:clamp(22px,5vw,44px);font-weight:700;letter-spacing:.02em;animation:sp 1s ease both}
 #splash .s1 span{display:block;font-size:clamp(14px,2.4vw,20px);color:#ff9b3d;letter-spacing:.16em;text-transform:uppercase;margin-bottom:10px;font-weight:500}
-#splash .s2 div{display:flex;flex-direction:column;align-items:center;gap:12px;font-size:clamp(16px,3vw,24px);letter-spacing:.06em;font-weight:500}
+#splash .s2 div{animation:sp 1s ease both;display:flex;flex-direction:column;align-items:center;gap:12px;font-size:clamp(16px,3vw,24px);letter-spacing:.06em;font-weight:500}
 .lorvin{font-family:'Alfa Slab One',serif;font-size:clamp(56px,15vw,120px);line-height:1;letter-spacing:2px;font-weight:400}.lorvin b{font-weight:400;color:#1a00a5}.lorvin i{font-style:normal;color:#ff7a1a}
 @keyframes sp{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:none}}
 .hide{display:none}
 </style></head><body>
 <canvas id="c"></canvas>
-<div id="splash"><div class="sl s1"><div>A Game By Blake Attard</div></div><div class="sl s2"><div>A<span class="lorvin"><b>LOR</b><i>VIN</i></span>Games Original</div></div></div>
+<div id="splash"><div class="sl s2"><div>A<span class="lorvin"><b>LOR</b><i>VIN</i></span>Games Original</div></div></div>
 <div id="hud" class="panel hide"><div id="info"></div><div id="bar"><i></i></div><div id="timer"></div></div>
 <div id="lb" class="panel hide"></div>
 <div id="ups" class="panel hide"></div>
@@ -540,11 +540,10 @@ const syncPerm=()=>{const e=$('permsw');e.classList.toggle('on',permOn);e.setAtt
 $('permsw').onclick=()=>{permOn=!permOn;try{localStorage.setItem('kermil_perm',permOn?'1':'0')}catch(e){}syncPerm()};syncPerm();
 document.querySelectorAll('#pw button').forEach(b=>b.onclick=()=>{const k=b.dataset.p;PW[k]=!PW[k];b.classList.toggle('on',!!PW[k])});
 document.querySelectorAll('#opt button').forEach(b=>b.onclick=()=>{const on=!b.classList.contains('on');b.classList.toggle('on',on);if(b.dataset.o=='snd')sndOn=on?1:0;else shkOn=on?1:0});
-(()=>{const sp=$('splash'),a=sp.querySelector('.s1'),b=sp.querySelector('.s2');let done=0,T=[];
+(()=>{const sp=$('splash'),b=sp.querySelector('.s2');let done=0,T=[];
 const end=()=>{if(done)return;done=1;T.forEach(clearTimeout);sp.style.transition='opacity .4s';sp.style.opacity=0;setTimeout(()=>sp.remove(),450)};
-T.push(setTimeout(()=>{a.style.transform='translateY(-100%)';b.style.transform='translateY(0)'},1500));
-T.push(setTimeout(()=>{b.style.transform='translateY(-100%)'},1500+850+1500));
-T.push(setTimeout(end,1500+850+1500+900));
+T.push(setTimeout(()=>{b.style.transform='translateY(-100%)'},1800));
+T.push(setTimeout(end,1800+900));
 sp.onclick=end})();
 $('play').onclick=()=>{sfx('pick');start()};$('pbtn').onclick=()=>setPause(true);$('resume').onclick=()=>setPause(false);$('itbtn').onclick=()=>{if(st=='play'&&!paused)useItem(P)};
 $('quit').onclick=()=>{paused=false;$('pause').classList.add('hide');$('name2').value=$('name').value;$('tomenu').onclick()};
