@@ -737,8 +737,8 @@ function getData (u, o) {
       var p = s.pts[i];
       if (i === 0) { px = p.x; py = p.y; w.u24(Math.round(px * 5)).u24(Math.round(py * 5)); }
       else {
-        var dx = Math.max(-60, Math.min(60, Math.round((p.x - px) * 2)));
-        var dy = Math.max(-60, Math.min(60, Math.round((p.y - py) * 2)));
+        var dx = Math.max(-127, Math.min(127, Math.round((p.x - px) * 2)));
+        var dy = Math.max(-127, Math.min(127, Math.round((p.y - py) * 2)));
         px += dx / 2; py += dy / 2;
         w.u8(127 + dx).u8(127 + dy);
       }
@@ -946,6 +946,20 @@ function getData (u, o) {
     }
   };
 
+  // distance from the player to the nearest part of a snake (head OR body), so a long
+  // snake whose head is far away but whose body is on screen is still shown to the client
+  World.prototype.snakeDist = function (s, p) {
+    var best = Math.hypot(s.x - p.x, s.y - p.y);
+    if (best < SNAKE_VIEW) return best;
+    if (best - s.pts.length * MSL > SNAKE_DROP) return best;
+    var pts = s.pts;
+    for (var i = pts.length - 1; i >= 0; i -= 3) {
+      var d = Math.hypot(pts[i].x - p.x, pts[i].y - p.y);
+      if (d < best) { best = d; if (best < SNAKE_VIEW) break; }
+    }
+    return best;
+  };
+
   // ---- main tick ----
   World.prototype.step = function () {
     if (this.dead) return;
@@ -983,12 +997,12 @@ function getData (u, o) {
       var d = Math.min(MSL, sp * f8 / 4);
       s.x += Math.cos(s.ang) * d; s.y += Math.sin(s.ang) * d;
 
-      // boost: sheds a small pellet every 250-450ms (1-2 per half second), 1 score each, down to a floor of score 10
+      // boost: every quarter second you lose 1 or 2 score (shed as a pellet), down to a floor of score 10
       if (canBoost) {
         s.boostAcc += dt;
-        if (s.boostAcc > s.boostNext) {
-          s.boostAcc = 0; s.boostNext = rnd(250, 450);
-          var cost = Math.min(1, scoreNow);                            // never below the floor
+        if (s.boostAcc >= 250) {
+          s.boostAcc = s.boostAcc > 500 ? 0 : s.boostAcc - 250;
+          var cost = Math.min(Math.random() < 0.5 ? 1 : 2, scoreNow);                            // never below the floor
           s.fam -= cost * fm(sct) / 15;
           var tp = s.pts[0];
           spawnFood.push([tp.x + rnd(-6, 6), tp.y + rnd(-6, 6), Math.max(3, cost * 4), s.cv % 9, true, cost]);
@@ -1118,7 +1132,7 @@ function getData (u, o) {
     if (this.over) { this.syncSectors(); }
     this.snakes.forEach(function (s) {
       if (s === p) return;
-      var d = Math.hypot(s.x - p.x, s.y - p.y), vis = self.visSnakes.has(s.id);
+      var d = self.snakeDist(s, p), vis = self.visSnakes.has(s.id);
       if (!vis && d < SNAKE_VIEW) { self.visSnakes.add(s.id); self.sendSnakeAdd(s); }
       else if (vis && d > SNAKE_DROP) { self.visSnakes.delete(s.id); self.sendSnakeRemove(s.id, false); }
     });
@@ -1151,6 +1165,18 @@ function getData (u, o) {
 
   // ---- fake WebSocket ----
   function stage(n) { var S = window.__stage = window.__stage || {}; if (n === "created") { for (var k in S) delete S[k]; } S[n] = Math.round(performance.now()); }
+  // the client builds your snake from the server's 's' packet, which (protocol 4) has no custom
+  // skin field, so it fell back to the default skin. Hand your own skin to newSlither() instead.
+  var curWorld = null, skinHooked = false;
+  function hookSkin() {
+    if (skinHooked || typeof window.newSlither !== "function") return;
+    skinHooked = true;
+    var orig = window.newSlither;
+    window.newSlither = function (id, xx, yy, cv, ang, pts, msl, cs) {
+      if (curWorld && curWorld.skin && curWorld.player && id === curWorld.player.id) cs = curWorld.skin;
+      return orig.call(this, id, xx, yy, cv, ang, pts, msl, cs);
+    };
+  }
   function FakeSocket(url) {
     var self = this;
     this.url = url; this.readyState = 0; this.binaryType = "arraybuffer";
@@ -1179,13 +1205,14 @@ function getData (u, o) {
         }
       } else if (b[0] === 115 && b[1] === 30 && b.length >= 28) {     // login packet
         this.loggedIn = true; stage("login");
-        var cv = b[24], nl = b[25], nick = "";
+        var cv = b[24], nl = b[25], nick = "", skin = null;
         for (var i = 0; i < nl && 26 + i < b.length; i++) nick += String.fromCharCode(b[26 + i]);
         nick = nick.replace(/ \[SDXP\]$/, "");
+        if (b[26 + nl] === 0 && b[27 + nl] === 255 && b.length > 28 + nl) skin = new Uint8Array(b.subarray(28 + nl));   // custom skin bytes
         var bots = parseInt((location.search.match(/[?&]bots=(\d+)/) || [])[1], 10);
         if (isNaN(bots)) { var cores = navigator.hardwareConcurrency || 4; bots = cores >= 8 ? 300 : cores >= 4 ? 200 : 120; }
         setTimeout(function () {
-          try { self._start(nick, cv, Math.max(0, Math.min(800, bots))); }
+          try { self._start(nick, cv, Math.max(0, Math.min(800, bots)), skin); }
           catch (e) { window.__startErr = String(e && e.stack || e).slice(0, 300); }
         }, 20);
       }
@@ -1193,9 +1220,10 @@ function getData (u, o) {
     }
     if (this.world) this.world.onClientPacket(b);
   };
-  FakeSocket.prototype._start = function (nick, cv, bots) {
+  FakeSocket.prototype._start = function (nick, cv, bots, skin) {
     if (this.readyState !== 1) return;
     var w = this.world = new World(this, nick, cv, bots), self = this;
+    w.skin = skin; curWorld = w; hookSkin();
     window.__started = true;
     w.sendInit();
     w.sendSnakeAdd(w.player);
