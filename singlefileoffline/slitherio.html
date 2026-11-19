@@ -10,9 +10,9 @@
   <meta property="og:title" content="slither.io" />
   <meta property="og:url" content="./" />
   <meta property="og:site_name" content="slither.io" />
-  <meta property="og:image" content="./s/fbthumb5.jpg" />
-  <link rel="image_src" href="./s/fbthumb5.jpg" />
-  <link rel='icon' type='image/png' href='./s/favicon.png' />
+  <meta property="og:image" content="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" />
+  <link rel="image_src" href="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==" />
+  <link rel='icon' type='image/png' href='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==' />
 
   <style type='text/css'>
   
@@ -296,7 +296,7 @@
  
  <div id='csrvh' style='position: fixed; right: 20px; bottom: 16px; z-index: 50; display: none;'>
   <a class='btn btnt' draggable="false" id='csrv' style='width:107px; height:89px;' href='#'>
-   <!-- <img class='nsi' border=0 draggable=false width=107 height=89 src='./s/chooseserver.png'> -->
+   <!-- <img class='nsi' border=0 draggable=false width=107 height=89 src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='> -->
   </a>
  </div>
  
@@ -304,21 +304,21 @@
  <!--
  <div id='trumpbtnh' style='position: fixed; z-index: 50; display: none;'>
   <a class='btn btnt' draggable="false" id='trumpbtn' style='width:202px; height:218px;' href='#'>
-   <img class='nsi' border=0 draggable=false width=202 height=218 src='./s/trumpbtn.png'>
+   <img class='nsi' border=0 draggable=false width=202 height=218 src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='>
   </a>
  </div>
  
  
  
  <div id='votetxth' style='position: fixed; z-index: 50; display: none;'>
-  <img class='nsi' border=0 draggable=false width=290 height=84 src='./s/votetxt2.png'>
+  <img class='nsi' border=0 draggable=false width=290 height=84 src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='>
  </div>
  
  
  
  <div id='kamalabtnh' style='position: fixed; z-index: 50; display: none;'>
   <a class='btn btnt' draggable="false" id='kamalabtn' style='width:202px; height:218px;' href='#'>
-   <img class='nsi' border=0 draggable=false width=202 height=218 src='./s/kamalabtn.png'>
+   <img class='nsi' border=0 draggable=false width=202 height=218 src='data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=='>
   </a>
  </div>
  -->
@@ -503,11 +503,56 @@ function getData (u, o) {
 
 
 <script>
+/* ===== Hardening for locked-down browsers (school machines, sandboxed iframes, web proxies) ===== */
+(function () {
+  // a) storage that throws (sandboxed / blocked cookies) -> in-memory replacement
+  ["localStorage", "sessionStorage"].forEach(function (n) {
+    var ok = true;
+    try { var st = window[n]; st.setItem("__t", "1"); st.removeItem("__t"); } catch (e) { ok = false; }
+    if (ok) return;
+    var d = {}, has = function (k) { return Object.prototype.hasOwnProperty.call(d, k); };
+    var store = {
+      getItem: function (k) { return has(k) ? d[k] : null; }, setItem: function (k, v) { d[k] = String(v); },
+      removeItem: function (k) { delete d[k]; }, clear: function () { d = {}; }, key: function (i) { return Object.keys(d)[i] || null; }
+    };
+    var obj = typeof Proxy === "function" ? new Proxy(store, {
+      get: function (t, k) { return k in t ? t[k] : (has(k) ? d[k] : undefined); },
+      set: function (t, k, v) { d[k] = String(v); return true; },
+      deleteProperty: function (t, k) { delete d[k]; return true; }
+    }) : store;
+    try { Object.defineProperty(window, n, { value: obj, configurable: true }); window.__storageFallback = true; } catch (e) { }
+  });
+  // b) remember errors, and if Play is pressed but the game never starts, say why on screen
+  var errs = [];
+  window.addEventListener("error", function (e) { errs.push((e.message || "error") + " @line " + (e.lineno || "?")); if (errs.length > 4) errs.shift(); });
+  window.addEventListener("unhandledrejection", function (e) { errs.push("promise: " + (e.reason && e.reason.message || e.reason)); if (errs.length > 4) errs.shift(); });
+  function t(name) { try { return typeof window[name] === "undefined" ? "n/a" : String(window[name]); } catch (e) { return "?"; } }
+  function banner() {
+    if (window.__bannerShown) return; window.__bannerShown = true;
+    var d = document.createElement("div");
+    d.style.cssText = "position:fixed;left:0;right:0;bottom:0;z-index:2147483647;background:#400;color:#fff;font:12px/1.4 monospace;padding:8px 12px;cursor:pointer;white-space:pre-wrap";
+    d.textContent = "The game didn't start. Send this to Claude (click to hide):\n" +
+      "errors: " + (errs.join(" | ") || "none") + "\n" +
+      "want_play=" + t("want_play") + " connecting=" + t("connecting") + " connected=" + t("connected") + " waiting_for_sos=" + t("waiting_for_sos") +
+      " servers=" + (window.sos ? window.sos.length : "n/a") + " storageFallback=" + (window.__storageFallback ? "yes" : "no") + "\n" +
+      "stages(ms): " + JSON.stringify(window.__stage || {}) + (window.__startErr ? "\nstart error: " + window.__startErr : "") + "\n" + navigator.userAgent;
+    d.onclick = function () { d.parentNode && d.parentNode.removeChild(d); };
+    (document.body || document.documentElement).appendChild(d);
+  }
+  var seen = 0;
+  setInterval(function () {
+    try {
+      if (window.__started) { seen = 0; return; }
+      if (window.want_play || window.connecting) { if (!seen) seen = Date.now(); else if (Date.now() - seen > 4000 || window.__startErr) banner(); } else seen = 0;
+    } catch (e) { }
+  }, 1000);
+})();
+
 /* ===== In-page bot server =====
  * Replaces WebSocket for any "/slither" connection with an offline fake server that
  * speaks the slither client protocol (version 4) and fills the arena with AI bots.
  * Real server access: add ?ws=host:port to the page URL (or set window.SLITHER_WS).
- * Bot count: ?bots=N (default 300, max 800). */
+ * Bot count: ?bots=N (default 300 on fast machines, fewer on slow ones; max 800). */
 (function () {
   var OrigWS = window.WebSocket;
   var PI2 = Math.PI * 2;
@@ -518,7 +563,6 @@ function getData (u, o) {
   var PROTO = 4;
   var VIEW_SEC = 9;          // sectors (each way) of food sent around the player
   var SNAKE_VIEW = 3000, SNAKE_DROP = 3500, SAFE_SPAWN = 3300;
-  var FOOD_TARGET = 80000;
 
   var fmlts = [], fpsls = [];
   (function () {
@@ -556,39 +600,44 @@ function getData (u, o) {
     this.snakes = new Map();
     this.nextId = 100 + Math.floor(Math.random() * 500);
     this.secFood = new Map();      // sector key -> array of food
-    this.foodTotal = 0;
+    this.genKeys = []; this.foodById = new Map(); this.foodTotal = 0;
     this.visSnakes = new Set();    // snake ids the client currently knows
     this.visSecs = new Map();      // sector key -> true (sectors the client knows)
     this.dead = false;
     this.lastTick = performance.now();
     this.lbT = 0; this.mmT = 0;
-    this.botTarget = botCount;
-    this.respawns = [];
-    this.populateFood();
+    this.botCap = botCount; this.botTarget = botCount; this.respawns = [];
+    this.ema = 0; this.lagEma = 33; this.adjT = performance.now();
     this.player = this.addSnake({ nick: nick, cv: cv, sct: 2, isPlayer: true });
-    for (var i = 0; i < botCount; i++) this.addBot(i < botCount * 0.45);
   }
 
   World.prototype.secKey = function (sx, sy) { return sx * 256 + sy; };
   World.prototype.inArena = function (x, y) { var dx = x - GRD, dy = y - GRD; return dx * dx + dy * dy < (GRD - 80) * (GRD - 80); };
 
-  World.prototype.newFood = function (x, y, sz, cv, val) {
+  // food for a sector is created the first time anything (you, a bot) comes near it
+  World.prototype.food = function (sx, sy) {
+    if (sx < 0 || sy < 0 || sx >= SEC_N || sy >= SEC_N) return null;
+    var k = this.secKey(sx, sy), arr = this.secFood.get(k);
+    if (arr) return arr;
+    arr = []; this.secFood.set(k, arr); this.genKeys.push(k);
+    if (Math.hypot((sx + 0.5) * SECTOR - GRD, (sy + 0.5) * SECTOR - GRD) > GRD + SECTOR) return arr;
+    var n = 3 + Math.floor(Math.random() * 6);
+    for (var i = 0; i < n; i++) {
+      var x = sx * SECTOR + Math.random() * SECTOR, y = sy * SECTOR + Math.random() * SECTOR;
+      if (this.inArena(x, y)) this.newFood(x, y, natSz(), undefined, undefined, true);
+    }
+    return arr;
+  };
+  World.prototype.newFood = function (x, y, sz, cv, val, noGen) {
     x = Math.round(x); y = Math.round(y);
     var id = y * GRD * 3 + x;
-    if (this.foodById && this.foodById.has(id)) return null;
-    var f = { id: id, x: x, y: y, rad: Math.min(255, Math.round(sz * 5)), cv: cv === undefined ? Math.floor(Math.random() * 9) : cv, val: val, sx: Math.floor(x / SECTOR), sy: Math.floor(y / SECTOR) };
-    var k = this.secKey(f.sx, f.sy);
-    var arr = this.secFood.get(k); if (!arr) { arr = []; this.secFood.set(k, arr); }
+    if (this.foodById.has(id)) return null;
+    var sx = Math.floor(x / SECTOR), sy = Math.floor(y / SECTOR);
+    var arr = noGen ? this.secFood.get(this.secKey(sx, sy)) : this.food(sx, sy);
+    if (!arr) return null;
+    var f = { id: id, x: x, y: y, rad: Math.min(255, Math.round(sz * 5)), cv: cv === undefined ? Math.floor(Math.random() * 9) : cv, val: val, sx: sx, sy: sy };
     arr.push(f); this.foodById.set(id, f); this.foodTotal++;
     return f;
-  };
-  World.prototype.populateFood = function () {
-    this.foodById = new Map();
-    var n = 0;
-    while (n < FOOD_TARGET) {
-      var a = Math.random() * PI2, r = Math.sqrt(Math.random()) * (GRD - 200);
-      if (this.newFood(GRD + Math.cos(a) * r, GRD + Math.sin(a) * r, natSz())) n++;
-    }
   };
   World.prototype.removeFood = function (f) {
     var k = this.secKey(f.sx, f.sy), arr = this.secFood.get(k);
@@ -728,7 +777,7 @@ function getData (u, o) {
       if (!self.visSecs.has(k)) {
         self.visSecs.set(k, v);
         self.send(new W().u8(87).u8(v[0]).u8(v[1]));
-        var arr = self.secFood.get(k);
+        var arr = self.food(v[0], v[1]);
         if (arr && arr.length) {
           for (var i = 0; i < arr.length; i += 40) {
             var w = new W().u8(70);
@@ -860,7 +909,7 @@ function getData (u, o) {
         // 3. food (dumb bots only look nearby and go for the closest bit)
         var psx = Math.floor(hx / SECTOR), psy = Math.floor(hy / SECTOR), bf = null, bs = -1, R = tier === 0 ? 1 : 2;
         for (var i = -R; i <= R; i++) for (var j = -R; j <= R; j++) {
-          var arr = this.secFood.get(this.secKey(psx + i, psy + j)); if (!arr) continue;
+          var arr = this.food(psx + i, psy + j); if (!arr) continue;
           for (var k = 0; k < arr.length; k++) {
             var f = arr[k], dx = f.x - hx, dy = f.y - hy, d2 = dx * dx + dy * dy;
             if (d2 > 640000) continue;
@@ -900,7 +949,7 @@ function getData (u, o) {
   // ---- main tick ----
   World.prototype.step = function () {
     if (this.dead) return;
-    var now = performance.now(), dt = Math.min(60, now - this.lastTick); this.lastTick = now;
+    var now = performance.now(), rawDt = now - this.lastTick, dt = Math.min(60, rawDt); this.lastTick = now;
     if (dt <= 0) return;
     var f8 = dt / 8, self = this, p = this.player;
 
@@ -957,7 +1006,7 @@ function getData (u, o) {
       // eat food
       var psx = Math.floor(s.x / SECTOR), psy = Math.floor(s.y / SECTOR), eatR = 30 + 6 * (sc - 1), eatR2 = eatR * eatR, gained = 0;
       for (var i = -1; i <= 1; i++) for (var j = -1; j <= 1; j++) {
-        var k = self.secKey(psx + i, psy + j), arr = self.secFood.get(k); if (!arr) continue;
+        var arr = self.food(psx + i, psy + j); if (!arr) continue;
         for (var q = arr.length - 1; q >= 0; q--) {
           var f = arr[q], dx = f.x - s.x, dy = f.y - s.y;
           if (dx * dx + dy * dy < eatR2) {
@@ -1034,15 +1083,35 @@ function getData (u, o) {
       if (f && self.sectorVisible(f.sx, f.sy))
         self.send(new W().u8(sf[4] ? 98 : 102).u8(f.cv).u16(f.x).u16(f.y).u8(f.rad));
     });
-    // natural food respawn
-    var deficit = FOOD_TARGET - this.foodTotal, nspawn = Math.min(deficit, Math.ceil(dt / 8));
-    for (var i = 0; i < nspawn; i++) {
-      var a = Math.random() * PI2, r = Math.sqrt(Math.random()) * (GRD - 200);
-      var f = this.newFood(GRD + Math.cos(a) * r, GRD + Math.sin(a) * r, natSz());
+    // natural food respawn (only in sectors that exist already)
+    for (var i = 0, nsp = Math.ceil(dt / 8); i < nsp && this.genKeys.length; i++) {
+      var gk = this.genKeys[Math.floor(Math.random() * this.genKeys.length)], garr = this.secFood.get(gk);
+      if (garr.length >= 8) continue;
+      var gx = Math.floor(gk / 256), gy = gk % 256, px0 = gx * SECTOR + Math.random() * SECTOR, py0 = gy * SECTOR + Math.random() * SECTOR;
+      if (!this.inArena(px0, py0)) continue;
+      var f = this.newFood(px0, py0, natSz(), undefined, undefined, true);
       if (f && this.sectorVisible(f.sx, f.sy)) this.send(new W().u8(102).u8(f.cv).u16(f.x).u16(f.y).u8(f.rad));
     }
-    // bot respawns
-    for (var i = this.respawns.length - 1; i >= 0; i--) if (now > this.respawns[i]) { this.respawns.splice(i, 1); if (!this.addBot(Math.random() < 0.6)) this.respawns.push(now + 1500); }
+    // bots: fill up gradually, respawn the dead, and shed some if this machine can't keep up
+    var stepMs = performance.now() - now;
+    this.ema = this.ema * 0.9 + stepMs * 0.1; this.lagEma = this.lagEma * 0.9 + Math.min(200, rawDt) * 0.1;
+    if (now - this.adjT > 1500) {
+      this.adjT = now;
+      if ((this.ema > 14 || this.lagEma > 60) && this.botTarget > 25) this.botTarget = Math.max(25, Math.floor(this.botTarget * 0.8));
+      else if (this.ema < 6 && this.lagEma < 45 && this.botTarget < this.botCap) this.botTarget = Math.min(this.botCap, this.botTarget + 10);
+    }
+    for (var i = this.respawns.length - 1; i >= 0; i--) if (now > this.respawns[i]) {
+      this.respawns.splice(i, 1);
+      if (!this.addBot(Math.random() < 0.6)) this.respawns.push(now + 1500);
+    }
+    var botsNow = 0; this.snakes.forEach(function (b) { if (b.isBot) botsNow++; });
+    var live = botsNow + this.respawns.length;
+    for (var i = 0, add = Math.min(15, this.botTarget - live); i < add; i++) this.addBot(Math.random() < 0.5);
+    if (live > this.botTarget + 5) {                      // too many for this machine: drop the farthest bots, never one you can see
+      var far = []; this.snakes.forEach(function (b) { if (b.isBot && !self.visSnakes.has(b.id)) far.push(b); });
+      far.sort(function (u, v) { return Math.hypot(v.x - p.x, v.y - p.y) - Math.hypot(u.x - p.x, u.y - p.y); });
+      for (var i = 0; i < Math.min(far.length, live - this.botTarget, 10); i++) this.snakes.delete(far[i].id);
+    }
 
     // visibility + sectors
     this.syncSectors();
@@ -1081,12 +1150,14 @@ function getData (u, o) {
   };
 
   // ---- fake WebSocket ----
+  function stage(n) { var S = window.__stage = window.__stage || {}; if (n === "created") { for (var k in S) delete S[k]; } S[n] = Math.round(performance.now()); }
   function FakeSocket(url) {
     var self = this;
     this.url = url; this.readyState = 0; this.binaryType = "arraybuffer";
     this.onopen = this.onmessage = this.onclose = this.onerror = null;
     this.world = null; this.timer = null; this.loggedIn = false;
-    setTimeout(function () { if (self.readyState === 0) { self.readyState = 1; if (self.onopen) self.onopen({}); } }, 40);
+    stage("created");
+    setTimeout(function () { if (self.readyState === 0) { self.readyState = 1; stage("open"); if (self.onopen) self.onopen({}); } }, 40);
   }
   FakeSocket.CONNECTING = 0; FakeSocket.OPEN = 1; FakeSocket.CLOSING = 2; FakeSocket.CLOSED = 3;
   FakeSocket.prototype._deliver = function (buf, async) {
@@ -1099,17 +1170,24 @@ function getData (u, o) {
     var b = data instanceof ArrayBuffer ? new Uint8Array(data) : new Uint8Array(data.buffer, data.byteOffset, data.byteLength);
     var self = this;
     if (!this.loggedIn) {
-      if (b.length === 2 && b[0] === 99) {            // client hello -> send server "version" string
-        var w = new W().u8(54).str("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ");
-        this._deliver(w.buf(), true);
-      } else if (b[0] === 115 && b[1] === 30 && b.length >= 30) {     // login packet
-        this.loggedIn = true;
+      var isLogin = b[0] === 115 && b[1] === 30 && b.length >= 28;           // login packet (28 bytes with an empty nickname)
+      if (!isLogin && (b.length === 1 || b.length === 27)) { return; }       // [1] flag / the random-id packet
+      if (!(b[0] === 115 && b[1] === 30 && b.length >= 28)) {                  // anything else before login = hello
+        if (!this.helloSent) {
+          this.helloSent = true; stage("hello");
+          this._deliver(new W().u8(54).str("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ").buf(), true);
+        }
+      } else if (b[0] === 115 && b[1] === 30 && b.length >= 28) {     // login packet
+        this.loggedIn = true; stage("login");
         var cv = b[24], nl = b[25], nick = "";
-        for (var i = 0; i < nl; i++) nick += String.fromCharCode(b[26 + i]);
+        for (var i = 0; i < nl && 26 + i < b.length; i++) nick += String.fromCharCode(b[26 + i]);
         nick = nick.replace(/ \[SDXP\]$/, "");
         var bots = parseInt((location.search.match(/[?&]bots=(\d+)/) || [])[1], 10);
-        if (isNaN(bots)) bots = 300;
-        setTimeout(function () { self._start(nick, cv, Math.max(0, Math.min(800, bots))); }, 20);
+        if (isNaN(bots)) { var cores = navigator.hardwareConcurrency || 4; bots = cores >= 8 ? 300 : cores >= 4 ? 200 : 120; }
+        setTimeout(function () {
+          try { self._start(nick, cv, Math.max(0, Math.min(800, bots))); }
+          catch (e) { window.__startErr = String(e && e.stack || e).slice(0, 300); }
+        }, 20);
       }
       return;
     }
@@ -1118,11 +1196,13 @@ function getData (u, o) {
   FakeSocket.prototype._start = function (nick, cv, bots) {
     if (this.readyState !== 1) return;
     var w = this.world = new World(this, nick, cv, bots), self = this;
+    window.__started = true;
     w.sendInit();
     w.sendSnakeAdd(w.player);
     w.syncSectors();
     w.sendLeaderboard();
     w.sendMinimap();
+    stage("started");
     this.timer = setInterval(function () {
       try { w.step(); } catch (e) { console.error("bot server error", e); }
       if (w.dead && self.timer) { clearInterval(self.timer); self.timer = null; }
@@ -1147,17 +1227,22 @@ function getData (u, o) {
     return window.SLITHER_WS || null;
   }
 
-  window.WebSocket = function (url, protocols) {
+  function makeSocket(url, protocols) {
     if (typeof url === "string" && url.indexOf("/ptc") !== -1) return new DeadSocket();
     if (typeof url === "string" && url.indexOf("/slither") !== -1) {
       var real = realURL();
       if (real) return protocols ? new OrigWS(real, protocols) : new OrigWS(real);
+      window.__started = false;
       return new FakeSocket(url);
     }
     return protocols ? new OrigWS(url, protocols) : new OrigWS(url);
-  };
-  window.WebSocket.prototype = OrigWS.prototype;
-  window.WebSocket.CONNECTING = 0; window.WebSocket.OPEN = 1; window.WebSocket.CLOSING = 2; window.WebSocket.CLOSED = 3;
+  }
+  window.__SlitherSocket = makeSocket;                 // the game calls this directly
+  try {                                                // ...and also cover anything else that uses WebSocket
+    window.WebSocket = makeSocket;
+    window.WebSocket.prototype = OrigWS.prototype;
+    window.WebSocket.CONNECTING = 0; window.WebSocket.OPEN = 1; window.WebSocket.CLOSING = 2; window.WebSocket.CLOSED = 3;
+  } catch (e) { }
   window.__botServer = { World: World, FakeSocket: FakeSocket };
 })();
 
@@ -2191,7 +2276,7 @@ function connect() {
             sos.sort(function (a, b) { return parseFloat(a.po) - parseFloat(b.po) }); bso = sos[Math.floor(Math.random() *
                 sos.length)]; for (var i = sos.length - 1; i >= 0; i--)if (!sos[i].tainted) if (sos[i].ptm <= bso.ptm) if (sos[i].ac > 20) bso = sos[i]; if (testing) { console.log("bso is selected the old way:"); console.log(bso) }
         }
-    } if (forcing) if (fobso != null) bso = fobso; if (testing) { var es = ""; if (fbso != null) es = "(fbso!)"; console.log("connecting to " + bso.ip + ":" + bso.po + "... " + es) } ws = new WebSocket("wss://" + bso.ip + ":" + bso.po + "/slither"); ws.binaryType = "arraybuffer"; window.ws = ws; ws.onmessage = function (e) {
+    } if (forcing) if (fobso != null) bso = fobso; if (testing) { var es = ""; if (fbso != null) es = "(fbso!)"; console.log("connecting to " + bso.ip + ":" + bso.po + "... " + es) } ws = new __SlitherSocket("wss://" + bso.ip + ":" + bso.po + "/slither"); ws.binaryType = "arraybuffer"; window.ws = ws; ws.onmessage = function (e) {
         if (ws != this) return; var a = new Uint8Array(e.data);
         rdps += a.length; apkps++; if (want_seq) { var seq = a[0] << 8 | a[1]; if (seq - 1 != lseq) if (seq != 0) if (testing) console.log("sequence error! " + seq + " != " + lseq); lseq = seq } else if (want_etm_s) { lptm = cptm; cptm = timeObj.now(); var etm_s = a[0] << 8 | a[1] } var m; var len; if (want_etm_s) m = 2; else m = 0; if (a[m] < 32) { var l = a.length; while (m < l) { if (a[m] < 32) { len = a[m] << 8 | a[m + 1]; m += 2 } else { len = a[m] - 32; m++ } var a2 = a.subarray(m, m + len); m += len; gotPacket(a2) } } else { var a2 = a.subarray(m, a.length); gotPacket(a2) }
     }; window.gotPacket = function (a) {
@@ -2205,8 +2290,8 @@ function connect() {
                         a[m]; m++; if (team_mode) team_val = extra_b
                 } if (team_mode) {
                     if (!trump_ii) {
-                        trump_ii = document.createElement("img"); trump_ii.style.opacity = 0; trump_ii.style.position = "absolute"; trf(trump_ii, "scale(.5, .5)"); trfo(trump_ii, "0% 100%"); trump_ii.style.left = tsbofx + 82 + "px"; trump_ii.style.bottom = tsbofy + "px"; trump_ii.onload = function () { trump_loaded = true; trump_h = this.height }; trump_ii.src = "./s/trump4.png"; sbmc.appendChild(trump_ii); kamala_ii = document.createElement("img"); kamala_ii.style.opacity = 0; kamala_ii.style.position =
-                            "absolute"; trf(kamala_ii, "scale(.5, .5)"); trfo(kamala_ii, "0% 100%"); kamala_ii.style.left = tsbofx + 10 + "px"; kamala_ii.style.bottom = tsbofy + "px"; kamala_ii.onload = function () { kamala_loaded = true }; kamala_ii.src = "./s/kamala4.png"; sbmc.appendChild(kamala_ii)
+                        trump_ii = document.createElement("img"); trump_ii.style.opacity = 0; trump_ii.style.position = "absolute"; trf(trump_ii, "scale(.5, .5)"); trfo(trump_ii, "0% 100%"); trump_ii.style.left = tsbofx + 82 + "px"; trump_ii.style.bottom = tsbofy + "px"; trump_ii.onload = function () { trump_loaded = true; trump_h = this.height }; trump_ii.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="; sbmc.appendChild(trump_ii); kamala_ii = document.createElement("img"); kamala_ii.style.opacity = 0; kamala_ii.style.position =
+                            "absolute"; trf(kamala_ii, "scale(.5, .5)"); trfo(kamala_ii, "0% 100%"); kamala_ii.style.left = tsbofx + 10 + "px"; kamala_ii.style.bottom = tsbofy + "px"; kamala_ii.onload = function () { kamala_loaded = true }; kamala_ii.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="; sbmc.appendChild(kamala_ii)
                     } lbf.style.left = "210px"; mmsta = .7
                 } else { lbf.style.left = "8px"; mmsta = .475 } reposLbf(); recalcSepMults(); setMscps(nmscps); setMinimapSize(24, true); lbh.style.display = "inline"; lbs.style.display = "inline"; lbn.style.display = "inline"; lbp.style.display = "inline";
             lbf.style.display = "inline"; vcm.style.display = "inline"; loch.style.display = "inline"; startShowGame()
@@ -2280,7 +2365,7 @@ function connect() {
             if (!playing) return; wumsts = true; var s_htm = ""; var n_htm = ""; var p_htm = ""; var nc = 0; var pos = 0; if (lb_fr == -1) if (dead_mtm == -1) lb_fr = 0; var k, v; var score; var my_pos = a[m]; m++; rank = a[m] << 8 | a[m + 1]; if (rank < best_rank) best_rank = rank; m += 2; slither_count = a[m] << 8 | a[m + 1]; if (slither_count > biggest_slither_count) biggest_slither_count = slither_count; m += 2; while (m < alen) {
                 var sct; var fam; sct = a[m] << 8 | a[m + 1]; m += 2; fam = (a[m] << 16 | a[m + 1] << 8 | a[m + 2]) / 16777215;
                 m += 3; score = Math.floor((fpsls[sct] + fam / fmlts[sct] - 1) * 15 - 5) / 1; var cv = a[m] % 9; m++; var nl = a[m]; m++; pos++; var nk = ""; for (var j = 0; j < nl; j++) { v = a[m]; nk += String.fromCharCode(v); m++ } if (pos == my_pos) { nk = my_nick; nl = nk.length } else if (!gdnm(nk)) nk = ""; var nk2 = ""; for (var j = 0; j < nl; j++) { v = nk.charCodeAt(j); if (v == 38) nk2 += "&amp;"; else if (v == 60) nk2 += "&lt;"; else if (v == 62) nk2 += "&gt;"; else if (v == 32) nk2 += "&nbsp;"; else nk2 += String.fromCharCode(v) } nk = nk2; nc++; if (pos == my_pos) k = 1; else k = .7 * (.3 + .7 * (1 - nc / 10)); s_htm += '<span style="opacity:' +
-                    k + "; color:" + per_color_imgs[cv].cs + ';">' + score + "</span><BR>"; n_htm += '<span style="opacity:' + k + "; color:" + per_color_imgs[cv].cs + ";" + (pos == my_pos ? "font-weight:bold;" : "") + '">' + nk + "</span><BR>"; p_htm += '<span style="opacity:' + k + "; color:" + per_color_imgs[cv].cs + ';">#' + nc + "</span><BR>"
+                    k + "; color:" + per_color_imgs[cv].cs + ';">' + score + "</span><BR>"; n_htm += '<span style="opacity:' + k + "; color:" + per_color_imgs[cv].cs + ";" + (pos == my_pos ? "font-weight:bold;" : "") + '">' + nk + "</span><BR>"; p_htm += '<span style="opacity:' + k + "; color:" + per_color_imgs[cv].cs + ';">#' + (pos == my_pos ? rank : nc) + "</span><BR>"
             } lbs.innerHTML = s_htm; lbn.innerHTML = n_htm; lbp.innerHTML = p_htm
         } else if (cmd == "v") if (a[m] == 2) { want_close_socket = true; want_victory_message = false; want_hide_victory = 1; hvfr = 0 } else {
             dead_mtm = timeObj.now(); play_btn.setEnabled(true); var sct =
@@ -2450,7 +2535,7 @@ if (teams_exist) { trumpbtn.onclick = function () { var aa = new Uint8Array(3); 
 etco.onclick = function () {
     if (!etco_sp_ii) { etco_sp_ii = document.createElement("img"); etco_sp_ii.width = 100; etco_sp_ii.height = 100 } if (!playing) if (dead_mtm == -1) {
         resetGame(); entering_code = true; ending_enter_code = false; if (!ever_showed_entercode) {
-            ever_showed_entercode = true; for (var i = etcobs.length - 1; i >= 0; i--)if (i == 10) etcobs[i].ii.src = "./s/codedel.png"; else etcobs[i].ii.src = "./s/code" + i + ".png"; etco_sp_ii.src = "./s/spinner.png"; for (var i = 0; i <= 11; i++) {
+            ever_showed_entercode = true; for (var i = etcobs.length - 1; i >= 0; i--)if (i == 10) etcobs[i].ii.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="; else etcobs[i].ii.src = "./s/code" + i + ".png"; etco_sp_ii.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="; for (var i = 0; i <= 11; i++) {
                 var ii = document.createElement("img");
                 ii.width = 54; ii.height = 67; var j = i; if (i == 10) j = "h"; else if (i == 11) j = "b"; ii.onload = function () { for (var i = etcdis.length - 1; i >= 0; i--) { var o = etcdis[i]; if (o.ii == this) o.loaded = true } }; var o = {}; o.ii = ii; o.loaded = false; etcdis.push(o); ii.src = "./s/cd" + j + ".png"
             }
@@ -2483,7 +2568,7 @@ scos.onclick = function () {
                         } else { o.ww = this.width * .35; o.hh = this.height * .35; this.width = o.ww; this.height = o.hh; o.xx -= o.ww / 2; o.yy -= o.hh / 2; reposCosbtns() } break
                     }
                 }
-            }; if (i == 32) ii.src = "./s/a_none.png"; else ii.src = a_imgs[i].u; ii.style.opacity = 0; ii.style.position = "absolute"; ii.style.left = "0px"; ii.style.top = "0px"; ii.draggable = false; o.ii = ii; trf(ii, "rotate(90deg)"); o.xx = 102 * (k % 8 - (tw / 2 - .5)); o.yy = -22 - 80 * Math.floor(k / 8); k++; var a = document.createElement("a");
+            }; if (i == 32) ii.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="; else ii.src = a_imgs[i].u; ii.style.opacity = 0; ii.style.position = "absolute"; ii.style.left = "0px"; ii.style.top = "0px"; ii.draggable = false; o.ii = ii; trf(ii, "rotate(90deg)"); o.xx = 102 * (k % 8 - (tw / 2 - .5)); o.yy = -22 - 80 * Math.floor(k / 8); k++; var a = document.createElement("a");
             a.draggable = false; a.href = "#"; a.className = "btn btnt"; a.style.zIndex = 53; a.style.position = "fixed"; a.appendChild(ii); o.a = a; document.body.appendChild(a); a.onclick = function () { if (!choosing_skin) return false; if (!selecting_cosmetic) return false; for (var i = cosbtns.length - 1; i >= 0; i--)if (cosbtns[i].a == this) { slither.accessory = cosbtns[i].v; break } return false }; cosbtns.push(o)
         } reposCosbtns()
     } return false
@@ -2543,7 +2628,7 @@ function loadSos(s) {
             }
         } sos_loaded_at_mtm = timeObj.now(); for (j = clus.length - 1; j >= 0; j--) {
             var cluo = clus[j]; if (cluo) if (cluo.sis.length > 0) {
-                var k = Math.floor(Math.random() * cluo.sis.length); var ip = cluo.sis[k].ip; var ps = null; try { var ps = new WebSocket("ws://" + ip + ":80/ptc"); if (testing) console.log("ptc") } catch (e) { ps = null } if (ps) {
+                var k = Math.floor(Math.random() * cluo.sis.length); var ip = cluo.sis[k].ip; var ps = null; try { var ps = new __SlitherSocket("ws://" + ip + ":80/ptc"); if (testing) console.log("ptc") } catch (e) { ps = null } if (ps) {
                     ps.binaryType = "arraybuffer"; ps.onerror = function (e) { }; ps.onmessage = function (e) {
                         var a = new Uint8Array(e.data); if (a.length == 1 && a[0] == 112) for (var j = clus.length -
                             1; j >= 0; j--) { var cluo = clus[j]; if (cluo) if (cluo.ps == this) { var ptm = Math.round(timeObj.now() - cluo.stm); if (testing) console.log(" ping time for cluster " + j + ": " + ptm); if (waiting_for_sos) if (sos_ready_after_mtm == -1) sos_ready_after_mtm = timeObj.now() + 2667; if (testing) if (cluo.ptms.length == 0) console.log("first ping response for " + j + " at " + timeObj.now()); cluo.ptms.push(ptm); if (cluo.ptms.length < 3) { cluo.stm = timeObj.now(); var ba = new Uint8Array(1); ba[0] = 112; this.send(ba) } else { this.close(); cluo.ps = null } break } }
@@ -2620,7 +2705,7 @@ window.partycityia = function () {
     }; window.ut_cd_iv = setInterval("ut_skf()", 250); ut_skf(); partycity_shown = true; reposPartyCity()
 }; function reposPartyCity() { if (partycity_shown) { var sc = Math.min(ww / pcy_width, hh / pcy_height); if (sc > 1) sc = 1; var vw = Math.ceil(pcy_width * sc); var vh = Math.ceil(pcy_height * sc); trf(ut_v, "scale(" + sc + "," + sc + ")"); trfo(ut_v, "0% 0%"); ut_v.style.left = Math.floor(ww / 2 - vw / 2) + "px"; ut_v.style.top = Math.floor(hh / 2 - vh / 2) + "px" } } var mba = null; var mbi = null;
 if (is_ios || is_android) {
-    mba = document.createElement("a"); mbi = document.createElement("img"); mbi.border = 0; mbi.draggable = false; mbi.className = "nsi"; mbi.width = 1245; mbi.height = 260; mbi.style.position = "fixed"; mbi.style.left = "0px"; mbi.style.bottom = "0px"; mbi.style.zIndex = 70; mbi.src = "./s/n2.jpg"; mba.appendChild(mbi); document.body.appendChild(mba); if (is_ios) mba.href = "https://itunes.apple.com/us/app/slither.io/id1091944550?ls=1&mt=8"; else if (is_android) if (is_amazon) mba.href = "http://www.amazon.com/Lowtech-Enterprises-slither-io/dp/B01E312TYQ/";
+    mba = document.createElement("a"); mbi = document.createElement("img"); mbi.border = 0; mbi.draggable = false; mbi.className = "nsi"; mbi.width = 1245; mbi.height = 260; mbi.style.position = "fixed"; mbi.style.left = "0px"; mbi.style.bottom = "0px"; mbi.style.zIndex = 70; mbi.src = "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg=="; mba.appendChild(mbi); document.body.appendChild(mba); if (is_ios) mba.href = "https://itunes.apple.com/us/app/slither.io/id1091944550?ls=1&mt=8"; else if (is_android) if (is_amazon) mba.href = "http://www.amazon.com/Lowtech-Enterprises-slither-io/dp/B01E312TYQ/";
     else mba.href = "https://play.google.com/store/apps/details?id=air.com.hypah.io.slither"
 } var app; var root = null; var nmlo; var fdglo; var fdlo; var prlo; var g2lo; var prglo; var suglo; var shilo; var slilo; var sfilo; var sdilo; var bgi;
 if (ggl) (async () => {
