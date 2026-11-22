@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en-AU">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Footy Redraft — Rebuild the league, Season by Season</title>
+<meta name="description" content="Inherit a real club's list, then re-draft with hindsight. Every player is rated on how they really performed, and you play it forward season by season to 2026. A rogue-lite re-draft dynasty: chase flags, fill your trophy cabinet, earn every club's S-Tier medal.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<meta name="theme-color" content="#101314">
+
+
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Footy Redraft">
+<meta property="og:title" content="Footy Redraft — Rebuild the league, season by season">
+<meta property="og:description" content="Inherit a real club's list, then delist, re-draft with hindsight and play it forward to 2026. Chase flags, fill your trophy cabinet, earn every club's S-Tier medal.">
+<meta property="og:url" content="https://footyredraft.com/">
+<meta property="og:image" content="https://footyredraft.com/share.png?v=2">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Footy Redraft — Rebuild the league, season by season">
+<meta name="twitter:description" content="Inherit a real club's list, re-draft with hindsight, chase flags to 2026.">
+<meta name="twitter:image" content="https://footyredraft.com/share.png?v=2">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@500;600;700;800;900&family=Familjen+Grotesk:ital,wght@0,400..700;1,400..700&family=Spline+Sans+Mono:ital,wght@0,300..700;1,300..700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+
+
+<script>window.va = window.va || function () { (window.vaq = window.vaq || []).push(arguments); };</script>
+<script defer src="/_vercel/insights/script.js"></script>
+</head>
+<body>
+
+
+<header class="topbar">
+  <div class="topbar-inner">
+    <div class="brand">
+      
+      <button class="brand-home" id="brand-home" type="button" aria-label="Back to the home screen">
+        <img class="brand-lockup" src="logo-lockup.svg" alt="Footy Redraft">
+      </button>
+      <span class="brand-season mono" id="brand-season">S2005</span>
+    </div>
+    <nav class="steps" aria-label="Game phases">
+      <button class="step" data-phase="list">List</button>
+      <button class="step" data-phase="draft">Draft</button>
+      <button class="step" data-phase="season">Season</button>
+      <button class="step" data-phase="review">Review</button>
+      <button class="step" data-phase="record">Record</button>
+    </nav>
+    <button class="rankings-btn" id="rankings-btn" hidden aria-label="League power rankings">
+      <span class="rankings-btn-tick"></span><span class="rankings-btn-label">RANKINGS</span>
+    </button>
+    <div class="topbar-rating">
+      <span class="topbar-rating-label">TEAM</span>
+      <span class="topbar-rating-num mono" id="topbar-rating">—</span>
+    </div>
+    <div class="topbar-score" id="topbar-score" hidden>
+      <span class="topbar-score-label">RUN<br>SCORE</span>
+      <span class="topbar-score-num mono" id="topbar-score-num">0</span>
+    </div>
+  </div>
+</header>
+
+
+<div class="ticker" id="ticker" hidden aria-label="Live totals across all games played">
+  <div class="ticker-track" id="ticker-track"></div>
+</div>
+
+<main class="shell">
+
+  
+  <section class="phase" id="phase-mode">
+
+    <div class="club-hero">
+      <h1 class="club-hero-mark">Inherit a real club and draft your way to a <span>flag</span>.</h1>
+      <p class="club-hero-sub">Take charge of any club, inherit its real list, and re-draft with hindsight.
+        Every player is rated on how he actually performed, season by season to 2026.</p>
+      
+      <div class="club-hero-actions">
+        <button class="club-hero-continue" id="club-hero-continue" hidden></button>
+        <span class="club-hero-links">
+          <button class="hero-link" id="club-hero-howto">How to Play</button>
+          
+          <button class="cabinet-pill" id="club-hero-cabinet">
+            <span class="cabinet-pill-coin" id="cabinet-pill-coin"></span>
+            <span class="cabinet-pill-text">Trophy Cabinet</span>
+            <span class="cabinet-pill-count mono" id="cabinet-pill-count"></span>
+          </button>
+        </span>
+      </div>
+    </div>
+    <h2 class="club-pick-head club-pick-head--landing">Choose your run</h2>
+    <div class="mode-stack">
+      <div class="mode-grid" id="mode-grid"></div>
+      <div class="run-axis"><span class="run-axis-end mono">every run ends 2026</span></div>
+      <button class="redraft-card" id="mode-redraft" type="button">
+        <span class="redraft-card-title">Year Zero <span class="mono redraft-card-yrs">2017&ndash;2026</span></span>
+        <span class="redraft-card-sub">Nobody keeps their list. One giant snake draft, eighteen clubs from scratch.</span>
+      </button>
+    </div>
+    
+    <button class="update-note" id="update-note" type="button">
+      <span class="update-note-kicker mono">UPDATE</span>
+      Trades are in. Here are some thoughts to consider. <span class="update-note-go">the note &rarr;</span>
+    </button>
+    <p class="club-hero-savenote">Your run saves automatically in this browser.</p>
+    <p class="hof-line"><button class="hof-link mono" id="club-hero-lb" type="button">Hall of Fame <span class="hero-retired-tag mono">retired</span> &rarr;</button></p>
+    <p class="beer-line"><a class="beer-pill" href="https://ko-fi.com/footyredraft" target="_blank" rel="noopener">&#127866; Shout me a beer</a></p>
+    <p class="contact-line">Feedback and &ldquo;constructive criticism&rdquo;:
+      <a class="contact-x" href="https://x.com/SgtButane" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="13" height="13" fill="currentColor" aria-hidden="true"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24h-6.657l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25h6.826l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        @SgtButane
+      </a>
+    </p>
+    <p class="disclaimer">A free fan project, not affiliated with, endorsed by or connected to the Australian
+      Football League, any club, or any player. The premierships you win here are, legally speaking, imaginary.</p>
+  </section>
+
+  
+  <section class="phase" id="phase-club" hidden>
+    <div class="club-pick-bar">
+      <button class="mode-back" id="mode-back" type="button">&larr; Run length</button>
+      <h2 class="club-pick-head club-pick-head--bar">Choose your club <span class="club-pick-mode mono" id="club-pick-mode"></span></h2>
+    </div>
+    <p class="club-pick-sub">Every club has an <b>S-Tier score</b> to chase. Reach it in a full run and the medal's yours.
+      <button class="tier-info" id="tier-help-btn" type="button" aria-label="How tiers work">how tiers work &rarr;</button></p>
+    <div class="club-grid" id="club-grid"></div>
+  </section>
+
+  
+  <section class="phase" id="phase-list" hidden>
+
+    <div class="panel rating-band">
+      <div class="band-overall">
+        <span class="overall-num" id="overall-num">—</span>
+        <span class="band-overall-meta">
+          <span class="band-club mono" id="rating-club">—</span>
+          <span class="overall-label" id="overall-label">Overall rating</span>
+          <span class="overall-tier" id="overall-tier">—</span>
+        </span>
+      </div>
+      <div class="line-stats" id="rating-lines"></div>
+    </div>
+
+    <div id="list-status"></div>
+
+    
+    <button class="trade-entry" id="open-trade-centre" type="button">
+      <span class="trade-entry-title">Open the Trade Centre <span class="trade-entry-go">&rarr;</span></span>
+      <span class="trade-entry-opt">(optional)</span>
+      <span class="trade-entry-copy">Players and picks, with the other 17 clubs. Closes at the draft.</span>
+      <span class="trade-entry-meta mono" id="trade-card-meta"></span>
+    </button>
+
+    <div id="list-retirees" aria-live="polite"></div>
+
+    <p class="list-hint" id="list-hint"><span class="hint-edge"></span><span id="list-hint-text"></span></p>
+
+    <div class="pos-grid" id="pos-grid"></div>
+
+  </section>
+
+  
+  <section class="phase" id="phase-draft" hidden>
+    <button class="mode-back draft-back" id="draft-back" type="button" hidden>&larr; Back to your list</button>
+    <div class="draft-grid">
+
+      <div class="panel draft-board-panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Draft Order</h2>
+          <span class="panel-aside mono" id="draft-pick-count">—</span>
+        </div>
+        <div class="onclock" id="onclock">
+          <span class="onclock-text">Reverse ladder order: the wooden spooners pick first.</span>
+        </div>
+        <div class="pick-ticker" id="pick-ticker"></div>
+        
+        <div class="your-picks" id="your-picks" hidden>
+          <div class="your-picks-head">
+            <span class="your-picks-title">Your Picks</span>
+            <span class="your-picks-count mono" id="your-picks-count"></span>
+          </div>
+          <div id="your-picks-rows"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <div class="panel-head">
+          <h2 class="panel-title">Draft Pool</h2>
+          <span class="panel-aside mono" id="pool-remaining"></span>
+        </div>
+        <div id="draft-hud"></div>
+        <div class="pool-controls">
+          <div class="seg" id="pool-filters">
+            <button class="seg-btn is-on" data-pos="ALL">All</button>
+            <button class="seg-btn" data-pos="DEF">Defs</button>
+            <button class="seg-btn" data-pos="MID">Mids</button>
+            <button class="seg-btn" data-pos="RUC">Rucks</button>
+            <button class="seg-btn" data-pos="FWD">Fwds</button>
+          </div>
+          <button class="chip-toggle" id="pool-remaining-toggle" type="button" role="switch" aria-checked="false">
+            <span class="chip-check" aria-hidden="true"></span>Available only
+          </button>
+          
+          <button class="autofill-btn" id="autofill-btn" type="button" hidden>&#9889; Autofill</button>
+          <div class="pool-search-wrap">
+            <svg class="pool-search-ico" viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/></svg>
+            <input class="pool-search" id="pool-search" type="search" placeholder="Search players&hellip;" autocomplete="off" spellcheck="false">
+          </div>
+        </div>
+        <div class="player-rows" id="pool-rows"></div>
+      </div>
+
+    </div>
+  </section>
+
+  
+  <section class="phase" id="phase-season" hidden>
+
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Form Line</h2>
+        <span class="form-head-right">
+          <span class="form-streak" id="form-streak" hidden></span>
+          <span class="panel-aside mono" id="form-record">0–0</span>
+        </span>
+      </div>
+      <div class="form-strip" id="form-strip"></div>
+    </div>
+
+    <div class="panel" id="finals-panel" hidden>
+      <div class="panel-head">
+        <h2 class="panel-title">September</h2>
+        <button class="finals-skip" id="finals-skip" type="button" hidden>Skip to result <span class="finals-skip-arrow" aria-hidden="true">&rarr;</span></button>
+        <span class="panel-aside mono" id="finals-aside">TOP 8 · FINAL EIGHT SYSTEM</span>
+      </div>
+      <div id="finals-bracket"></div>
+    </div>
+
+    <div class="season-grid">
+      <div class="panel season-results">
+        <div class="panel-head">
+          <h2 class="panel-title">Results</h2>
+          <span class="panel-aside mono" id="round-counter">RD 0/22</span>
+        </div>
+        <div class="results-feed" id="results-feed">
+          <p class="feed-empty">Season yet to commence.</p>
+        </div>
+      </div>
+
+      <div class="panel season-ladder">
+        <div class="panel-head">
+          <h2 class="panel-title">Ladder</h2>
+          <span class="panel-aside mono">TOP 8 PLAY FINALS</span>
+        </div>
+        <table class="ladder">
+          <thead><tr><th class="num">#</th><th>Club</th><th class="num">RTG</th><th class="num">W</th><th class="num">L</th><th class="num">%</th><th class="num">PTS</th></tr></thead>
+          <tbody id="ladder-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+
+  
+  <section class="phase" id="phase-review" hidden>
+
+    <div class="verdict" id="verdict">
+      <span class="verdict-flag" id="verdict-flag" hidden>Undefeated home &amp; away season</span>
+      <span class="verdict-banner" id="verdict-banner">—</span>
+      <div class="verdict-tiles">
+        <div class="verdict-tile">
+          <span class="verdict-tile-label">FINISHED</span>
+          <span class="verdict-tile-num" id="verdict-finished">—</span>
+        </div>
+        <div class="verdict-tile">
+          <span class="verdict-tile-label">PROJECTED</span>
+          <span class="verdict-tile-num verdict-tile-num--dim" id="verdict-projected">—</span>
+        </div>
+      </div>
+      <p class="verdict-copy" id="verdict-copy"></p>
+    </div>
+
+    <div class="review-shape" id="review-shape" hidden></div>
+
+    <div class="stat-tiles" id="stat-tiles"></div>
+
+    <div class="review-cols">
+      <div class="panel">
+        <div class="panel-head"><h2 class="panel-title">Season Awards</h2></div>
+        <div class="awards" id="awards"></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><h2 class="panel-title">Departures</h2>
+          <span class="panel-aside mono">OFF THE LIST FOR <span id="dep-year"></span></span></div>
+        <div class="departures" id="departures"></div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head"><h2 class="panel-title">Final Ladder</h2></div>
+      <table class="ladder">
+        <thead><tr><th class="num">#</th><th>Club</th><th class="num">RTG</th><th class="num">W</th><th class="num">L</th><th class="num">%</th><th class="num">PTS</th></tr></thead>
+        <tbody id="final-ladder-body"></tbody>
+      </table>
+    </div>
+
+  </section>
+
+  
+  <section class="phase" id="phase-record" hidden>
+    <div class="panel">
+      <div class="panel-head">
+        <h2 class="panel-title">Season Record</h2>
+        <span class="panel-aside mono" id="record-club">—</span>
+      </div>
+      <div class="record-summary" id="record-summary"></div>
+      <div class="record-scroll">
+        <table class="ladder record-table">
+          <thead><tr><th>Season</th><th class="num">Rating</th><th class="num">Ladder</th><th class="num">%</th><th>Finals</th><th>Premier</th><th>Brownlow</th><th>Coleman</th><th>Best &amp; Fairest</th><th>Leading GK</th><th class="num rec-pts-h">Run Pts</th></tr></thead>
+          <tbody id="record-body"></tbody>
+        </table>
+      </div>
+      
+      <div class="record-shape" id="record-shape" hidden></div>
+      <div class="record-newrun-row" id="record-newrun-row" hidden>
+        <p class="record-newrun-note">This dynasty is complete. The ledger stays in your trophy cabinet.</p>
+        <button class="cta" id="record-newrun" type="button">Start a New Run</button>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+
+<div class="actionbar">
+  <div class="actionbar-inner">
+    <span class="actionbar-status" id="action-status"></span>
+    <div class="cta-group">
+      <button class="cta is-ghost" id="cta-alt" hidden></button>
+      <button class="cta" id="cta"></button>
+    </div>
+  </div>
+</div>
+
+
+<script src="data.real.js?v=13"></script>
+
+<script src="data.overrides.js?v=13"></script>
+<script src="data.js?v=13"></script>
+<script src="app.js"></script>
+<script src="trade.js"></script>
+</body>
+</html>

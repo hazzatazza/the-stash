@@ -1,0 +1,166 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Sheep Farmer</title>
+<style>
+html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:Georgia,serif;color:#d8d2c4}
+canvas{display:block}
+#hud{position:fixed;inset:0;pointer-events:none}
+#hud::before{content:"";position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 55%,rgba(0,0,0,.6) 100%)}
+#top{position:absolute;top:14px;left:18px;font-size:15px;letter-spacing:.12em;text-shadow:0 0 6px #000;line-height:1.6}
+#msg{position:absolute;bottom:16%;width:100%;text-align:center;font-size:18px;opacity:0;transition:opacity .4s;text-shadow:0 0 8px #000;font-style:italic}
+#title{position:absolute;top:34%;width:100%;text-align:center;font-size:44px;letter-spacing:.3em;opacity:0;transition:opacity 1s;text-shadow:0 0 14px #800}
+#cross{position:absolute;top:50%;left:50%;width:6px;height:6px;margin:-3px;border-radius:50%;background:rgba(255,255,255,.75);display:none}
+#vig{position:absolute;inset:0;background:radial-gradient(ellipse at center,transparent 35%,rgba(150,0,0,.95) 100%);opacity:0}
+#menu{position:fixed;inset:0;background:rgba(0,0,0,.9);display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;gap:14px;z-index:4}
+#menu h1{margin:0;font-size:40px;letter-spacing:.2em;color:#c9b88a;font-weight:400}
+#menu p{margin:0;max-width:480px;line-height:1.55;color:#a9a392}
+button{font:inherit;font-size:18px;letter-spacing:.15em;padding:12px 34px;background:#1a1410;color:#e8dcc0;border:1px solid #6b5a3a;cursor:pointer}
+button:hover{background:#2c2118}
+#scare{position:fixed;inset:0;display:none;background:#000;z-index:5;align-items:center;justify-content:center;animation:flash .6s,shake .06s infinite;overflow:hidden}
+#scare svg{animation:zoom .22s cubic-bezier(.1,.9,.2,1) forwards,flick .12s steps(2) infinite}
+@keyframes flash{0%{background:#fff}15%{background:#a00}30%{background:#fff}45%{background:#600}100%{background:#000}}
+@keyframes zoom{from{transform:scale(.12)}to{transform:scale(1.25)}}
+@keyframes flick{0%{filter:brightness(1) contrast(1.2)}100%{filter:brightness(1.7) contrast(1.5) saturate(1.6)}}
+@keyframes shake{0%{transform:translate(-8px,4px) scale(1.05)}33%{transform:translate(9px,-6px) scale(1.1)}66%{transform:translate(-5px,-8px) scale(1.07)}100%{transform:translate(6px,7px) scale(1.12)}}
+</style></head><body>
+<div id="hud"><div id="top"></div><div id="title"></div><div id="msg"></div><div id="cross"></div><div id="vig"></div></div>
+<div id="menu"></div>
+<div id="scare"><svg viewBox="0 0 400 400" style="width:min(96vw,96vh)"><defs><radialGradient id="rg" cx="50%" cy="50%" r="60%"><stop offset="0" stop-color="#500"/><stop offset="1" stop-color="#000"/></radialGradient><filter id="gl"><feGaussianBlur stdDeviation="6" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs><rect width="400" height="400" fill="url(#rg)"/><path d="M30 60L90 120L100 20L150 100L200 10L250 100L300 20L310 120L370 60L350 200L385 260L330 300L300 380L200 400L100 380L70 300L15 260L50 200Z" fill="#1c1c20" stroke="#000" stroke-width="4"/><path d="M120 90L130 170M160 70L165 150M240 70L235 150M280 90L270 170M90 200L130 230M310 200L270 230" stroke="#3a3a42" stroke-width="4" fill="none"/><path d="M110 230Q200 190 290 230L270 300L130 300Z" fill="#26262b"/><path d="M105 275Q200 240 295 275L280 360Q200 400 120 360Z" fill="#4a0000" stroke="#000" stroke-width="3"/><path d="M160 330Q200 310 240 330Q220 385 200 385Q180 385 160 330Z" fill="#8a1a2a"/><path d="M118 272L132 330L146 268M150 266L160 312L172 262M175 260L184 296L196 258M204 258L216 296L225 260M228 262L240 312L250 266M254 268L268 330L282 272" fill="#f2ecd6" stroke="#f2ecd6" stroke-width="3"/><path d="M130 360L140 322L152 366M165 372L174 336L186 378M214 378L226 336L235 372M248 366L260 322L270 360" fill="#e0d8bc" stroke="#e0d8bc" stroke-width="3"/><path d="M150 300Q146 340 152 360M250 300Q254 345 248 365" stroke="#a00" stroke-width="5" fill="none"/><path d="M70 150L190 190L180 130ZM330 150L210 190L220 130Z" fill="#0a0a0c"/><g filter="url(#gl)"><path d="M95 165Q140 135 185 178Q140 200 95 165ZM305 165Q260 135 215 178Q260 200 305 165Z" fill="#ffdd00"/></g><ellipse cx="143" cy="170" rx="5" ry="18" fill="#000"/><ellipse cx="257" cy="170" rx="5" ry="18" fill="#000"/><path d="M175 235Q200 220 225 235Q220 255 200 258Q180 255 175 235Z" fill="#000"/><path d="M70 120L120 210M80 125L128 205" stroke="#7a1a1a" stroke-width="3"/><g style="display:none"><svg viewBox="0 0 400 400" style="width:min(96vw,96vh)"><path d="M60 30L150 125L250 125L340 30L360 190L305 335L200 395L95 335L40 190Z" fill="#2a2a2e"/><path d="M110 150L175 185L160 205L100 185Z M290 150L225 185L240 205L300 185Z" fill="#f00"/><circle cx="140" cy="190" r="9" fill="#ff0"/><circle cx="260" cy="190" r="9" fill="#ff0"/><path d="M130 260Q200 235 270 260L285 345Q200 390 115 345Z" fill="#300"/><path d="M135 262L150 310L165 258 M170 256L188 322L205 254 M205 254L222 322L240 256 M235 258L250 310L265 262 M140 345L155 300L170 350 M230 350L245 300L260 345" fill="#fff" stroke="#fff" stroke-width="3"/></svg></g></svg></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+const $=id=>document.getElementById(id);
+const wrap=a=>((a+Math.PI)%(2*Math.PI)+2*Math.PI)%(2*Math.PI)-Math.PI;
+// ---------- scene ----------
+const scene=new THREE.Scene();scene.background=new THREE.Color(0x02040c);
+scene.fog=new THREE.FogExp2(0x02040c,.04);
+const cam=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,.1,100);
+cam.position.set(0,1.7,0);cam.rotation.order='YXZ';scene.add(cam);
+const R=new THREE.WebGLRenderer({antialias:true});R.setSize(innerWidth,innerHeight);R.setPixelRatio(Math.min(devicePixelRatio,2));R.shadowMap.enabled=true;R.shadowMap.type=THREE.PCFSoftShadowMap;document.body.prepend(R.domElement);
+addEventListener('resize',()=>{cam.aspect=innerWidth/innerHeight;cam.updateProjectionMatrix();R.setSize(innerWidth,innerHeight)});
+scene.add(new THREE.AmbientLight(0x10182a,.5));
+const spot=new THREE.SpotLight(0xffaa55,2.4,45,.34,.55,1);spot.position.set(.3,-.1,0);spot.castShadow=true;spot.shadow.mapSize.set(1024,1024);spot.shadow.bias=-.0004;
+const sT=new THREE.Object3D();sT.position.set(0,0,-10);cam.add(sT);spot.target=sT;cam.add(spot);
+const glow=new THREE.PointLight(0xff8833,.9,9,2);glow.position.set(.3,-.3,-.5);cam.add(glow);
+const flashL=new THREE.PointLight(0xffffcc,0,40);cam.add(flashL);
+const gc=document.createElement('canvas');gc.width=gc.height=256;{const x=gc.getContext('2d');x.fillStyle='#2b4a28';x.fillRect(0,0,256,256);for(let i=0;i<5000;i++){x.fillStyle='hsl('+(90+Math.random()*40)+',45%,'+(18+Math.random()*28)+'%)';x.fillRect(Math.random()*256,Math.random()*256,1+Math.random()*2,2+Math.random()*4)}}
+const gt=new THREE.CanvasTexture(gc);gt.wrapS=gt.wrapT=THREE.RepeatWrapping;gt.repeat.set(50,50);gt.anisotropy=4;
+const ground=new THREE.Mesh(new THREE.PlaneGeometry(200,200),new THREE.MeshStandardMaterial({map:gt,roughness:1}));ground.rotation.x=-Math.PI/2;ground.receiveShadow=true;scene.add(ground);
+// stars + moon
+{const p=[];for(let i=0;i<800;i++){const a=Math.random()*6.283,e=Math.random()*1.3+.08,r=70;p.push(Math.cos(a)*Math.cos(e)*r,Math.sin(e)*r,Math.sin(a)*Math.cos(e)*r)}
+const sg=new THREE.BufferGeometry();sg.setAttribute('position',new THREE.Float32BufferAttribute(p,3));scene.add(new THREE.Points(sg,new THREE.PointsMaterial({color:0xb4bedb,size:1.8,fog:false,sizeAttenuation:false})));
+const mo=new THREE.Mesh(new THREE.SphereGeometry(3.5,24,16),new THREE.MeshBasicMaterial({color:0xeef2ff,fog:false}));mo.position.set(-35,42,-48);scene.add(mo);
+const mh=new THREE.Mesh(new THREE.SphereGeometry(7,24,16),new THREE.MeshBasicMaterial({color:0x6677aa,fog:false,transparent:true,opacity:.18}));mh.position.copy(mo.position);scene.add(mh)}
+// trees
+{const tm=new THREE.MeshStandardMaterial({color:0x14261a,roughness:1}),tk=new THREE.MeshStandardMaterial({color:0x2a1c12});
+for(let i=0;i<45;i++){const a=Math.random()*6.283,r=30+Math.random()*25,h=5+Math.random()*5,g=new THREE.Group(),t=new THREE.Mesh(new THREE.CylinderGeometry(.25,.35,h*.3,6),tk);t.position.y=h*.15;g.add(t);
+for(let k=0;k<3;k++){const c=new THREE.Mesh(new THREE.ConeGeometry(2.2-k*.5,h*.5,7),tm);c.position.y=h*.35+k*h*.2;g.add(c)}g.position.set(Math.sin(a)*r,0,Math.cos(a)*r);scene.add(g)}}
+// grass tufts
+{const gI=new THREE.InstancedMesh(new THREE.ConeGeometry(.06,.35,4),new THREE.MeshStandardMaterial({color:0x3a6a30,roughness:1}),2500),du=new THREE.Object3D();
+for(let i=0;i<2500;i++){const a=Math.random()*6.283,r=2+Math.random()*32;du.position.set(Math.sin(a)*r,.12,Math.cos(a)*r);du.scale.set(1,.6+Math.random()*1.2,1);du.rotation.set((Math.random()-.5)*.4,0,(Math.random()-.5)*.4);du.updateMatrix();gI.setMatrixAt(i,du.matrix)}scene.add(gI)}
+// fence
+const wood=new THREE.MeshStandardMaterial({color:0x4a3220,roughness:1});
+for(let i=0;i<40;i++){const a=i/40*Math.PI*2,p=new THREE.Mesh(new THREE.BoxGeometry(.16,1.2,.16),wood);p.position.set(Math.sin(a)*21,.6,Math.cos(a)*21);p.castShadow=true;scene.add(p)}
+[.5,.95].forEach(y=>{const r=new THREE.Mesh(new THREE.TorusGeometry(21,.04,5,60),wood);r.rotation.x=Math.PI/2;r.position.y=y;scene.add(r)});
+// sheep
+const wm=new THREE.MeshStandardMaterial({color:0xddd8cc,roughness:1}),dm=new THREE.MeshStandardMaterial({color:0x2a2622});
+const sheep=[];for(let i=0;i<24;i++){const g=new THREE.Group(),b=new THREE.Mesh(new THREE.SphereGeometry(.5,10,8),wm);b.scale.set(1.2,.9,.9);b.position.y=.75;g.add(b);for(let k=0;k<9;k++){const c=new THREE.Mesh(new THREE.SphereGeometry(.26,8,6),wm);c.position.set((Math.random()-.5)*.9,.75+(Math.random()-.3)*.45,(Math.random()-.5)*.6);g.add(c)}
+const h=new THREE.Mesh(new THREE.BoxGeometry(.28,.3,.32),dm);h.position.set(.62,.95,0);g.add(h);[.2,-.2].forEach(z=>{const e=new THREE.Mesh(new THREE.BoxGeometry(.1,.06,.12),dm);e.position.set(.55,1.1,z);g.add(e)});
+[[.3,.2],[.3,-.2],[-.3,.2],[-.3,-.2]].forEach(([x,z])=>{const l=new THREE.Mesh(new THREE.BoxGeometry(.1,.45,.1),dm);l.position.set(x,.22,z);g.add(l)});
+const a=Math.random()*6.283,r=5+Math.random()*12;g.position.set(Math.sin(a)*r,0,Math.cos(a)*r);g.rotation.y=Math.random()*6.283;g.userData={alive:true,sp:.4+Math.random()*.5,turn:0,tt:0,moving:true};g.traverse(o=>{o.castShadow=true});scene.add(g);sheep.push(g)}
+// held items
+const torch=new THREE.Group();
+const tp=new THREE.Mesh(new THREE.CylinderGeometry(.035,.05,.55,8),wood);torch.add(tp);
+const tf=new THREE.Mesh(new THREE.SphereGeometry(.08,8,8),new THREE.MeshBasicMaterial({color:0xffaa33}));tf.position.y=.38;torch.add(tf);const rag=new THREE.Mesh(new THREE.CylinderGeometry(.07,.05,.14,8),new THREE.MeshStandardMaterial({color:0x1a1008}));rag.position.y=.27;torch.add(rag);
+torch.position.set(.35,-.4,-.6);torch.rotation.x=-.3;cam.add(torch);
+const gun=new THREE.Group(),gm=new THREE.MeshStandardMaterial({color:0x222222,metalness:.6,roughness:.5});
+const bar=new THREE.Mesh(new THREE.BoxGeometry(.06,.07,.9),gm);gun.add(bar);
+const stock=new THREE.Mesh(new THREE.BoxGeometry(.08,.14,.4),wood);stock.position.set(0,-.05,.5);gun.add(stock);const fore=new THREE.Mesh(new THREE.BoxGeometry(.08,.08,.45),wood);fore.position.set(0,-.05,-.1);gun.add(fore);
+gun.position.set(.28,-.28,-.6);gun.visible=false;cam.add(gun);
+// wolf
+function mkWolf(){const g=new THREE.Group(),m=new THREE.MeshStandardMaterial({color:0x55555c,roughness:1});
+const P=(w,h,d,x,y,z)=>{const o=new THREE.Mesh(new THREE.BoxGeometry(w,h,d),m);o.position.set(x,y,z);g.add(o);return o};
+P(1.4,.6,.5,0,.8,0);P(.45,.4,.4,.85,1.05,0);P(.35,.2,.2,1.15,.98,0);P(.6,.75,.55,.45,.9,0);P(.3,.08,.18,1.12,.86,0);P(.3,.3,.3,.65,1.0,0);
+[[.5,.18],[.5,-.18],[-.5,.18],[-.5,-.18]].forEach(([x,z])=>P(.14,.7,.14,x,.35,z));
+P(.6,.12,.12,-.95,.9,0).rotation.z=.5;P(.1,.15,.1,.8,1.3,.12);P(.1,.15,.1,.8,1.3,-.12);
+{const T=new THREE.MeshStandardMaterial({color:0xefe8d0,roughness:.4}),B=new THREE.MeshStandardMaterial({color:0x2a0000,roughness:.6}),Ey=new THREE.MeshStandardMaterial({color:0xe6dc78,roughness:.3});
+const jaw=new THREE.Mesh(new THREE.BoxGeometry(.42,.07,.2),B);jaw.position.set(1.08,.74,0);jaw.rotation.z=-.35;g.add(jaw);
+for(let k=0;k<5;k++)for(const s of[-1,1]){const u=new THREE.Mesh(new THREE.ConeGeometry(.028,.11,4),T);u.position.set(.99+k*.07,.84,s*.08);u.rotation.z=Math.PI;g.add(u);const l=new THREE.Mesh(new THREE.ConeGeometry(.024,.09,4),T);l.position.set((k-2)*.085,.07,s*.08);jaw.add(l)}
+[.12,-.12].forEach(z=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.045,8,8),Ey);e.position.set(1.02,1.12,z);g.add(e)});
+for(let k=0;k<7;k++){const s=new THREE.Mesh(new THREE.ConeGeometry(.07,.28,4),m);s.position.set(.7-k*.23,1.2+(k%2)*.05,0);s.rotation.z=-.5;g.add(s)}}
+const em=new THREE.MeshBasicMaterial({color:0xff1100,fog:false}),eyes=new THREE.Group();
+[.12,-.12].forEach(z=>{const e=new THREE.Mesh(new THREE.SphereGeometry(.05,6,6),em);e.position.set(1.04,1.12,z);eyes.add(e)});
+eyes.visible=false;g.add(eyes);g.userData.eyes=eyes;g.scale.setScalar(1.4);g.traverse(o=>{if(o.isMesh)o.castShadow=true});return g}
+// ---------- audio ----------
+let AC;
+function ac(){if(!AC){AC=new(window.AudioContext||window.webkitAudioContext)();const s=AC.createBufferSource();s.buffer=nb(3);s.loop=true;const f=AC.createBiquadFilter();f.frequency.value=260;const g=AC.createGain();g.gain.value=.05;s.connect(f).connect(g).connect(AC.destination);s.start()}if(AC.state==='suspended')AC.resume()}
+function nb(d){const b=AC.createBuffer(1,AC.sampleRate*d,AC.sampleRate),a=b.getChannelData(0);for(let i=0;i<a.length;i++)a[i]=Math.random()*2-1;return b}
+function noise(d,v,f,type='lowpass',pan=0){if(!AC)return;const s=AC.createBufferSource();s.buffer=nb(d);const fl=AC.createBiquadFilter();fl.type=type;fl.frequency.value=f;const g=AC.createGain();g.gain.setValueAtTime(v,AC.currentTime);g.gain.exponentialRampToValueAtTime(.001,AC.currentTime+d);const p=AC.createStereoPanner();p.pan.value=pan;s.connect(fl).connect(g).connect(p).connect(AC.destination);s.start()}
+function tone(f1,f2,d,v,type,pan=0){if(!AC)return;const o=AC.createOscillator(),g=AC.createGain(),p=AC.createStereoPanner(),t=AC.currentTime;o.type=type;o.frequency.setValueAtTime(f1,t);o.frequency.exponentialRampToValueAtTime(f2,t+d);g.gain.setValueAtTime(v,t);g.gain.exponentialRampToValueAtTime(.001,t+d);p.pan.value=pan;o.connect(g).connect(p).connect(AC.destination);o.start();o.stop(t+d)}
+const sfx={shot(){noise(.4,.9,2000);tone(130,30,.3,.6,'square')},clunk(){tone(150,50,.15,.5,'triangle');noise(.1,.3,500)},
+growl(p,v){tone(95,50,.9,v,'sawtooth',p);noise(.8,v*.5,400,'lowpass',p)},yelp(){tone(600,180,.35,.3,'sawtooth')},thump(){tone(70,40,.15,.7,'sine')},
+scream(){tone(1100,350,1.6,.8,'sawtooth');tone(1175,300,1.6,.7,'sawtooth');tone(660,140,1.6,.8,'square');tone(60,25,1.2,1,'sine');tone(180,70,1.6,.7,'sawtooth');noise(1.6,1,3500,'highpass');noise(.5,1,200,'lowpass')},click(){tone(900,700,.05,.2,'square')}};
+// ---------- game ----------
+const NIGHT=300;let state='menu',night=1,yaw=0,pitch=0,held=true,dropYaw=0,wolves=[],spawned=0,killed=0,spawnT=5,reload=0,hb=0,blackT=0,doneT=0,time=0,nt=0,sheepShot=0,deadT=15,C;
+const cfg=n=>({interval:Math.max(7,26-2*n),creep:.8+.12*n,react:9.5-.65*n,maxSim:1+Math.floor(n/3),arc:n<=3?1.6:n<=6?2.6:Math.PI});
+let msgTO;function say(t,ms=3500){const m=$('msg');m.textContent=t;m.style.opacity=1;clearTimeout(msgTO);msgTO=setTimeout(()=>m.style.opacity=0,ms)}
+function setTorch(on,silent){held=on;torch.visible=on;spot.visible=on;glow.visible=on;gun.visible=!on;$('cross').style.display=on?'none':'block';if(!on)dropYaw=yaw;if(!silent)sfx.clunk()}
+function menu(html,btn,fn){const m=$('menu');m.innerHTML=html+'<button id="b">'+btn+'</button>';m.style.display='flex';$('b').onclick=fn}
+function begin(n){ac();night=n;C=cfg(n);wolves.forEach(w=>scene.remove(w.g));wolves=[];spawned=killed=0;spawnT=5;doneT=0;yaw=pitch=0;reload=0;nt=0;sheepShot=0;corpses.forEach(c=>scene.remove(c));corpses.length=0;pools.length=0;deadT=15;sheep.forEach(s=>{s.userData.alive=true;s.visible=true;s.rotation.x=0;s.position.y=0;s.userData.moving=true});setTorch(true,true);
+scene.fog.density=.035+n*.003;spot.angle=.34-n*.01;$('menu').style.display='none';$('scare').style.display='none';R.domElement.requestPointerLock();state='play';
+const t=$('title');t.textContent='NIGHT '+n;t.style.opacity=1;setTimeout(()=>t.style.opacity=0,2600);
+say(n==1?'Sweep your torch across the field. Something is out there…':n==4?'They are circling now. Listen.':n==7?'The torch won’t always hold…':'Keep the flock safe.',5000)}
+function caught(){if(state!=='play')return;state='dead';document.exitPointerLock();$('vig').style.opacity=0;$('scare').style.display='flex';sfx.scream();
+setTimeout(()=>{$('scare').style.display='none';menu('<h1>DEVOURED</h1><p>The wolf got you. You made it to night '+night+'.</p>','START OVER FROM NIGHT 1',()=>begin(1))},2200)}
+function loseSheep(){state='dead';document.exitPointerLock();$('vig').style.opacity=0;sfx.thump();menu('<h1>YOU SHOT THE FLOCK</h1><p>Two sheep lost to your rifle. You made it to night '+night+'.</p>','START OVER FROM NIGHT 1',()=>begin(1))}
+const bloodM=new THREE.MeshStandardMaterial({color:0x7a0000,roughness:.25,polygonOffset:true,polygonOffsetFactor:-2}),corpses=[],pools=[];
+function blood(x,z,r){const m=new THREE.Mesh(new THREE.CircleGeometry(1,20),bloodM);m.rotation.x=-Math.PI/2;m.position.set(x+(Math.random()-.5)*.4,.025,z+(Math.random()-.5)*.4);m.scale.setScalar(.05);m.userData={r,s:0};scene.add(m);corpses.push(m);pools.push(m)}
+function killSheep(s){s.userData.alive=false;s.rotation.order='YXZ';s.rotation.x=(Math.random()<.5?1:-1)*Math.PI/2;s.position.y=.4;blood(s.position.x,s.position.z,.9+Math.random()*.4)}
+function killWolf(w){const g=w.g;g.rotation.order='YXZ';g.rotation.x=(Math.random()<.5?1:-1)*Math.PI/2;g.position.y=.3;blood(g.position.x,g.position.z,1.5);corpses.push(g)}
+function spawn(){const g=mkWolf(),a=wrap((Math.random()*2-1)*C.arc),d=15+Math.random()*4;scene.add(g);
+const w={g,a,d,rev:false,t:0,gr:3+Math.random()*4};wolves.push(w);place(w);spawned++}
+function place(w){w.g.position.set(-Math.sin(w.a)*w.d,0,-Math.cos(w.a)*w.d);w.g.rotation.y=Math.atan2(w.g.position.z,-w.g.position.x);w.g.position.y=w.rev?Math.abs(Math.sin(time*9+w.a*5))*.18:0;w.g.rotation.z=w.rev?Math.sin(time*18)*.05:0}
+const fw=new THREE.Vector3(),tv=new THREE.Vector3();
+function aim(o,y=.7){cam.getWorldDirection(fw);tv.set(o.position.x,y,o.position.z).sub(cam.position);const dd=tv.length();tv.normalize();return{ang:Math.acos(Math.min(1,fw.dot(tv))),dd}}
+function shoot(){if(state!=='play')return;if(held){say('Drop the torch first — you need both hands.',2200);sfx.click();return}
+if(reload>0)return;reload=1;sfx.shot();flashL.intensity=4;gun.position.z=-.45;
+let best=null,bd=1e9,isS=false;
+wolves.forEach(w=>{const{ang,dd}=aim(w.g);if(ang<Math.atan(.9/dd)+.012&&dd<bd){best=w;bd=dd;isS=false}});
+sheep.forEach(s=>{if(!s.userData.alive)return;const{ang,dd}=aim(s,.75);if(ang<Math.atan(.8/dd)+.01&&dd<bd){best=s;bd=dd;isS=true}});
+if(!best)return;
+if(isS){killSheep(best);sheepShot++;sfx.yelp();if(sheepShot>=2)return loseSheep();say('You shot a sheep! One more and it’s over.',3500)}
+else{killWolf(best);wolves.splice(wolves.indexOf(best),1);killed++;setTimeout(sfx.yelp,80)}}
+function toggle(){if(state!=='play')return;if(held)setTorch(false);else if(Math.abs(wrap(yaw-dropYaw))<.3){setTorch(true,true);sfx.clunk()}else{sfx.clunk();say('Your hand finds only dirt…',1800)}}
+addEventListener('mousemove',e=>{if(document.pointerLockElement){yaw-=e.movementX*.0022;pitch=Math.max(-1.2,Math.min(1.2,pitch-e.movementY*.0022))}});
+addEventListener('mousedown',e=>{if(e.button===0&&document.pointerLockElement)shoot()});
+addEventListener('contextmenu',e=>e.preventDefault());
+addEventListener('keydown',e=>{if(e.code==='KeyF'||e.code==='KeyQ')toggle()});
+document.addEventListener('pointerlockchange',()=>{if(!document.pointerLockElement&&state==='play'){state='pause';menu('<h1>PAUSED</h1><p>The night waits for no one.</p>','RESUME',()=>{$('menu').style.display='none';R.domElement.requestPointerLock();state='play'})}});
+function update(dt){time+=dt;nt+=dt;
+for(const s of sheep){const u=s.userData;if(!u.alive)continue;u.tt-=dt;if(u.tt<=0){u.tt=2+Math.random()*4;u.turn=(Math.random()-.5)*1.4;u.moving=Math.random()<.75}
+const p=s.position,r=Math.hypot(p.x,p.z);if(r>19||r<4){let t=Math.atan2(p.z,-p.x);if(r<4)t+=Math.PI;s.rotation.y+=Math.max(-2,Math.min(2,wrap(t-s.rotation.y)*2))*dt;u.moving=true}else s.rotation.y+=u.turn*dt;
+if(u.moving){p.x+=Math.cos(s.rotation.y)*u.sp*dt;p.z-=Math.sin(s.rotation.y)*u.sp*dt}}
+// torch flicker + blackouts
+if(held){blackT-=dt;if(night>=6&&blackT<=-1&&Math.random()<dt*.12*(night-5)){blackT=.15+Math.random()*.3}
+const on=blackT<=0;spot.intensity=on?2.4*(.85+.15*Math.sin(time*23)+(Math.random()-.5)*.1):0;glow.intensity=on?.9*(.9+Math.random()*.2):0;tf.visible=on;tf.scale.set(1,1.3+Math.sin(time*30)*.25,1)}
+flashL.intensity*=.78;gun.position.z+=(-.6-gun.position.z)*Math.min(1,dt*8);reload=Math.max(0,reload-dt);
+cam.rotation.set(pitch,yaw,0);
+// spawning
+pools.forEach(p=>{const u=p.userData;if(u.s<1){u.s=Math.min(1,u.s+dt*1.2);p.scale.setScalar(.05+u.r*u.s)}});
+deadT-=dt;if(deadT<=0&&nt<NIGHT-10){deadT=Math.max(12,40-2.5*night)*(.6+Math.random()*.8);const al=sheep.filter(s=>s.userData.alive);if(al.length>10){const s=al[Math.floor(Math.random()*al.length)];killSheep(s);tone(420,230,.45,.12,'triangle',Math.sin(yaw-Math.atan2(-s.position.x,-s.position.z)))}}
+spawnT-=dt;if(nt<NIGHT&&spawnT<=0&&wolves.length<C.maxSim){spawn();spawnT=C.interval*(.7+Math.random()*.6)}
+let minT=99;
+for(const w of[...wolves]){const{ang,dd}=aim(w.g);
+if(!w.rev){w.d-=C.creep*dt;w.gr-=dt;if(w.gr<=0){w.gr=2.5+Math.random()*4;sfx.growl(Math.sin(yaw-w.a),Math.max(.05,.5-w.d/60))}
+if(held&&blackT<=0&&dd<38&&ang<spot.angle*.95){w.rev=true;w.t=Math.max(2.2,C.react*Math.min(1,Math.max(.35,w.d/20)));sfx.growl(Math.sin(yaw-w.a),.9)}
+if(w.d<=2)return caught()}
+else{w.t-=dt;if(w.t<=.05)return caught();w.d-=(w.d-1.6)/w.t*dt;minT=Math.min(minT,w.t)}
+place(w)}
+// tension
+const v=$('vig');if(minT<99){v.style.opacity=Math.max(0,Math.min(.9,1-minT/6));hb-=dt;if(hb<=0){sfx.thump();hb=.25+Math.min(minT,6)*.12}}else v.style.opacity=0;
+const rem=Math.max(0,Math.ceil(NIGHT-nt));$('top').innerHTML='NIGHT '+night+' / 10<br>DAWN IN '+Math.floor(rem/60)+':'+String(rem%60).padStart(2,'0')+'<br>WOLVES KILLED: '+killed+'<br>SHEEP SHOT: '+sheepShot+' / 2'+(held?'':'<br>TORCH DROPPED');
+// night end
+if(nt>=NIGHT&&wolves.length===0){doneT+=dt;if(doneT>1.5){state='done';document.exitPointerLock();
+if(night>=10)menu('<h1>DAWN</h1><p>All ten nights survived. The flock lives, and the sun rises over your farm.</p>','PLAY AGAIN',()=>begin(1));
+else menu('<h1>NIGHT '+night+' SURVIVED</h1><p>Dawn breaks. But the wolves are watching, and they’re getting bolder.</p>','NIGHT '+(night+1),()=>begin(night+1))}}}
+let last=performance.now();
+(function loop(){requestAnimationFrame(loop);const n=performance.now(),dt=Math.min((n-last)/1000,.05);last=n;if(state==='play')update(dt);R.render(scene,cam)})();
+menu('<h1>SHEEP FARMER</h1><p>Each night lasts 5 minutes. You guard the flock from a hilltop with a torch and a single-shot rifle. Shoot two sheep, or let a wolf reach you, and you start over from night 1. Wolves creep in from the dark. Find them with the torch, then <b>drop it</b> to shoot — and in the dark, you’ll have to remember where you left it. Survive 10 nights.</p><p><b>Mouse</b> look &nbsp;·&nbsp; <b>F</b> drop / pick up torch &nbsp;·&nbsp; <b>Click</b> shoot &nbsp;·&nbsp; <b>Esc</b> pause<br>Desktop with sound on. Best played in the dark.</p>','BEGIN',()=>begin(1));
+</script></body></html>
